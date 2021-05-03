@@ -1,9 +1,9 @@
 import React from "react";
-import Image from "./InteractiveImage";
+import Format from "./format";
 import "./style.css";
 
 const App: React.FC = () => {
-  return <Image />;
+  return <Format/>;
 };
 
 export default App;

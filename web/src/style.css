@@ -1,3 +1,4 @@
+@import 'antd/dist/antd.css';
 html,
 body,
 #app {
@@ -5,10 +6,61 @@ body,
   height: 100%;
   margin: 0;
   padding: 0;
+  background: #ffffff;
+}
+.site-layout .site-layout-background {
+  background: #ffffff;
 }
 
-#app {
-  display: flex;
-  justify-content: center;
-  align-items: center;
+.ant-row {
+  background: #ffffff;
 }
+
+.code-box-demo {
+  text-align: center;
+}
+
+.ant-layout {
+  background: #ffffff;
+}
+.ant-layout-header {
+  background: #ffffff;
+}
+
+.ant-layout-footer {
+  color: #fff;
+  background: #ffffff;
+}
+
+[data-theme="dark"] .ant-layout-header {
+  background: #ffffff;
+}
+[data-theme="dark"] .ant-layout-footer {
+  background: #ffffff;
+}
+
+.ant-layout-sider {
+  color: #fff;
+  line-height: 16px;
+  background: #ffffff;
+  width: 500px;
+}
+
+[data-theme="dark"] .ant-layout-sider {
+  background: #ffffff;
+}
+
+.ant-layout-content {
+  min-height: 120px;
+  color: #fff;
+  line-height: 120px;
+  background: rgb(255, 255, 255);
+}
+
+[data-theme="dark"] .ant-layout-content {
+  background: #ffffff;
+}
+
+/* > .code-box-demo > .ant-layout + .ant-layout {
+  margin-top: 16px;
+}  */
