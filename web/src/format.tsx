@@ -105,8 +105,8 @@ const Format: React.FC = () => {
             "selectedTool":0
         }
     );
-    const [selectedMapIndex, setSelectedMapIndex] = useState(0);
-    const [selectedVertexIndex, setSelectedVertexIndex] = useState(0);
+    const [selectedMapKey, setSelectedMapKey] = useState(0);
+    const [selectedVertexKey, setSelectedVertexKey] = useState(0);
     const [selectedTool,setSelectecTool] = useState(0);
     const handleToolsChange = (e)=>{
         console.log("handleToolsChange",e.target.value);
@@ -117,15 +117,15 @@ const Format: React.FC = () => {
         //设置默认选中的map
         selectedRowKeys: [0],
         onChange: (selectedRowKeys: React.Key[], selectedRows: any[]) => {
-            changeData({selectedMapKey: selectedRows[0].index}); //index是服务器存储的顺序
-            setSelectedMapIndex(selectedRows[0].key); //key是客户端存储的顺序
+            changeData({selectedMapIndex: selectedRows[0].index}); //index是服务器存储的顺序
+            setSelectedMapKey(selectedRows[0].key); //key是客户端存储的顺序
             console.log(`selectedRowKeys: ${selectedRowKeys}`, 'selectedRows: ', selectedRows[0]);
         },
     };
 
     const onClickJumpToVex = (record)=>{
         changeData({selectedVertexIndex : record.index});
-        setSelectedVertexIndex(record.key);
+        setSelectedVertexKey(record.key);
     }
 
     const changeData = (_data) => {
@@ -182,8 +182,9 @@ const Format: React.FC = () => {
                     <Col offset={1} span={7}>
                         <TreeVisualization
                             data={data}
-                            selectedMapIndex={selectedMapIndex}
-                            selectedVertexIndex={selectedVertexIndex}
+                            onClickJumpToVex={onClickJumpToVex}
+                            selectedMapKey={selectedMapKey}
+                            selectedVertexKey={selectedVertexKey}
                         />
                     </Col>
                 </Row>
