@@ -7,9 +7,24 @@
 #include <fstream>
 #include <sstream>
 #include <map>
+#include <list>
+
+using namespace std;
 
 namespace SWCP 
 {
+	enum Type
+	{
+		Undefined = 0,
+		Soma, //胞体 1
+		Axon, //轴突 2
+		Dendrite, //树突 3
+		ApicalDendrite, //顶树突 4
+		ForkPoint, //分叉点 5
+		EndPoint, //端点 6
+		Custom,
+	};
+
 	#if __cplusplus >= 201103L
 		#define SWCP_CPP11_COMPATIBLE
 	#endif
@@ -61,19 +76,62 @@ namespace SWCP
 		}
 	#endif
 
-	struct Vertex
+	int GetCurrentTimestamp(){
+		time_t timer;
+		return timer;
+	}
+
+	typedef struct BasicObj
 	{
-		enum Type
-		{
-			Undefined = 0,
-			Soma,
-			Axon,
-			Dendrite,
-			ApicalDendrite,
-			ForkPoint,
-			EndPoint,
-			Custom,
+		long id; //index
+		std::string color; //color
+		bool visible; //是否可见
+		bool selected; //是否被选择
+		std::string name;
+		BasicObj(){
+			id=0;
+			color="#000000";
+			selected=false;
+			visible=true;
+			name="";
+		}
+	}BasicObj;
+
+	typedef struct NeuronSWC : public BasicObj
+	{
+		//继承id
+		Type type;
+		float x,y,z;
+		union{
+			float r;
+			float radius;
 		};
+		union
+		{
+			long pn;
+			long parent;
+		};
+		long line_id; //属于的路径id
+		long seg_start_id; //线的起点id
+		long seg_end_id; //线的终点id
+		int block_id; //点所在脑数据中的block
+		int timestamp; //时间戳
+		NeuronSWC(){
+			id=0;
+			type=Undefined;
+			x=y=z=0;
+			r=1;
+			pn=-1;
+			line_id=-1;
+			seg_start_id=-1;
+			seg_end_id=-1;
+			block_id=1;
+			timestamp=-1;
+		}
+	} NeuronSWC;
+
+	typedef struct Vertex : public BasicObj //记录关键节点和它们之下的节点的SWC索引
+	{
 
 		Vertex(int64_t id, Type type, double x, double y, double z, float radius) : id(id), type(type), radius(radius), x(x), y(y), z(z)
 		{};
@@ -81,29 +139,58 @@ namespace SWCP
 		Vertex() {};
 
 		int64_t id;
-		double x;
-		double y;
-		double z;
+		double x,y,z;
 		float radius;
 		Type type;
-	};
-		
-	struct Edge
-	{
-		Edge(int64_t idParent, int64_t idChild) : idParent(idParent), idChild(idChild)
-		{};
-		
-		Edge() {};
 
-		int64_t idParent;
-		int64_t idChild;
+		map<int, bool> hash_linked_seg_ids; //相关的线id
+		list<int> linked_vertex_ids; //相连的点id
+	} Vertex;
+
+	typedef struct Segment //路径中的单个线段
+	{
+		int start_id;
+		int end_id;
+		list<int> segment_vertex_ids; //在线中的顶点在SWC中的索引id
+		Segment(int s, int e){
+			start_id = s;
+			end_id = e;
+		};
+
+		void InsertId(int _id){
+			segment_vertex_ids.push_back(_id);
+		}
+
+		bool VextexIdxIsIn(int _id){ //检测SWC中的Index点是否在该线段上
+			for( auto i : segment_vertex_ids ){
+				if(i == _id){
+					return true;
+				}
+			}
+			return false;
+		}
+	} Segment;
+		
+	struct Line : public BasicObj //Line是有关关键Vertex的集合
+	{
+		map< int, Vertex > hash_vertexes;
+		Line(){
+			id=0;
+			color="#000000";
+			selected=false;
+			visible=true;
+			name="";
+		}
 	};
 	
 	struct Graph
 	{
-		std::vector<Vertex> vertices;
-		std::vector<Edge> edges;
-		std::vector<std::string> meta;
+		string file; //文件源
+		list<NeuronSWC> list_swc; //list_swc中间删除时，需要对hash_swc_id重新计算
+		map<int,int> hash_swc_ids; //方便查询，点与相关联SWC文件的映射索引
+		map<int,list<Line> > lines; //路径合集（点合辑）
+		map<int,list<Segment> > segments; //关键点及非关键点的线段合集
+		list<string> meta; //memo
 	};
 
 	class Parser
@@ -136,6 +223,7 @@ namespace SWCP
 		bool AcceptInteger(int64_t& integer);
 		bool AcceptInteger(uint64_t& integer);
 		bool AcceptDouble(double& integer);
+		bool AcceptStringWithoutSpace(char &);
 		
 		const char* m_iterator;
 		int m_line;
@@ -213,11 +301,12 @@ namespace SWCP
 			countOfLines++;
 		}
 
-		graph.edges.clear();
-		graph.vertices.clear();
+		graph.list_swc.clear();
+		graph.hash_swc_ids.clear();
+		graph.lines.clear();
+		graph.segments.clear();
 		graph.meta.clear();
-		graph.edges.reserve(countOfLines);
-		graph.vertices.reserve(countOfLines);
+
 
 		m_line = 1;
 		m_iterator = string;
@@ -256,12 +345,13 @@ namespace SWCP
 			return true;
 		}
 
-		if (Accept('#'))
+		if (Accept('#')) //注释能够用于获得一些数据信息
 		{
 			const char* commentStart = m_iterator;
 			const char* commentEnd = m_iterator;
 			while (!AcceptEndOfLine() && *m_iterator != '\0')
 			{
+				//eg :#id:1 line_id:1 seg_start_id=-1 seg_end_id=-1 block_id=1 timestamp=1 name:aaaa color=#aaaaaa
 				NextSymbol();
 				commentEnd = m_iterator;
 			}
@@ -288,8 +378,8 @@ namespace SWCP
 								int64_t parent;
 								if (AcceptInteger(parent))
 								{
-									graph.vertices.push_back(Vertex(id, static_cast<Vertex::Type>(type), x, y, z, static_cast<float>(r)));
-
+									Vertex nv = Vertex(id, static_cast<Type>(type), x, y, z, static_cast<float>(r));
+									
 									if (parent != -1)
 									{
 										graph.edges.push_back(Edge(parent, id));
@@ -357,6 +447,11 @@ namespace SWCP
 			return true;
 		}
 		return false;
+	}
+	
+	inline bool Parser::AcceptStringWithoutSpace()
+	{
+
 	}
 
 	inline bool Parser::AcceptInteger(int64_t& value)
