@@ -239,7 +239,7 @@ class TreeVisualization extends React.Component {
             .on("mouseover", (d,i) => {
                 console.log(d)
             d3.select("#tooltip").remove();
-            d3.select("#Rectangle")
+            d3.select("#Radi")
                 .select("svg")
                 .append("text")
                 .attr("x", d.layerX)
@@ -433,7 +433,7 @@ class TreeVisualization extends React.Component {
             .on("mouseover", (d,i) => {
                 console.log(d)
             d3.select("#tooltip").remove();
-            d3.select("#Rectangle")
+            d3.select("#EqualAngle")
                 .select("svg")
                 .append("text")
                 .attr("x", d.layerX)

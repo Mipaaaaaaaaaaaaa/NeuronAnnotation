@@ -6,7 +6,6 @@ import LoadAndSave from "./LoadAndSave";
 import ToolsHeader from "./ToolsHeader";
 import RenderSelecter from "./RenderSelecter";
 import TreeVisualization from "./TreeVisualization";
-import { useEffect, useRef, useState } from "react";
 import "./style.css";
 
 const { Header, Footer, Sider, Content } = Layout;
@@ -33,18 +32,28 @@ const Format: React.FC = () => {
                             "headVex" : 1,
                             "tailVex" : 4,
                             "distance" : 7.25
-                        }
+                        },
+                        {
+                            "headVex" : 1,
+                            "tailVex" : 7,
+                            "distance" : 8
+                        },
                     ]
                 },
                 {   "key":1,
                     "index":3,
                     "lastEditTime":"2021-11-10 20:20:20",
                     "arc":[
-                        {
-                            "headVex" : 1,
-                            "tailVex" : 3,
-                            "distance" : 10.332
+                        {                        
+                            "headVex" : 3,
+                            "tailVex" : 8,
+                            "distance": 11,
                         },
+                        {
+                            "headVex" : 3,
+                            "tailVex" : 9,
+                            "distance": 12,
+                        }
                     ]
                 },
                 {
@@ -91,10 +100,42 @@ const Format: React.FC = () => {
                             "distance" : 7
                         }
                     ]
+                },{
+                    "key":5,
+                    "index":7,
+                    "lastEditTime":"2021-4-29 08:00:54",
+                    "arc":[
+                        {
+                            "headVex":7,
+                            "tailVex":1,
+                            "distance":8
+                        }
+                    ]
+                },{
+                    "key":6,
+                    "index":8,
+                    "lastEditTime":"2021-4-29 08:00:54",
+                    "arc":[
+                        {
+                            "headVex":3,
+                            "tailVex":8,
+                            "distance":9
+                        }
+                    ]
+                },{
+                    "key":7,
+                    "index":9,
+                    "lastEditTime":"2021-4-29 08:00:54",
+                    "arc":[
+                        {
+                            "headVex":3,
+                            "index":4,
+                        }
+                    ]
                 }
                 ],
                 "color":"#cc00aa",
-                "name":"haha",
+                "name":"路径1",
                 "index":0,
                 "status":true,
                 "key":0
@@ -151,7 +192,7 @@ const Format: React.FC = () => {
     return (
             <Card>
                 <Row gutter={{ xs: 8, sm: 16, md: 24, lg: 32 }}>
-                    <Col span={6}>
+                    <Col span={4}>
                     <RenderSelecter />
                         <Divider dashed />
                         <SrcTable 
@@ -162,7 +203,7 @@ const Format: React.FC = () => {
                             />
                         <Divider dashed />
                     </Col>
-                    <Col span={10}>
+                    <Col span={12}>
                         <Row>
                             <Col span={20}>
                             <ToolsHeader handleToolsChange={handleToolsChange}/>
