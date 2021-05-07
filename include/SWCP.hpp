@@ -8,6 +8,7 @@
 #include <sstream>
 #include <map>
 #include <list>
+#include <regex>
 
 using namespace std;
 
@@ -217,6 +218,7 @@ namespace SWCP
 	private:
 		void NextSymbol();
 
+		vector<std::string> Split(const std::string& in, const std::string& delim);
 		bool Accept(char symbol);
 		bool AcceptWhightSpace();
 		bool AcceptLine(Graph& graph);
@@ -285,26 +287,111 @@ namespace SWCP
 		str.append(buffer, static_cast<unsigned int>(inStream.gcount()));
 		m_errorMessage.clear();
 
-		m_iterator = str.c_str();
-
-		int countOfLines = 1;
-		while (*m_iterator != '\0')
-		{
-			while (!AcceptEndOfLine() && *m_iterator != '\0')
-			{
-				NextSymbol();
-			}
-			countOfLines++;
-		}
-
 		graph.list_swc.clear();
 		graph.hash_swc_ids.clear();
 		graph.lines.clear();
 		graph.segments.clear();
 		graph.meta.clear();
-		while 
+		
+		m_line = 1;
+		m_iterator = str.c_str();
+
+		while (AcceptLine(graph))
+		{
+			++m_line;
+		}
+
+		if (*m_iterator == '\0')
+		{
+			return true;
+		}
+		else
+		{
+			m_errorMessage << "Error at line: " << m_line << ", unexpected symbol:" << *m_iterator << '\n';
+			return false;
+		}
 	}
 
+	inline vector<std::string> Parser::Split(const std::string& in, const std::string& delim){
+		std::regex re{ delim };
+		return std::vector<std::string> {
+			std::sregex_token_iterator(in.begin(), in.end(), re, -1),
+			std::sregex_token_iterator()
+		};
+	}
+
+	inline bool Parser::AcceptLine(Graph& graph){
+		while( AcceptWhightSpace() ){}
+		if ( AcceptEndOfLine() ) return true;
+		if (Accept('#')) //纯注释行
+		{
+			const char* commentStart = m_iterator;
+			const char* commentEnd = m_iterator;
+			while (!AcceptEndOfLine() && *m_iterator != '\0')
+			{
+				NextSymbol();
+				commentEnd = m_iterator;
+			}
+			graph.meta.push_back(std::string(commentStart, commentEnd));
+			return true;
+		}
+
+		const char* infoStart = m_iterator;
+		const char* infoEnd = m_iterator;
+		while (!AcceptEndOfLine() && *m_iterator != '\0')
+		{
+			NextSymbol();
+			infoEnd = m_iterator;
+		}
+		NeuronSWC swc;
+		vector<string> infoList = Split(std::string(infoStart,infoEnd)," ");
+	}
+
+	inline bool Parser::Accept(char symbol)
+	{
+		if (symbol == *m_iterator)
+		{
+			NextSymbol();
+			return true;
+		}
+		return false;
+	}
+
+	inline bool Parser::AcceptEndOfLine()
+	{
+		if (Accept('\n'))
+		{
+			return true;
+		}
+		else if (Accept('\r'))
+		{
+			Accept('\n');
+			return true;
+		}
+
+		return false;
+	}
+
+	inline bool Parser::AcceptWhightSpace()
+	{
+		if (Accept(' '))
+		{
+			return true;
+		}
+		if (Accept('\t'))
+		{
+			return true;
+		}
+		return false;
+	}
+
+	inline void Parser::NextSymbol()
+	{
+		if (*m_iterator != '\0')
+		{
+			++m_iterator;
+		}
+	}
 
 	inline std::string Parser::GetErrorMessage()
 	{
