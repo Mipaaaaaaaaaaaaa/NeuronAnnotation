@@ -83,7 +83,7 @@ namespace SWCP
 
 	typedef struct BasicObj
 	{
-		long id; //index
+		int64_t id; //index
 		std::string color; //color
 		bool visible; //是否可见
 		bool selected; //是否被选择
@@ -108,14 +108,15 @@ namespace SWCP
 		};
 		union
 		{
-			long pn;
-			long parent;
+			int64_t pn;
+			int64_t parent;
 		};
-		long line_id; //属于的路径id
-		long seg_start_id; //线的起点id
-		long seg_end_id; //线的终点id
-		int block_id; //点所在脑数据中的block
-		int timestamp; //时间戳
+		int64_t line_id; //属于的路径id
+		int64_t seg_size; //线段的swc大小
+		int64_t seg_id; //线段的id
+		int64_t seg_in_id; //该点在线段内的id
+		int64_t block_id; //点所在脑数据中的block
+		int64_t timestamp; //时间戳
 		NeuronSWC(){
 			id=0;
 			type=Undefined;
@@ -123,8 +124,9 @@ namespace SWCP
 			r=1;
 			pn=-1;
 			line_id=-1;
-			seg_start_id=-1;
-			seg_end_id=-1;
+			seg_id=1;
+			seg_size=-1;
+			seg_in_id=-1;
 			block_id=1;
 			timestamp=-1;
 		}
@@ -138,23 +140,22 @@ namespace SWCP
 		
 		Vertex() {};
 
-		int64_t id;
 		double x,y,z;
 		float radius;
 		Type type;
-
+		int64_t line_id;
 		map<int, bool> hash_linked_seg_ids; //相关的线id
 		list<int> linked_vertex_ids; //相连的点id
 	} Vertex;
 
 	typedef struct Segment //路径中的单个线段
 	{
-		int start_id;
-		int end_id;
+		int size;
+		int line_id;
 		list<int> segment_vertex_ids; //在线中的顶点在SWC中的索引id
-		Segment(int s, int e){
-			start_id = s;
-			end_id = e;
+		Segment(int s, int l){
+			size = s;
+			line_id = l;
 		};
 
 		void InsertId(int _id){
@@ -282,14 +283,9 @@ namespace SWCP
 			str.append(buffer, sizeof(buffer));
 		}
 		str.append(buffer, static_cast<unsigned int>(inStream.gcount()));
-		return ReadSWC(str.c_str(), graph);
-	}
-
-	inline bool Parser::ReadSWC(const char *string, Graph& graph)
-	{
 		m_errorMessage.clear();
 
-		m_iterator = string;
+		m_iterator = str.c_str();
 
 		int countOfLines = 1;
 		while (*m_iterator != '\0')
@@ -306,207 +302,9 @@ namespace SWCP
 		graph.lines.clear();
 		graph.segments.clear();
 		graph.meta.clear();
-
-
-		m_line = 1;
-		m_iterator = string;
-
-		while (AcceptLine(graph))
-		{
-			++m_line;
-		}
-
-		if (*m_iterator == '\0')
-		{
-			return true;
-		}
-		else
-		{
-			m_errorMessage << "Error at line: " << m_line << ", unexpected symbol:" << *m_iterator << '\n';
-			return false;
-		}
+		while 
 	}
 
-	inline void Parser::NextSymbol()
-	{
-		if (*m_iterator != '\0')
-		{
-			++m_iterator;
-		}
-	}
-
-	inline bool Parser::AcceptLine(Graph& graph)
-	{
-		while (AcceptWhightSpace())
-		{}
-
-		if (AcceptEndOfLine())
-		{
-			return true;
-		}
-
-		if (Accept('#')) //注释能够用于获得一些数据信息
-		{
-			const char* commentStart = m_iterator;
-			const char* commentEnd = m_iterator;
-			while (!AcceptEndOfLine() && *m_iterator != '\0')
-			{
-				//eg :#id:1 line_id:1 seg_start_id=-1 seg_end_id=-1 block_id=1 timestamp=1 name:aaaa color=#aaaaaa
-				NextSymbol();
-				commentEnd = m_iterator;
-			}
-			graph.meta.push_back(std::string(commentStart, commentEnd));
-			return true;
-		}
-
-		int64_t id = 0;
-		if (AcceptInteger(id))
-		{
-			int64_t type = 0;
-			if (AcceptInteger(type))
-			{
-				double x, y, z;
-				if (AcceptDouble(x))
-				{
-					if (AcceptDouble(y))
-					{
-						if (AcceptDouble(z))
-						{
-							double r;
-							if (AcceptDouble(r))
-							{
-								int64_t parent;
-								if (AcceptInteger(parent))
-								{
-									Vertex nv = Vertex(id, static_cast<Type>(type), x, y, z, static_cast<float>(r));
-									
-									if (parent != -1)
-									{
-										graph.edges.push_back(Edge(parent, id));
-									}
-									return true;
-								}
-								else
-								{
-									m_errorMessage << "Error at line: " << m_line 
-										<< ", wrong parent. You need to specify an id of a perent, or -1 if there is no parent.\n";
-									return false;
-								}
-							}
-							m_errorMessage << "Error at line: " << m_line
-								<< ", wrong radius. You need to specify a radius as a float value.\n";
-							return false;
-						}
-					}
-				}
-				m_errorMessage << "Error at line: " << m_line
-					<< ", wrong coordinates. You need to specify type as an integer value.\n";
-				return false;
-			}
-			m_errorMessage << "Error at line: " << m_line
-				<< ", wrong coordinates. You need to specify coordinates as three double values.\n";
-			return false;
-		}
-
-		return false;
-	}
-
-	inline bool Parser::AcceptEndOfLine()
-	{
-		if (Accept('\n'))
-		{
-			return true;
-		}
-		else if (Accept('\r'))
-		{
-			Accept('\n');
-			return true;
-		}
-
-		return false;
-	}
-
-	inline bool Parser::Accept(char symbol)
-	{
-		if (symbol == *m_iterator)
-		{
-			NextSymbol();
-			return true;
-		}
-		return false;
-	}
-
-	inline bool Parser::AcceptWhightSpace()
-	{
-		if (Accept(' '))
-		{
-			return true;
-		}
-		if (Accept('\t'))
-		{
-			return true;
-		}
-		return false;
-	}
-	
-	inline bool Parser::AcceptStringWithoutSpace()
-	{
-
-	}
-
-	inline bool Parser::AcceptInteger(int64_t& value)
-	{
-		char* endp = NULL;
-		int64_t result = strtoll(m_iterator, &endp, 0);
-		if (endp > m_iterator)
-		{
-			value = result;
-			m_iterator = endp;
-
-			while (AcceptWhightSpace())
-			{
-			}
-
-			return true;
-		}
-		return false;
-	}
-
-	inline bool Parser::AcceptInteger(uint64_t& value)
-	{
-		char* endp = NULL;
-		uint64_t result = strtoull(m_iterator, &endp, 0);
-		if (endp > m_iterator)
-		{
-			value = result;
-			m_iterator = endp;
-
-			while (AcceptWhightSpace())
-			{
-			}
-
-			return true;
-		}
-		return false;
-	}
-
-	inline bool Parser::AcceptDouble(double& value)
-	{
-		char* endp = NULL;
-		double result = strtod(m_iterator, &endp);
-		if (endp > m_iterator)
-		{
-			value = result;
-			m_iterator = endp;
-
-			while (AcceptWhightSpace())
-			{
-			}
-
-			return true;
-		}
-		return false;
-	}
 
 	inline std::string Parser::GetErrorMessage()
 	{
