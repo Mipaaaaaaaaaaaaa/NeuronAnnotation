@@ -65,6 +65,7 @@ private:
 class NeuronPool{
 public:
     bool addVertex(Vertex v);
+    bool addVertex(float x, float y, float z);
 
 private:
     std::shared_ptr<NeuronGraph> cur_edit_graph;

@@ -10,6 +10,9 @@
 
 #include <seria/deserialize.hpp>
 #include <iostream>
+#include <Data/AnnotationDS.hpp>
+#include <ErrorMessage.hpp>
+
 using Poco::Util::Application;
 
 void WebSocketRequestHandler::handleRequest(
@@ -19,9 +22,10 @@ void WebSocketRequestHandler::handleRequest(
 
     Application &app = Application::instance();
     VolumeRenderer block_volume_renderer("BlockVolumeRenderer");
+    VolumeRenderer lines_renderer("LinesRender");
     std::cout<<"loading render backend..."<<std::endl;
 #ifdef _WINDOWS
-    block_volume_renderer.set_volume("E:/mouse_23389_29581_10296_512_2_lod3/mouse_23389_29581_10296_9p2_lod3.h264");
+    block_volume_renderer.set_volume("D:/mouse_23389_29581_10296_512_2_lod3/mouse_23389_29581_10296_9p2_lod3.h264");
 #else
     block_volume_renderer.set_volume("/media/wyz/Workspace/mouse_23389_29581_10296_512_2_lod3/mouse_23389_29581_10296_9p2_lod3.h264");
 #endif
@@ -66,6 +70,7 @@ void WebSocketRequestHandler::handleRequest(
                     Camera camera;
                     seria::deserialize(camera,values);
                     block_volume_renderer.set_camera(camera);
+                    lines_renderer.set_camera(camera);
                 }
                 else if(document.HasMember("click"))
                 {
@@ -77,7 +82,13 @@ void WebSocketRequestHandler::handleRequest(
                 block_volume_renderer.render_frame();
                 auto &image = block_volume_renderer.get_frame();
                 auto encoded = Image::encode(image, Image::Format::JPEG);
-                auto query_res=block_volume_renderer.get_querypoint();
+                auto query_res = block_volume_renderer.get_querypoint();
+                if(document.HasMember("insert")){
+                    if( ! neuron_pool.addVertex(query_res[0],query_res[1],query_res[3])){
+                        Error error = Error();
+                        ws.sendFrame(error.what(), std::strlen(error.what()),WebSocket::FRAME_TEXT);
+                    }
+                }
                 std::cout<<"pos: "<<query_res[0]<<" "<<query_res[1]<<" "<<query_res[2]<<" "<<query_res[3]<<std::endl;
                 std::cout<<"color: "<<query_res[4]<<" "<<query_res[5]<<" "<<query_res[6]<<" "<<query_res[7]<<std::endl;
                 ws.sendFrame(encoded.data.data(), encoded.data.size(),WebSocket::FRAME_BINARY);

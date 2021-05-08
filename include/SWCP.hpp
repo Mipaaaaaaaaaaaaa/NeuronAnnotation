@@ -10,10 +10,9 @@
 #include <list>
 #include <regex>
 
-using namespace std;
-
 namespace SWCP 
 {
+	using namespace std;
 	enum Type
 	{
 		Undefined = 0,
@@ -102,7 +101,7 @@ namespace SWCP
 	{
 		//继承id
 		Type type;
-		float x,y,z;
+		double x,y,z;
 		union{
 			float r;
 			float radius;
@@ -136,8 +135,12 @@ namespace SWCP
 	typedef struct Vertex : public BasicObj //记录关键节点和它们之下的节点的SWC索引
 	{
 
-		Vertex(int64_t id, Type type, double x, double y, double z, float radius) : id(id), type(type), radius(radius), x(x), y(y), z(z)
-		{};
+		Vertex( Type type, double x, double y, double z, float radius) : type(type), radius(radius), x(x), y(y), z(z)
+		{
+			line_id = -1;
+			hash_linked_seg_ids.clear();
+			linked_vertex_ids.clear();
+		};
 		
 		Vertex() {};
 
@@ -146,42 +149,42 @@ namespace SWCP
 		Type type;
 		int64_t line_id;
 		map<int, bool> hash_linked_seg_ids; //相关的线id
-		list<int> linked_vertex_ids; //相连的点id
+		map<int, bool> linked_vertex_ids; //相连的点id
 	} Vertex;
 
 	typedef struct Segment //路径中的单个线段
 	{
 		int size;
 		int line_id;
-		list<int> segment_vertex_ids; //在线中的顶点在SWC中的索引id
+		int start_id;
+		int end_id;
+		map<int,int> segment_vertex_ids; //在线中的顶点在SWC中的索引id
+		Segment(){
+			size = 0;
+			line_id = -1;
+			start_id = -1;
+			end_id = -1;	
+		}
 		Segment(int s, int l){
 			size = s;
 			line_id = l;
+			start_id = -1;
+			end_id = -1;
 		};
 
-		void InsertId(int _id){
-			segment_vertex_ids.push_back(_id);
-		}
-
-		bool VextexIdxIsIn(int _id){ //检测SWC中的Index点是否在该线段上
-			for( auto i : segment_vertex_ids ){
-				if(i == _id){
-					return true;
-				}
-			}
-			return false;
-		}
 	} Segment;
 		
 	struct Line : public BasicObj //Line是有关关键Vertex的集合
 	{
 		map< int, Vertex > hash_vertexes;
+		int block_id;
 		Line(){
 			id=0;
 			color="#000000";
 			selected=false;
 			visible=true;
 			name="";
+			block_id = -1;
 		}
 	};
 	
@@ -190,8 +193,8 @@ namespace SWCP
 		string file; //文件源
 		list<NeuronSWC> list_swc; //list_swc中间删除时，需要对hash_swc_id重新计算
 		map<int,int> hash_swc_ids; //方便查询，点与相关联SWC文件的映射索引
-		map<int,list<Line> > lines; //路径合集（点合辑）
-		map<int,list<Segment> > segments; //关键点及非关键点的线段合集
+		map<int,Line> lines; //路径合集（点合辑）
+		map<int,Segment > segments; //关键点及非关键点的线段合集
 		list<string> meta; //memo
 	};
 
@@ -237,11 +240,8 @@ namespace SWCP
 	{
 	public:
 		bool WriteToFile(const char *filename, const Graph& graph);
-
 		bool Write(std::ostream &outStream, const Graph& graph);
-
 		bool Write(std::string& outString, const Graph& graph);
-
 		std::string GetErrorMessage();
 	private:
 		enum 
@@ -251,7 +251,7 @@ namespace SWCP
 		std::stringstream m_errorMessage;
 	};
 
-	inline bool SWCP::Parser::ReadSWCFromFile(const char *filename, Graph& graph)
+	inline bool Parser::ReadSWCFromFile(const char *filename, Graph& graph)
 	{
 		std::ifstream file(filename, std::ios::binary | std::ios::ate);
 		std::streamsize size = file.tellg();
@@ -285,16 +285,19 @@ namespace SWCP
 			str.append(buffer, sizeof(buffer));
 		}
 		str.append(buffer, static_cast<unsigned int>(inStream.gcount()));
-		m_errorMessage.clear();
+		return str.c_str();
+	}
 
+	inline bool Parser::ReadSWC(const char *string, Graph& graph){	
+		m_errorMessage.clear();
 		graph.list_swc.clear();
 		graph.hash_swc_ids.clear();
 		graph.lines.clear();
 		graph.segments.clear();
 		graph.meta.clear();
-		
+
 		m_line = 1;
-		m_iterator = str.c_str();
+		m_iterator = string;
 
 		while (AcceptLine(graph))
 		{
@@ -344,7 +347,156 @@ namespace SWCP
 			infoEnd = m_iterator;
 		}
 		NeuronSWC swc;
-		vector<string> infoList = Split(std::string(infoStart,infoEnd)," ");
+		for( int i = 0 ; i < 7 ; i ++ ){
+			char* endp_int = NULL;
+			char* endp_double = NULL;
+			int64_t result_int = strtoll(m_iterator,&endp_int,0);
+			double result_double = strtod(m_iterator, &endp_double);
+			if (endp_int > m_iterator || endp_double > m_iterator){
+				switch( i ){
+					case 0: //id
+						swc.id = result_int;
+						m_iterator = endp_int;
+						break;
+					case 1: //type
+						swc.type = Type(result_int);
+						m_iterator = endp_int;
+						break;
+					case 2: //x
+						swc.x = result_double;
+						m_iterator = endp_double;
+						break;
+					case 3: //y
+						swc.y = result_double;
+						m_iterator = endp_double;
+						break;
+					case 4: //z
+						swc.z = result_double;
+						m_iterator = endp_double;
+						break;
+					case 5: //r
+						swc.r = result_double;
+						m_iterator = endp_double;
+						break;
+					case 6: //pn
+						swc.pn = result_int;
+						m_iterator = endp_int;
+						break;
+					default:
+						m_errorMessage << "Error at Line:" << m_line;
+						return false;
+				}
+			}
+			else{
+				return false;
+			}
+			while (AcceptWhightSpace()){}
+		}
+		if( Accept('#') ){ //其他相关SWC
+			const char* infoStart = m_iterator;
+			const char* infoEnd = m_iterator;
+			while (!AcceptEndOfLine() && *m_iterator != '\0')
+			{
+				NextSymbol();
+				infoEnd = m_iterator;
+			}
+			vector<string> infoStr = Split(std::string(infoStart,infoEnd), " ");
+			for( int i = 0 ; i < infoStr.size() ; i ++ ){
+				if( infoStr[i].find("name") ){
+					int startPos = infoStr[i].find(":");
+					swc.name = infoStr[i].substr(startPos+1,infoStr[i].length()-startPos);
+					continue;
+				}
+				if( infoStr[i].find("block_id") ){
+					int startPos = infoStr[i].find(":");
+					swc.block_id = atoi(infoStr[i].c_str()+startPos+1);
+					continue;
+				}
+				if( infoStr[i].find("line_id") ){
+					int startPos = infoStr[i].find(":");
+					swc.line_id = atoi(infoStr[i].c_str()+startPos+1);
+					continue;
+				}
+				if( infoStr[i].find("seg_id") ){
+					int startPos = infoStr[i].find(":");
+					swc.seg_id = atoi(infoStr[i].c_str()+startPos+1);
+					continue;
+				}
+				if( infoStr[i].find("seg_in_id") ){
+					int startPos = infoStr[i].find(":");
+					swc.seg_in_id = atoi(infoStr[i].c_str()+startPos+1);
+					continue;
+				}
+				if( infoStr[i].find("seg_size") ){
+					int startPos = infoStr[i].find(":");
+					swc.seg_size = atoi(infoStr[i].c_str()+startPos+1);
+					continue;
+				}
+				if( infoStr[i].find("block_id") ){
+					int startPos = infoStr[i].find(":");
+					swc.block_id = atoi(infoStr[i].c_str()+startPos+1);
+					continue;
+				}
+				if( infoStr[i].find("timestamp") ){
+					int startPos = infoStr[i].find(":");
+					swc.block_id = atoi(infoStr[i].c_str()+startPos+1);
+					continue;
+				}
+				if( infoStr[i].find("color") ){
+					int startPos = infoStr[i].find(":");
+					swc.color = infoStr[i].substr(startPos+1,infoStr[i].length()-startPos);
+					continue;
+				}
+			}
+		} else {
+			m_errorMessage << "Error! It's not My SWC Type!";
+			return false;
+		}
+		graph.list_swc.push_back(swc);
+		graph.hash_swc_ids[swc.id] = graph.list_swc.size()-1;
+		graph.segments[swc.seg_id].size = swc.seg_size;
+		graph.segments[swc.seg_id].line_id = swc.line_id;
+		graph.segments[swc.seg_id].segment_vertex_ids.insert({swc.seg_in_id,graph.list_swc.size()-1});
+		if( graph.lines.find(swc.line_id) == graph.lines.end()){
+			graph.lines[swc.line_id].id = swc.line_id;
+			graph.lines[swc.line_id].color = swc.color;
+			graph.lines[swc.line_id].name = swc.name;
+			graph.lines[swc.line_id].block_id = swc.block_id;
+		}
+		if( swc.seg_in_id == 0 || swc.seg_in_id == swc.seg_size - 1 ){ //关键节点
+			Vertex v;
+			if( graph.lines[swc.line_id].hash_vertexes.find(swc.id) == graph.lines[swc.line_id].hash_vertexes.end()){ //如果该点不在线内
+				v = Vertex(swc.type,swc.x,swc.y,swc.z,swc.r);
+				v.id = swc.id;
+				v.line_id = swc.line_id;
+			}
+			else{
+				Vertex v = graph.lines[swc.line_id].hash_vertexes[swc.id];
+			}
+			v.hash_linked_seg_ids[swc.seg_id] = true; //将点与线段相联系
+			if( swc.seg_in_id == 0 ){ //起点
+				graph.segments[swc.seg_id].start_id = swc.id;
+				if( graph.segments[swc.seg_id].end_id != -1 ){
+					v.linked_vertex_ids[graph.segments[swc.seg_id].end_id] = true; //将点与点相联系
+					Vertex st = graph.lines[swc.line_id].hash_vertexes.at(graph.segments[swc.seg_id].end_id);
+					st.linked_vertex_ids[v.id] = true;
+				}
+			}else{ //终点
+				graph.segments[swc.seg_id].end_id = swc.id;
+				if( graph.segments[swc.seg_id].start_id != -1 ){
+					v.linked_vertex_ids[graph.segments[swc.seg_id].start_id] = true;
+					Vertex st = graph.lines[swc.line_id].hash_vertexes.at(graph.segments[swc.seg_id].start_id);
+					st.linked_vertex_ids[v.id] = true;
+				}
+			}
+			graph.lines[swc.line_id].hash_vertexes[swc.id] = v;
+		}
+		else if( swc.seg_in_id == 1 && swc.pn != -1 ){ //关键点的后一个节点
+			graph.lines[swc.line_id].hash_vertexes[swc.pn].hash_linked_seg_ids[swc.seg_id] = true;
+			graph.segments[swc.seg_id].segment_vertex_ids.insert({0,graph.hash_swc_ids[swc.pn]});
+			graph.segments[swc.seg_id].start_id = swc.pn;
+		}
+		return true;
 	}
 
 	inline bool Parser::Accept(char symbol)
