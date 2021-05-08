@@ -73,7 +73,7 @@ int main()
     // -----------------------------
     glEnable(GL_DEPTH_TEST);
 
-    Shader pick_shader("C:\\Users\\wyz\\projects\\NeuronAnnotation\\test\\pick_v.glsl","C:\\Users\\wyz\\projects\\NeuronAnnotation\\test\\pick_f.glsl");
+    Shader pick_shader("./pick_v.glsl","./pick_f.glsl");
 
     float vertices[]={
             1.f,1.f,1.f,1.f,
