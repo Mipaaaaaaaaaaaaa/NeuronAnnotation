@@ -9,6 +9,7 @@
 #include <map>
 #include <list>
 #include <regex>
+#include <iostream>
 
 namespace SWCP 
 {
@@ -338,14 +339,6 @@ namespace SWCP
 			graph.meta.push_back(std::string(commentStart, commentEnd));
 			return true;
 		}
-
-		const char* infoStart = m_iterator;
-		const char* infoEnd = m_iterator;
-		while (!AcceptEndOfLine() && *m_iterator != '\0')
-		{
-			NextSymbol();
-			infoEnd = m_iterator;
-		}
 		NeuronSWC swc;
 		for( int i = 0 ; i < 7 ; i ++ ){
 			char* endp_int = NULL;
@@ -402,47 +395,42 @@ namespace SWCP
 			}
 			vector<string> infoStr = Split(std::string(infoStart,infoEnd), " ");
 			for( int i = 0 ; i < infoStr.size() ; i ++ ){
-				if( infoStr[i].find("name") ){
+				if( infoStr[i].find("name") != infoStr[i].npos ){
 					int startPos = infoStr[i].find(":");
 					swc.name = infoStr[i].substr(startPos+1,infoStr[i].length()-startPos);
 					continue;
 				}
-				if( infoStr[i].find("block_id") ){
-					int startPos = infoStr[i].find(":");
-					swc.block_id = atoi(infoStr[i].c_str()+startPos+1);
-					continue;
-				}
-				if( infoStr[i].find("line_id") ){
+				if( infoStr[i].find("line_id") != infoStr[i].npos ){
 					int startPos = infoStr[i].find(":");
 					swc.line_id = atoi(infoStr[i].c_str()+startPos+1);
 					continue;
 				}
-				if( infoStr[i].find("seg_id") ){
+				if( infoStr[i].find("seg_id") != infoStr[i].npos ){
 					int startPos = infoStr[i].find(":");
 					swc.seg_id = atoi(infoStr[i].c_str()+startPos+1);
 					continue;
 				}
-				if( infoStr[i].find("seg_in_id") ){
+				if( infoStr[i].find("seg_in_id") != infoStr[i].npos ){
 					int startPos = infoStr[i].find(":");
 					swc.seg_in_id = atoi(infoStr[i].c_str()+startPos+1);
 					continue;
 				}
-				if( infoStr[i].find("seg_size") ){
+				if( infoStr[i].find("seg_size") != infoStr[i].npos ){
 					int startPos = infoStr[i].find(":");
 					swc.seg_size = atoi(infoStr[i].c_str()+startPos+1);
 					continue;
 				}
-				if( infoStr[i].find("block_id") ){
+				if( infoStr[i].find("block_id") != infoStr[i].npos ){
 					int startPos = infoStr[i].find(":");
 					swc.block_id = atoi(infoStr[i].c_str()+startPos+1);
 					continue;
 				}
-				if( infoStr[i].find("timestamp") ){
+				if( infoStr[i].find("timestamp") != infoStr[i].npos ){
 					int startPos = infoStr[i].find(":");
-					swc.block_id = atoi(infoStr[i].c_str()+startPos+1);
+					swc.timestamp = atoi(infoStr[i].c_str()+startPos+1);
 					continue;
 				}
-				if( infoStr[i].find("color") ){
+				if( infoStr[i].find("color") != infoStr[i].npos ){
 					int startPos = infoStr[i].find(":");
 					swc.color = infoStr[i].substr(startPos+1,infoStr[i].length()-startPos);
 					continue;
@@ -469,6 +457,8 @@ namespace SWCP
 				v = Vertex(swc.type,swc.x,swc.y,swc.z,swc.r);
 				v.id = swc.id;
 				v.line_id = swc.line_id;
+				v.color = swc.color;
+				v.name = swc.name;
 			}
 			else{
 				Vertex v = graph.lines[swc.line_id].hash_vertexes[swc.id];
@@ -478,15 +468,13 @@ namespace SWCP
 				graph.segments[swc.seg_id].start_id = swc.id;
 				if( graph.segments[swc.seg_id].end_id != -1 ){
 					v.linked_vertex_ids[graph.segments[swc.seg_id].end_id] = true; //将点与点相联系
-					Vertex st = graph.lines[swc.line_id].hash_vertexes.at(graph.segments[swc.seg_id].end_id);
-					st.linked_vertex_ids[v.id] = true;
+					graph.lines[swc.line_id].hash_vertexes[graph.segments[swc.seg_id].end_id].linked_vertex_ids[v.id] = true;
 				}
 			}else{ //终点
 				graph.segments[swc.seg_id].end_id = swc.id;
 				if( graph.segments[swc.seg_id].start_id != -1 ){
 					v.linked_vertex_ids[graph.segments[swc.seg_id].start_id] = true;
-					Vertex st = graph.lines[swc.line_id].hash_vertexes.at(graph.segments[swc.seg_id].start_id);
-					st.linked_vertex_ids[v.id] = true;
+					graph.lines[swc.line_id].hash_vertexes[graph.segments[swc.seg_id].start_id].linked_vertex_ids[v.id] = true;
 				}
 			}
 			graph.lines[swc.line_id].hash_vertexes[swc.id] = v;
@@ -496,6 +484,13 @@ namespace SWCP
 			graph.segments[swc.seg_id].segment_vertex_ids.insert({0,graph.hash_swc_ids[swc.pn]});
 			graph.segments[swc.seg_id].start_id = swc.pn;
 		}
+		if( swc.seg_in_id == 1 && swc.seg_size == 2){ //一共只有两个节点
+			graph.lines[swc.line_id].hash_vertexes[swc.pn].hash_linked_seg_ids[swc.seg_id] = true;
+			graph.lines[swc.line_id].hash_vertexes[swc.pn].linked_vertex_ids[swc.id] = true;
+			graph.segments[swc.seg_id].segment_vertex_ids.insert({0,graph.hash_swc_ids[swc.pn]});
+			graph.segments[swc.seg_id].start_id = swc.pn;
+		}
+		AcceptEndOfLine();
 		return true;
 	}
 
@@ -560,10 +555,16 @@ namespace SWCP
 		for (std::list<NeuronSWC>::const_iterator it = graph.list_swc.begin(); it != graph.list_swc.end(); ++it)
 		{
 			char buff[MaxLineSize];
-			sprintf(buff, " %lld %d %.15g %.15g %.15g %.7g %lld", it->id, it->type, it->x, it->y, it->z, it->radius, it->parent);
-			sprintf(buff, " #name:%s color:%s line_id:%d seg_id:%d seg_size:%d seg_in_id:%d  block_id:%d timestamp:%lld\n",
-					it->name,
-					it->color,
+			sprintf(buff, " %lld %d %.15g %.15g %.15g %.7g %lld #name:%s color:%s line_id:%d seg_id:%d seg_size:%d seg_in_id:%d block_id:%d timestamp:%lld\n",
+					it->id,
+					it->type,
+					it->x,
+					it->y,
+					it->z,
+					it->radius,
+					it->parent,
+					it->name.c_str(),
+					it->color.c_str(),
 					it->line_id,
 					it->seg_id,
 					it->seg_size,
