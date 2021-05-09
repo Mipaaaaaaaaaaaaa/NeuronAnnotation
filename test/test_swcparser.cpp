@@ -6,9 +6,6 @@ using namespace std;
 int main()
 {
 	bool pass = true;
-
-	int vcount[] = {5, 32434, 3130, 2285, 10024};
-
     SWCP::Parser parser;
     SWCP::Graph graph;
     std::stringstream path;

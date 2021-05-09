@@ -5,13 +5,14 @@
 #ifndef NEURONANNOTATION_ANNOTATIONDS_HPP
 #define NEURONANNOTATION_ANNOTATIONDS_HPP
 
-
-
 #include<vector>
 #include<list>
 #include<memory>
 #include<map>
 #include<glm/glm.hpp>
+#include<Poco/Mutex.h>
+#include<Camera.hpp>
+
 using namespace std;
 class NeuronGraph;
 
@@ -153,7 +154,9 @@ struct Line : public BasicObj //Line是有关关键Vertex的集合
 	
 class NeuronGraph : public BasicObj{
 public:
-    explicit NeuronGraph(int idx):graph_index(idx){}
+    NeuronGraph(const char* filePath);
+    NeuronGraph();
+    // explicit NeuronGraph(int idx):graph_index(idx){}
     bool selectVertices(std::vector<int> idxes);
     bool selectEdges(std::vector<int> idxes);
     bool selectLines(std::vector<int> idxes);
@@ -161,6 +164,10 @@ public:
     bool deleteCurSelectEdges();
     bool deleteCurSelectLines();
     bool addVertex(Vertex* v);
+    bool addSegment(int id, Vertex* v);
+    long int getNewVertexId();
+    long int getNewSegmentId();
+    long int getNewLineId();
 private:
     string file; //文件源
     list<NeuronSWC> list_swc; //list_swc中间删除时，需要对hash_swc_id重新计算
@@ -169,42 +176,59 @@ private:
     map<int,Segment > segments; //关键点及非关键点的线段合集
     list<string> meta; //memo
 
-    int graph_index;
-    std::map<int,Segment*> segments;
-    std::map<int,Vertex*> vertices;
-    std::map<int,Line*> lines;
-    std::vector<Vertex*> cur_select_vertices;//last add or current pick
-    std::vector<Segment*> cur_select_segments;//last add edge or current select edge
-    std::vector<Line*> cur_select_lines;
-    int select_obj;//0 for nothing, 1 for point, 2 for edge, 3 for points, 4 for edges,5 for line,6 for lines
+    long int cur_max_line_id;
+    long int cur_max_seg_id;
+    long int cur_max_vertex_id;
 
-    
+    Poco::Mutex max_line_id_mutex;
+    Poco::Mutex max_seg_id_mutex;
+    Poco::Mutex max_vertex_id_mutex;
+    Poco::Mutex list_and_hash_mutex;
+    // int graph_index;
+    // std::map<int,Segment*> segments;
+    // std::map<int,Vertex*> vertices;
+    // std::map<int,Line*> lines;
+    // std::vector<Vertex*> cur_select_vertices;//last add or current pick
+    // std::vector<Segment*> cur_select_segments;//last add edge or current select edge
+    // std::vector<Line*> cur_select_lines;
+    // int select_obj;//0 for nothing, 1 for point, 2 for edge, 3 for points, 4 for edges,5 for line,6 for lines
 };
 
-class NeuronGraphDB{
-public:
-    NeuronGraphDB()=default;
-private:
-    bool isValid(int user_id) const{
-        return user_id==owner_id;
-    }
-private:
-    std::vector<std::unique_ptr<NeuronGraph>> graphs;
-    int owner_id;
-};
+// class NeuronGraphDB{
+// public:
+//     NeuronGraphDB()=default;
+// private:
+//     bool isValid(int user_id) const{
+//         return user_id==owner_id;
+//     }
+// private:
+//     std::vector<std::unique_ptr<NeuronGraph>> graphs;
+//     int owner_id;
+// };
 
 class NeuronPool{
 public:
     bool addVertex(Vertex v);
     bool addVertex(float x, float y, float z);
+    bool addLine();
+    bool deleteLine();
+    bool jumpToVertex(int id);
+    void setGraph( NeuronGraph * pN){
+        this->graph = pN;
+    };
+    void setUserId( int id ){
+        this->user_id = id;
+    }
+private:
+    Camera m_camera; //视角信息
+    int m_selected_vertex_index; //当前编辑顶点
+    int m_selected_line_index; //当前选择路径
+    map<int,bool> line_id_visible; //路径可视映射
 
 private:
-    std::shared_ptr<NeuronGraph> cur_edit_graph;
-    Vertex last_add_v;
-    Edge last_add_e;
-private:
     int user_id;
-    std::vector<std::unique_ptr<NeuronGraphDB>> graphs;
+    NeuronGraph* graph;
+    //std::shared_ptr<NeuronGraph> graph;
 };
 
 

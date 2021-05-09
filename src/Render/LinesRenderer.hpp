@@ -54,11 +54,8 @@ private:
 
 private: //用户相关
     Camera camera;
-    Tools selected_tool;
-    long selected_line_index;
-    long selected_vertex_index;
     UserInfo *cur_user_info;
-    NeuronTree *neuron;
+    neuronGraph *neuronGraph;
 private:    
     CUcontext cu_context;
 

@@ -11,7 +11,7 @@
 #include <seria/deserialize.hpp>
 #include <iostream>
 #include <Data/AnnotationDS.hpp>
-#include <ErrorMessage.hpp>
+// #include <ErrorMessage.hpp>
 
 using Poco::Util::Application;
 
@@ -83,12 +83,12 @@ void WebSocketRequestHandler::handleRequest(
                 auto &image = block_volume_renderer.get_frame();
                 auto encoded = Image::encode(image, Image::Format::JPEG);
                 auto query_res = block_volume_renderer.get_querypoint();
-                if(document.HasMember("insert")){
-                    if( ! neuron_pool.addVertex(query_res[0],query_res[1],query_res[3])){
-                        Error error = Error();
-                        ws.sendFrame(error.what(), std::strlen(error.what()),WebSocket::FRAME_TEXT);
-                    }
-                }
+                // if(document.HasMember("insert")){
+                //     if( ! neuron_pool.addVertex(query_res[0],query_res[1],query_res[3])){
+                //         Error error = Error();
+                //         ws.sendFrame(error.what(), std::strlen(error.what()),WebSocket::FRAME_TEXT);
+                //     }
+                // }
                 std::cout<<"pos: "<<query_res[0]<<" "<<query_res[1]<<" "<<query_res[2]<<" "<<query_res[3]<<std::endl;
                 std::cout<<"color: "<<query_res[4]<<" "<<query_res[5]<<" "<<query_res[6]<<" "<<query_res[7]<<std::endl;
                 ws.sendFrame(encoded.data.data(), encoded.data.size(),WebSocket::FRAME_BINARY);
