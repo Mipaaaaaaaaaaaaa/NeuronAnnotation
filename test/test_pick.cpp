@@ -8,6 +8,7 @@
 #include "shader.hpp"
 #include "camera.hpp"
 
+#include "SWCP.hpp"
 #include <iostream>
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
@@ -73,24 +74,40 @@ int main()
     // -----------------------------
     glEnable(GL_DEPTH_TEST);
 
-    Shader pick_shader("./pick_v.glsl","./pick_f.glsl");
+    Shader pick_shader("C:/Users/chenchuanchang/Desktop/git/NeuronAnnotation/test/pick_f.glsl","C:/Users/chenchuanchang/Desktop/git/NeuronAnnotation/test/pick_f.glsl");
 
-    float vertices[]={
-            1.f,1.f,1.f,1.f,
-            0.5,0.5,0.5,2.f,
-            1.f,0.f,0.f,3.f,
-            0.f,1.f,0.f,4.f
-    };
-    GLuint vao,vbo;
+    SWCP::Parser parser;
+    SWCP::Graph graph;
+    std::stringstream path;
+    path << "./test.swc";
+    parser.ReadSWCFromFile(path.str().c_str(), graph);
+
+    GLuint vao,vbo,ebo;
     glGenVertexArrays(1,&vao);
     glGenBuffers(1,&vbo);
+    glGenBuffers(1, &ebo);
+
     glBindVertexArray(vao);
     glBindBuffer(GL_ARRAY_BUFFER, vbo);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
-    glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)0);
+
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3* sizeof(float), (void*)0);
     glEnableVertexAttribArray(0);
 
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
+    glBufferStorage(GL_ELEMENT_ARRAY_BUFFER,
+                   1000*2*sizeof(uint32_t),
+             nullptr, GL_DYNAMIC_STORAGE_BIT);
 
+    int count = 0;
+    for( int i = 0 ; i < graph.list_swc.size() ; i ++ ){
+        if(graph.list_swc[i].pn != -1){
+            count += 1;
+            uint32_t idx[2] = {graph.list_swc[i].id, graph.list_swc[i].pn};
+            glNamedBufferSubData(vao,(count)*2*sizeof(uint32_t),2*sizeof(uint32_t),idx);
+        }
+        float vertex[3] = {graph.list_swc[i].x,graph.list_swc[i].y,graph.list_swc[i].z};
+        glNamedBufferSubData(vbo,(i)*sizeof(float)*3,3*sizeof(float),vertex);
+    }
     // render loop
     // -----------
     while (!glfwWindowShouldClose(window))
@@ -118,11 +135,11 @@ int main()
         pick_shader.use();
         pick_shader.setMat4("MVPMatrix",mvp);
 
-
+        glColor3f(0.5,0.5,1.0);
         glBindVertexArray(vao);
-        glPointSize(3);
-        glDrawArrays(GL_LINES,0,4);
-
+        glLineWidth(3);
+        glDrawElements(GL_LINES, count,GL_UNSIGNED_INT, nullptr);
+        glBindVertexArray(0);
 
         // glfw: swap buffers and poll IO events (keys pressed/released, mouse moved etc.)
         // -------------------------------------------------------------------------------
