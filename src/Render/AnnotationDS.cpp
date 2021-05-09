@@ -1,5 +1,5 @@
-#include "AnnotationDS.hpp"
-#include "SWCP.hpp"
+#include "Data/AnnotationDS.hpp"
+#include "Data/SWCP.hpp"
 #include <iostream>
 #include <Poco/Mutex.h>
 
@@ -67,7 +67,8 @@ bool NeuronGraph::addVertex(Vertex v){
 bool NeuronGraph::addSegment(int id, Vertex v){
     NeuronSWC vStartswc = list_swc[hash_swc_ids[id]];
     NeuronSWC vEndswc;
-
+    //生成新的segments
+    long int segId = getNewSegmentId();
     vEndswc.id = v.id;
     vEndswc.name = v.name;
     vEndswc.color = v.color;
@@ -78,10 +79,28 @@ bool NeuronGraph::addSegment(int id, Vertex v){
     vEndswc.type = v.type;
     //路径生成算法之后修改该部分
     vEndswc.pn = id;
+    vEndswc.block_id = lines[v.line_id].block_id;
+    vEndswc.line_id = v.line_id;
+    vEndswc.seg_id = segId;
+    vEndswc.seg_in_id = 1;
+    vEndswc.seg_size = 2;
 
+    //连接两个点
     v.linked_vertex_ids[id] = true;
-    lines[v.line_id].hash_vertexes[id].linked_vertex_ids[v.id] = true; //连接两个点
-    lines[v.line_id].hash_vertexes[v.id] = v;
+    lines[v.line_id].hash_vertexes[id].linked_vertex_ids[v.id] = true;
+    v.hash_linked_seg_ids[segId] = true;
+    lines[v.line_id].hash_vertexes[id].hash_linked_seg_ids[segId] = true;
+
+    Segment sg;
+    sg.id = segId;
+    sg.line_id = v.line_id;
+    sg.start_id = id;
+    sg.end_id = v.id;
+    sg.size = 2;
+    sg.segment_vertex_ids[0] = id;
+    sg.segment_vertex_ids[1] = v.id;
+    segments[segId] = sg;
+
     list_and_hash_mutex.lock();
     {
         list_swc.push_back(vEndswc);
@@ -89,4 +108,6 @@ bool NeuronGraph::addSegment(int id, Vertex v){
     }
     list_and_hash_mutex.unlock();
 
+    lines[v.line_id].hash_vertexes[v.id] = v;
+    return true;
 }

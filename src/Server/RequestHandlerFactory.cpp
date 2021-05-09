@@ -1,6 +1,8 @@
 #include "RequestHandlerFactory.hpp"
 #include "MyHTTPRequestHandler.hpp"
 #include "WebSocketRequestHandler.hpp"
+#include <Data/AnnotationDS.hpp>
+#include <Data/SWCP.hpp>
 #include <iostream>
 
 int RequestHandlerFactory::max_linked_id = 0;

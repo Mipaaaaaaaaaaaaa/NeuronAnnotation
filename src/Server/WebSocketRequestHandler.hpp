@@ -2,7 +2,7 @@
 #include <Poco/Net/HTTPRequestHandler.h>
 #include <Poco/Net/HTTPServerRequest.h>
 #include <Poco/Net/HTTPServerResponse.h>
-#include <Data/AnnotationDS.hpp>>
+#include <Data/AnnotationDS.hpp>
 
 class WebSocketRequestHandler : public Poco::Net::HTTPRequestHandler {
 public:

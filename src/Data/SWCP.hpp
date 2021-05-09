@@ -40,7 +40,7 @@ namespace SWCP
 		vector<std::string> Split(const std::string& in, const std::string& delim);
 		bool Accept(char symbol);
 		bool AcceptWhightSpace();
-		bool AcceptLine(Graph& graph);
+		bool AcceptLine(NeuronGraph& graph);
 		bool AcceptEndOfLine();
 		bool AcceptInteger(int64_t& integer);
 		bool AcceptInteger(uint64_t& integer);
