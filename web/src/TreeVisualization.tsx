@@ -485,13 +485,13 @@ class TreeVisualization extends React.Component {
                 .attr("text-anchor", "middle")
                 .attr("font-size", "13px")
                 .text( function(){
-                    let num = i.thisLabel ? i.thisLabel : self.props.data.graphs[self.props.selectedMapKey].sub[0].index;
+                    let num = i.thisLabel ? i.thisLabel : 0;
                     return "跳转至" + num + "号点";
                 });
         })
         .on("click",(d,i)=>{
             let record = {
-                index:self.props.data.graphs[self.props.selectedMapKey].sub[i.thisLabel].index,
+                index:self.props.data.graphs[self.props.selectedMapKey].sub[i.thisLabel?i.thisLabel:0].index,
                 key:i.thisLabel
             };
             self.props.onClickJumpToVex(record);
