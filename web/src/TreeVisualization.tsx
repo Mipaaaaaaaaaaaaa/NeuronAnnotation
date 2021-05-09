@@ -118,11 +118,9 @@ const GraphToNewick = ( graph:DataType ) =>{
             return key + ":" + length/maxLength;
         }
         if( length == 0 ){ //最后一个顶点
-            console.log(parsedStr);
             return "(" + parsedStr + ")" ;
         }
         else {
-            console.log(parsedStr);
             return "(" + parsedStr + ")" + key + ":" + length/maxLength;
         }
     }
@@ -133,6 +131,24 @@ const GraphToNewick = ( graph:DataType ) =>{
 class TreeVisualization extends React.Component {
     constructor(props) {
         super(props);
+        this.state = {
+            nowPage : "1"
+        };
+    }
+
+    componentDidUpdate(){
+        console.log("change");
+
+        if (this.state.nowPage == '1') {
+            console.log("Rect")
+            this.RectPhyloPlot();
+        } else if (this.state.nowPage == '2') {
+            console.log("Radi")
+            this.RadiPhyloPlot();
+        } else if (this.state.nowPage == '3') {
+            console.log("UnrootedPhyloPlot")
+            this.UnrootedPhyloPlot();
+        }
     }
 
     componentDidMount() {
@@ -222,18 +238,18 @@ class TreeVisualization extends React.Component {
             .join("circle")
             .attr("class", "dot")
             .attr("r", function (d) {
-              if (d.thisLabel == self.props.data.selectedVertexIndex) return 6;
+              if (d.thisLabel == self.props.selectedVertexKey) return 6;
               else return 4;
             })
             .attr("cx", d => xScaleRadial(d.x0))
             .attr("cy", d => yScaleRadial(d.y0))
             .attr('stroke', function(d){
-              if (d.thisLabel == self.props.data.selectedVertexIndex)
+              if (d.thisLabel == self.props.selectedVertexKey)
                 return 'red';
               else return 'black';
             })
             .attr('stroke-width', function (d) {
-              if (d.thisLabel == self.props.data.selectedVertexIndex) return 3;
+              if (d.thisLabel == self.props.selectedVertexKey) return 3;
                 if (d.isTip) {
                     return 2;
                 } else {
@@ -337,18 +353,18 @@ class TreeVisualization extends React.Component {
             .join('circle')
             .attr('class', 'dot')
             .attr('r', function (d) {
-                if (d.thisLabel == self.props.data.selectedVertexIndex) return 6;
+                if (d.thisLabel == self.props.selectedVertexKey) return 6;
                 else return 4;
             })
             .attr('cx', d => xScaleRect(d.x1))
             .attr('cy', d => yScaleRect(d.y1))
             .attr('stroke', function(d){
-              if (d.thisLabel == self.props.data.selectedVertexIndex)
+              if (d.thisLabel == self.props.selectedVertexKey)
                 return 'red';
               else return 'black';
             })
             .attr('stroke-width', function (d) {
-                if (d.thisLabel == self.props.data.selectedVertexIndex) return 3;
+                if (d.thisLabel == self.props.selectedVertexKey) return 3;
                 if (d.isTip) {
                     return 2;
                 } else {
@@ -371,7 +387,7 @@ class TreeVisualization extends React.Component {
                 .attr("text-anchor", "middle")
                 .attr("font-size", "13px")
                 .text( function(){
-                    let num = i.thisLabel ? i.thisLabel : self.props.data.graphs[self.props.selectedMapKey].sub[0].index;
+                    let num = i.thisLabel ? i.thisLabel : 0;
                     return "跳转至" + num + "号点";
                 });
         })
@@ -435,18 +451,18 @@ class TreeVisualization extends React.Component {
             .append("circle")
             .attr("class", "dot")
             .attr("r", function (d) {
-              if (d.thisLabel == self.props.data.selectedVertexIndex) return 6;
+              if (d.thisLabel == self.props.selectedVertexKey) return 6;
               else return 4;
             })
             .attr("cx", d => xScaleUnroot(d.x))
             .attr("cy", d => yScaleUnroot(d.y))
             .attr('stroke', function(d){
-              if (d.thisLabel == self.props.data.selectedVertexIndex)
+              if (d.thisLabel == self.props.selectedVertexKey)
                 return 'red';
               else return 'black';
             })
             .attr('stroke-width', function (d) {
-                if (d.thisLabel == self.props.data.selectedVertexIndex) return 3;
+                if (d.thisLabel == self.props.selectedVertexKey) return 3;
                 if (d.isTip) {
                     return 2;
                 } else {
@@ -487,6 +503,9 @@ class TreeVisualization extends React.Component {
     }
 
     onChange = (activeKey : String) => {
+        this.setState({
+            nowPage : activeKey
+        });
         if (activeKey == '1') {
             console.log("Rect")
             this.RectPhyloPlot();
