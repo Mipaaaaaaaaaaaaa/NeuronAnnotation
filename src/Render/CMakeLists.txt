@@ -10,9 +10,9 @@ if(WIN32)
             APPEND
             BlockVolumeRenderer_SRCS
             BlockVolumeRenderer.cpp
+        #     LinesRenderer.cpp
             Image.cpp
             BlockData/BlockVolumeManager.cpp
-            AnnotationDS.cpp
             ${PROJECT_SOURCE_DIR}/third_party/glad_wgl/src/gl.c
             ${PROJECT_SOURCE_DIR}/third_party/glad_wgl/src/wgl.c
     )
@@ -23,9 +23,9 @@ elseif(UNIX)
             APPEND
             BlockVolumeRenderer_SRCS
             BlockVolumeRenderer.cpp
+            LinesRenderer.cpp
             Image.cpp
             BlockData/BlockVolumeManager.cpp
-            AnnotationDS.cpp
             ${PROJECT_SOURCE_DIR}/third_party/glad/src/glad.c
     )
     set(GLAD_INCLUDE_DIR ${PROJECT_SOURCE_DIR}/third_party/glad/include)
@@ -52,6 +52,9 @@ target_link_libraries(
         spdlog::spdlog
         glm::glm
         voxel_uncompress
+        Poco::Net
+        Poco::Util
+        Poco::JSON
         ${CUDA_CUDA_LIBRARY}
 
         PUBLIC

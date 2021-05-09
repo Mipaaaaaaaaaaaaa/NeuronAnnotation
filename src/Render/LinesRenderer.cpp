@@ -33,7 +33,7 @@ void EGLCheck(const char *fn) {
 #endif
 
 #include <cudaGL.h>
-
+#include "IRenderer.hpp"
 #include <Common/transferfunction_impl.h>
 #include <Common/help_gl.hpp>
 #include <random>

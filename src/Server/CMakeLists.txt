@@ -11,8 +11,11 @@ list(
         MyHTTPRequestHandler.cpp
         WebSocketRequestHandler.cpp
         VolumeRenderer.cpp
+        AnnotationDS.cpp
         Image.cpp
 )
+
+add_library( AnnotationDS SHARED AnnotationDS.cpp )
 
 add_executable(NeuronAnnotateServer ${SERVER_SRCS})
 target_include_directories(NeuronAnnotateServer PRIVATE
@@ -20,6 +23,7 @@ target_include_directories(NeuronAnnotateServer PRIVATE
 target_link_libraries(NeuronAnnotateServer PRIVATE
         Poco::Net
         Poco::Util
+        Poco::JSON
         spdlog::spdlog
         Threads::Threads
         glm::glm

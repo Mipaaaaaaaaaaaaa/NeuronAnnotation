@@ -6,6 +6,7 @@
 #include <Poco/JSON/Object.h>
 using namespace std;
 using Poco::Dynamic::Var;
+using Poco::JSON::Object;
 class ErrorMessage{
     public:
     string type;
@@ -18,7 +19,9 @@ class ErrorMessage{
         Poco::JSON::Object v;
         v.set("type",type);
         v.set("message",message);
-        Poco::Dynamic::Var jsnString = JSON(v);
+        Poco::Dynamic::Var jsnString = v;
         return jsnString.toString();
     }
-}
+};
+
+#endif

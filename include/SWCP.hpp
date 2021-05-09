@@ -84,7 +84,7 @@ namespace SWCP
 		file.read(content, size);
 
 		content[size] = '\0';
-		
+		graph.file = filename;
 		bool result = ReadSWC(content, graph);
 
 		delete[] content;
@@ -276,6 +276,7 @@ namespace SWCP
 				v.line_id = swc.line_id;
 				v.color = swc.color;
 				v.name = swc.name;
+				v.timestamp = swc.timestamp;
 			}
 			else{
 				Vertex v = graph.lines[swc.line_id].hash_vertexes[swc.id];
@@ -307,6 +308,9 @@ namespace SWCP
 			graph.segments[swc.seg_id].segment_vertex_ids.insert({0,graph.hash_swc_ids[swc.pn]});
 			graph.segments[swc.seg_id].start_id = swc.pn;
 		}
+		if( swc.id > graph.getCurMaxVertexId() ) graph.setMaxVertexId(swc.id);
+		if( swc.line_id > graph.getCurMaxLineId() ) graph.setMaxLineId(swc.line_id);
+		if( swc.seg_id > graph.getCurMaxSegmentId() ) graph.setMaxSegmentId(swc.seg_id);
 		AcceptEndOfLine();
 		return true;
 	}

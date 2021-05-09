@@ -12,9 +12,20 @@
 #include<glm/glm.hpp>
 #include<Poco/Mutex.h>
 #include<Camera.hpp>
+#include <seria/deserialize.hpp>
 
 using namespace std;
-class NeuronGraph;
+
+class NeuronPool;
+
+enum Tools
+{
+    Drag,
+    Insert,
+    Cut,
+    Select,
+    Delete
+};
 
 enum Type
 {
@@ -112,11 +123,12 @@ typedef struct Vertex : public BasicObj //记录关键节点和它们之下的�
     float radius;
     Type type;
     int64_t line_id;
+    int64_t timestamp;
     map<int, bool> hash_linked_seg_ids; //相关的线id
     map<int, bool> linked_vertex_ids; //相连的点id
 } Vertex;
 
-typedef struct Segment //路径中的单个线段
+typedef struct Segment : public BasicObj //路径中的单个线段
 {
     int size;
     int line_id;
@@ -154,7 +166,7 @@ struct Line : public BasicObj //Line是有关关键Vertex的集合
 	
 class NeuronGraph : public BasicObj{
 public:
-    NeuronGraph(const char* filePath);
+    NeuronGraph::NeuronGraph(const char * filePath);
     NeuronGraph(){};
     // explicit NeuronGraph(int idx):graph_index(idx){}
     bool selectVertices(std::vector<int> idxes);
@@ -168,6 +180,15 @@ public:
     long int getNewVertexId();
     long int getNewSegmentId();
     long int getNewLineId();
+    long int getCurMaxVertexId();
+    long int getCurMaxLineId();
+    long int getCurMaxSegmentId();
+    void setMaxVertexId(long int id);
+    void setMaxLineId(long int id);
+    void setMaxSegmentId(long int id);
+    double getDistance(int seg_id);
+    double getDistance( float x1, float y1, float z1, float x2, float y2, float z2 );
+    string getLinestoJson(NeuronPool * np);
 
     string file; //文件源
     vector<NeuronSWC> list_swc; //list_swc中间删除时，需要对hash_swc_id重新计算
@@ -209,17 +230,27 @@ private:
 
 class NeuronPool{
 public:
-    bool addVertex(Vertex v);
+    void selectVertex(int id);
+    void selectLine(int id);
+    NeuronPool(){
+        m_selected_vertex_index = -1;
+        m_selected_line_index = -1;
+    }
+    string getLinestoJson();
+    bool getLineVisible(int id);
+    bool addVertex(Vertex *v);
     bool addVertex(float x, float y, float z);
     bool addLine();
     bool deleteLine();
     bool jumpToVertex(int id);
+    bool modifyData(const rapidjson::Value *v);
     void setGraph( NeuronGraph * pN){
-        this->graph = pN;
+        graph = pN;
     };
     void setUserId( int id ){
-        this->user_id = id;
+        user_id = id;
     }
+
 private:
     Camera m_camera; //视角信息
     int m_selected_vertex_index; //当前编辑顶点

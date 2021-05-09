@@ -1,8 +1,8 @@
 #include "RequestHandlerFactory.hpp"
 #include "MyHTTPRequestHandler.hpp"
 #include "WebSocketRequestHandler.hpp"
-#include <Data/AnnotationDS.hpp>
-#include <Data/SWCP.hpp>
+#include <AnnotationDS.hpp>
+#include <SWCP.hpp>
 #include <iostream>
 
 int RequestHandlerFactory::max_linked_id = 0;
@@ -15,6 +15,7 @@ Poco::Net::HTTPRequestHandler *RequestHandlerFactory::createRequestHandler(
         std::cout << "create WebSocketRequestHandler" << std::endl;
         WebSocketRequestHandler *n = new WebSocketRequestHandler();
         n->user_id = ++max_linked_id;
+        n->neuron_pool = new NeuronPool();
         n->neuron_pool->setGraph(neuronGraph);
         n->neuron_pool->setUserId(n->user_id);
         return n;

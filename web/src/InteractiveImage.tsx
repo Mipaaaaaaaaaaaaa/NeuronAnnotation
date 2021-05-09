@@ -1,3 +1,4 @@
+import { OmitProps } from "antd/lib/transfer/ListBody";
 import React, { useEffect, useRef, useState } from "react";
 import TrackballControl from "./FirstPersonController";
 
@@ -12,7 +13,7 @@ function hasDiff(prev: number[], next: number[]): boolean {
 
 const DEBOUNCE = 5;
 
-const Image: React.FC = () => {
+const Image: React.FC = (props) => {
   const [src, setSrc] = useState("");
   const [width, setWidth] = useState(1200);
   const [height, setHeight] = useState(900);
@@ -25,7 +26,7 @@ const Image: React.FC = () => {
     let lastTarget = [0, 0, -1];
     let lastUp = [0, 1, 0];
     let lastZoom = 20.0;
-
+    //let prop = props;
     const ws = new WebSocket("ws://127.0.0.1:12121/render");
     ws.binaryType = "arraybuffer";
     ws.onopen = () => {
@@ -48,13 +49,14 @@ const Image: React.FC = () => {
         if (end) {
           setRecording(false);
         }
-
+        console.log("tool: props.selectedTool",props.selectedTool);
         ws.send(
           JSON.stringify({
             click: {
               x,
               y,
             },
+            tool: props.selectedTool
           })
         );
       };
@@ -117,10 +119,11 @@ const Image: React.FC = () => {
         const url = URL.createObjectURL(blob);
         setSrc(url);
         return;
-      }
-
+      }  
       try {
         const obj = JSON.parse(data);
+        console.log(obj);
+        props.setData(obj);
         console.log(obj.error);
       } catch {
         console.log(data);

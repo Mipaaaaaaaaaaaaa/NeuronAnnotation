@@ -289,8 +289,8 @@ void BlockVolumeRenderer::initCUDA() {
 
 void BlockVolumeRenderer::setupSystemInfo() {
 
-    vol_tex_block_nx=6;
-    vol_tex_block_ny=4;
+    vol_tex_block_nx=2;
+    vol_tex_block_ny=2;
     vol_tex_num=3;
 }
 
@@ -405,8 +405,8 @@ void BlockVolumeRenderer::createGLSampler() {
     GL_EXPR(glSamplerParameterfv(gl_sampler,GL_TEXTURE_BORDER_COLOR,color));
 }
 void BlockVolumeRenderer::createGLShader() {
-    raycasting_shader=std::make_unique<sv::Shader>("../../src/Render/Shaders/block_raycast_v.glsl",
-                                                   "../../src/Render/Shaders/block_raycast_f.glsl");
+    raycasting_shader=std::make_unique<sv::Shader>("../../../src/Render/Shaders/block_raycast_v.glsl",
+                                                   "../../../src/Render/Shaders/block_raycast_f.glsl");
 //    raycasting_shader->setShader(shader::mix_block_raycast_v,shader::mix_block_raycast_f,nullptr);
 
 }

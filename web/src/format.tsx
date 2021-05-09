@@ -148,7 +148,7 @@ const Format: React.FC = () => {
     );
     const [selectedMapKey, setSelectedMapKey] = useState(0);
     const [selectedVertexKey, setSelectedVertexKey] = useState(0);
-    const [selectedTool,setSelectecTool] = useState(0);
+    const [selectedTool,setSelectecTool] = useState(1);
     const handleToolsChange = (e)=>{
         console.log("handleToolsChange",e.target.value);
         setSelectecTool(e.target.value);

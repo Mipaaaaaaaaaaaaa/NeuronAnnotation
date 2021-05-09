@@ -151,6 +151,13 @@ class TreeVisualization extends React.Component {
         const parsedTree = lw.readTree(treeString);
         const self = this;
         const radPhylo = lw.radialLayout(parsedTree)
+
+        d3
+        .select("#Radi")
+        .select("svg")
+        .selectAll("*")
+        .remove()
+    
         const svg = d3
             .select("#Radi")
             .select("svg")
@@ -248,7 +255,10 @@ class TreeVisualization extends React.Component {
                 .attr("class","tooltip")
                 .attr("text-anchor", "middle")
                 .attr("font-size", "13px")
-                .text("跳转至" + i.thisLabel + "号点");
+                .text( function(){
+                    let num = i.thisLabel ? i.thisLabel : self.props.data.graphs[self.props.selectedMapKey].sub[0].index;
+                    return "跳转至" + num + "号点";
+                });
         })
         .on("click",(d,i)=>{
             let record = {
@@ -268,6 +278,13 @@ class TreeVisualization extends React.Component {
         const parsedTree = lw.readTree(treeString);
         const rectPhylo = lw.rectangleLayout(parsedTree);
         const self = this;
+
+        d3
+        .select("#Rectangle")
+        .select("svg")
+        .selectAll("*")
+        .remove()
+    
         const svg = d3
             .select("#Rectangle")
             .select("svg")
@@ -353,7 +370,10 @@ class TreeVisualization extends React.Component {
                 .attr("class","tooltip")
                 .attr("text-anchor", "middle")
                 .attr("font-size", "13px")
-                .text("跳转至" + i.thisLabel + "号点");
+                .text( function(){
+                    let num = i.thisLabel ? i.thisLabel : self.props.data.graphs[self.props.selectedMapKey].sub[0].index;
+                    return "跳转至" + num + "号点";
+                });
         })
         .on("click",(d,i)=>{
             let record = {
@@ -373,6 +393,12 @@ class TreeVisualization extends React.Component {
         const parsedTree = lw.readTree(treeString);
         const unrootedPhylo = lw.unrooted(parsedTree);
         const self = this;
+        d3
+            .select("#EqualAngle")
+            .select("svg")
+            .selectAll("*")
+            .remove()
+        
         const svg = d3
             .select("#EqualAngle")
             .select("svg")
@@ -442,7 +468,10 @@ class TreeVisualization extends React.Component {
                 .attr("class","tooltip")
                 .attr("text-anchor", "middle")
                 .attr("font-size", "13px")
-                .text("跳转至" + i.thisLabel + "号点");
+                .text( function(){
+                    let num = i.thisLabel ? i.thisLabel : self.props.data.graphs[self.props.selectedMapKey].sub[0].index;
+                    return "跳转至" + num + "号点";
+                });
         })
         .on("click",(d,i)=>{
             let record = {

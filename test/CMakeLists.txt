@@ -1,12 +1,11 @@
-
 add_executable(test_simple_server test_simple_server.cpp)
 add_executable(test_swcparser test_swcparser.cpp)
-# add_executable(test_errormessage test_errormessage.cpp)
+add_executable(test_errormessage test_errormessage.cpp)
 
-# target_link_libraries(test_errormessage PRIVATE
-#         Poco::Dynamic
-#         Poco::JSON
-#         )
+target_link_libraries(test_errormessage PRIVATE
+        Poco::Net
+        Poco::Util
+        )
 
 target_link_libraries(test_simple_server PRIVATE
         Poco::Net

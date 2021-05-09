@@ -371,7 +371,7 @@ class FirstPersonConroller {
     );
     const front = new Vector3(this.front[0], this.front[1], this.front[2]);
     const up = new Vector3(this.up[0], this.up[1], this.up[2]);
-    console.log(front);
+    // console.log(front);
     // eye.copy(position).sub(target);
 
     const eyeDirection = new Vector3();
