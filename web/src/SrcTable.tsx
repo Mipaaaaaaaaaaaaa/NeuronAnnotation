@@ -380,6 +380,17 @@ class SrcTable extends React.Component<EditableTableProps, EditableTableState>{
         this.props.onClickJumpToVex(record);
     }
 
+    timestampToTime = (timestamp) =>{
+      var date = new Date(timestamp * 1000);//时间戳为10位需*1000，时间戳为13位的话不需乘1000
+      var Y = date.getFullYear() + '-';
+      var M = (date.getMonth()+1 < 10 ? '0'+(date.getMonth()+1):date.getMonth()+1) + '-';
+      var D = (date.getDate()< 10 ? '0'+date.getDate():date.getDate())+ ' ';
+      var h = (date.getHours() < 10 ? '0'+date.getHours():date.getHours())+ ':';
+      var m = (date.getMinutes() < 10 ? '0'+date.getMinutes():date.getMinutes()) + ':';
+      var s = date.getSeconds() < 10 ? '0'+date.getSeconds():date.getSeconds();
+      return Y+M+D+h+m+s;
+  }
+
     render(){
         let self = this;
         var dataSource;
@@ -391,7 +402,7 @@ class SrcTable extends React.Component<EditableTableProps, EditableTableState>{
         const expandedRowRender = (data: { sub: readonly any[] | undefined; }) => {
           const columns = [
             { title: '', dataIndex: 'name', key: 'name' },
-            { title: '最后编辑时间', dataIndex: 'lastEditTime', key: 'lastEditTime'},
+            { title: '最后编辑时间', dataIndex: 'lastEditTime', key: 'lastEditTime', render:(_,record)=>(<a>{self.timestampToTime(record.lastEditTime)}</a>)},
             { title: '操作', key:'action', dataIndex: 'action',
             render: ( _, record)=>(
               //如何传入row TODO
