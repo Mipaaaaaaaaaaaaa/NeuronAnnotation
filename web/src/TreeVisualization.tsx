@@ -4,38 +4,23 @@ import * as lw from "@euphrasiologist/lwphylo";
 import * as d3 from "d3";
 
 const {TabPane} = Tabs;
-const w = 980;
-const h = 980;
+const w = 1024;
+const h = 200;
 const scaleRect = 15;
 const xScaleRect = d3
     .scaleLinear()
     .domain([
-        -scaleRect * 0.05,
+        -scaleRect * 0.03,
         scaleRect * 0.5
     ])
     .range([0, w]);
 const yScaleRect = d3
     .scaleLinear()
     .domain([
-        -scaleRect * 0.01,
-        scaleRect * 1.5
+        -scaleRect * 0.1,
+        scaleRect * 0.5
     ])
-    .range([h, 0]);
-const scaleRadial = 5;
-const xScaleRadial = d3
-    .scaleLinear()
-    .domain([
-        -scaleRadial,
-        scaleRadial
-    ])
-    .range([0, w]);
-const yScaleRadial = d3
-    .scaleLinear()
-    .domain([
-        -scaleRadial,
-        scaleRadial
-    ])
-    .range([h, 0]);
+    .range([h,0]);
 const scaleUnroot = 3.5;
 const xScaleUnroot = d3
     .scaleLinear()
@@ -76,7 +61,7 @@ interface ArcType{
     distance: number;
 }
 
-const GraphToNewick = ( graph:DataType ) =>{
+const GraphToNewick = ( graph:DataType, key:number ) =>{
     var maxLength = 0;
     for( let i = 0 ; i < graph.sub.length ; i ++ ){
         for( let j = 0 ; j < graph.sub[i].arc.length ; j ++ ){
@@ -125,8 +110,10 @@ const GraphToNewick = ( graph:DataType ) =>{
         }
     }
 
-    return dfs(graph,0,0);
+    return dfs(graph,key,0);
 }
+
+
 
 class TreeVisualization extends React.Component {
     constructor(props) {
@@ -137,160 +124,25 @@ class TreeVisualization extends React.Component {
     }
 
     componentDidUpdate(){
-        console.log("change");
-
-        if (this.state.nowPage == '1') {
-            console.log("Rect")
-            this.RectPhyloPlot();
-        } else if (this.state.nowPage == '2') {
-            console.log("Radi")
-            this.RadiPhyloPlot();
-        } else if (this.state.nowPage == '3') {
-            console.log("UnrootedPhyloPlot")
-            this.UnrootedPhyloPlot();
+        console.log(this.props);
+        if(this.props.data.graphs[this.props.selectedMapKey].sub && this.props.data.graphs[this.props.selectedMapKey].sub[this.props.selectedVertexKey].arc){
+            if (this.state.nowPage == '1') {
+                this.RectPhyloPlot();
+            } else if (this.state.nowPage == '3') {
+                this.UnrootedPhyloPlot();
+            }
         }
     }
 
     componentDidMount() {
-        this.RectPhyloPlot();
-        this.RadiPhyloPlot();
-        this.UnrootedPhyloPlot();
-    }
-
-    RadiPhyloPlot = () => {
-        const treeString = GraphToNewick(this.props.data.graphs[this.props.selectedMapKey]);
-        const color = this
-            .props
-            .data
-            .graphs[this.props.selectedMapKey]
-            .color;
-        const parsedTree = lw.readTree(treeString);
-        const self = this;
-        const radPhylo = lw.radialLayout(parsedTree)
-
-        d3
-        .select("#Radi")
-        .select("svg")
-        .selectAll("*")
-        .remove()
-    
-        const svg = d3
-            .select("#Radi")
-            .select("svg")
-            .attr("width", w)
-            .attr("height", h)
-            .attr("font-family", "sans-serif")
-            .attr("font-size", 10);
-
-        // create a grouping variable
-        const group = svg.append("g");
-
-        const stroke_width = 3
-        // draw radii
-        group
-            .append("g")
-            .attr("class", "phylo_lines")
-            .selectAll("lines")
-            .data(radPhylo.arcs)
-            .join("path")
-            .attr("d", d => lw.describeArc(
-                xScaleRadial(0),
-                yScaleRadial(0),
-                d.radius * Math.PI * Math.PI * 10,
-                d.start,
-                d.end
-            ))
-            .attr('fill-opacity', '0')
-            .attr("class", "path")
-            .attr("stroke", this.props.data.graphs[this.props.selectedMapKey].color)
-            .attr("stroke-width", stroke_width)
-
-        // draw radii
-        group
-            .append("g")
-            .attr("class", "phylo_lines")
-            .selectAll("lines")
-            .data(radPhylo.radii)
-            .join("line")
-            .attr("class", "lines")
-            .attr("x1", d => xScaleRadial(d.x0))
-            .attr("y1", d => yScaleRadial(d.y0))
-            .attr("x2", d => xScaleRadial(d.x1))
-            .attr("y2", d => yScaleRadial(d.y1))
-            .attr("stroke-width", stroke_width)
-            .attr("stroke", this.props.data.graphs[this.props.selectedMapKey].color);
-
-        const tooltip = d3
-            .select("#Radi")
-            .append("div")
-            .attr("class", "svg-tooltip")
-            .attr("class", "tiplabs")
-            .style("position", "absolute")
-            .style("background-color", "black")
-
-        //draw nodes
-        group
-            .append("g")
-            .attr("class", "phylo_points")
-            .selectAll(".dot")
-            // remove rogue dot.
-            .data(radPhylo.radii)
-            .join("circle")
-            .attr("class", "dot")
-            .attr("r", function (d) {
-              if (d.thisLabel == self.props.selectedVertexKey) return 6;
-              else return 4;
-            })
-            .attr("cx", d => xScaleRadial(d.x0))
-            .attr("cy", d => yScaleRadial(d.y0))
-            .attr('stroke', function(d){
-              if (d.thisLabel == self.props.selectedVertexKey)
-                return 'red';
-              else return 'black';
-            })
-            .attr('stroke-width', function (d) {
-              if (d.thisLabel == self.props.selectedVertexKey) return 3;
-                if (d.isTip) {
-                    return 2;
-                } else {
-                    return 1;
-                }
-            })
-            .attr('fill', 'white');
-
-        group.selectAll('.dot')
-            .on("mouseover", (d,i) => {
-                console.log(d)
-            d3.select("#tooltip").remove();
-            d3.select("#Radi")
-                .select("svg")
-                .append("text")
-                .attr("x", d.layerX)
-                .attr("y", d.layerY-18)
-                .attr("id", "tooltip")
-                .attr("class","tooltip")
-                .attr("text-anchor", "middle")
-                .attr("font-size", "13px")
-                .text( function(){
-                    let num = i.thisLabel ? i.thisLabel : self.props.data.graphs[self.props.selectedMapKey].sub[0].index;
-                    return "跳转至" + num + "号点";
-                });
-        })
-        .on("click",(d,i)=>{
-            let record = {
-                index:self.props.data.graphs[self.props.selectedMapKey].sub[i.thisLabel].index,
-                key:i.thisLabel
-            };
-            self.props.onClickJumpToVex(record);
-        })
-        .on("mouseout", (d) => {
-            d3.select("#tooltip").remove();
-        })
-
+        if(this.props.data.graphs[this.props.selectedMapKey].sub[this.props.selectedVertexKey]){
+            this.RectPhyloPlot();
+            this.UnrootedPhyloPlot();
+        }
     }
 
     RectPhyloPlot = () => {
-        const treeString = GraphToNewick(this.props.data.graphs[this.props.selectedMapKey]);
+        const treeString = GraphToNewick(this.props.data.graphs[this.props.selectedMapKey],this.props.selectedVertexKey);
         const parsedTree = lw.readTree(treeString);
         const rectPhylo = lw.rectangleLayout(parsedTree);
         const self = this;
@@ -405,7 +257,7 @@ class TreeVisualization extends React.Component {
     }
 
     UnrootedPhyloPlot = () => {
-        const treeString = GraphToNewick(this.props.data.graphs[this.props.selectedMapKey]);
+        const treeString = GraphToNewick(this.props.data.graphs[this.props.selectedMapKey],this.props.selectedVertexKey);
         const parsedTree = lw.readTree(treeString);
         const unrootedPhylo = lw.unrooted(parsedTree);
         const self = this;
@@ -509,9 +361,6 @@ class TreeVisualization extends React.Component {
         if (activeKey == '1') {
             console.log("Rect")
             this.RectPhyloPlot();
-        } else if (activeKey == '2') {
-            console.log("Radi")
-            this.RadiPhyloPlot();
         } else if (activeKey == '3') {
             console.log("UnrootedPhyloPlot")
             this.UnrootedPhyloPlot();
@@ -521,7 +370,7 @@ class TreeVisualization extends React.Component {
     render() {
 
         return (
-            <> < Tabs tabPosition = "top" onChange = {
+            <> < Tabs tabPosition = "right" onChange = {
                 (activeKey) => this.onChange(activeKey)
             }
             type = {
@@ -536,18 +385,6 @@ class TreeVisualization extends React.Component {
                     overflowX: 'auto'
                 }}>
                 <div className="Rectangle" id="Rectangle" ref="Rectangle">
-                    <svg></svg>
-                </div>
-            </TabPane>
-            <TabPane
-                tab="Radial"
-                key="2"
-                forceRender={true}
-                style={{
-                    overflowY: 'auto',
-                    overflowX: 'auto'
-                }}>
-                <div className="Radi" id="Radi" ref="Radi">
                     <svg></svg>
                 </div>
             </TabPane>

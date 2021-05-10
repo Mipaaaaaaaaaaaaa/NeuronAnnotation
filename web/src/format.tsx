@@ -9,10 +9,11 @@ import TreeVisualization from "./TreeVisualization";
 import "./style.css";
 
 const { Header, Footer, Sider, Content } = Layout;
-const _SOCKETLINK = "ws://127.0.0.1:12121/render";
+const _SOCKETLINK = "ws://10.76.3.92:12121/render";
 
 const Format: React.FC = () => {
 
+    const [src,setSrc] = useState("");
     const [data,setData] = useState(
         {
             "type":"structure",
@@ -149,38 +150,33 @@ const Format: React.FC = () => {
     const [selectedMapKey, setSelectedMapKey] = useState(0);
     const [selectedVertexKey, setSelectedVertexKey] = useState(0);
     const [selectedTool,setSelectecTool] = useState(1);
-    const handleToolsChange = (e)=>{
+    const handleToolsChange = (e: { target: { value: React.SetStateAction<number>; }; })=>{
         console.log("handleToolsChange",e.target.value);
         setSelectecTool(e.target.value);
     }
 
     const rowSelection = {
+        selectedRowKeys: [data.selectedMapIndex],
         //设置默认选中的map
-        selectedRowKeys: [1],
+
         onChange: (selectedRowKeys: React.Key[], selectedRows: any[]) => {
-            changeData({selectedMapIndex: selectedRows[0].index}); //index是服务器存储的顺序
+            changeData({selectedLineIndex: selectedRows[0].index}); //index是服务器存储的顺序
             setSelectedMapKey(selectedRows[0].key); //key是客户端存储的顺序
             console.log(`selectedRowKeys: ${selectedRowKeys}`, 'selectedRows: ', selectedRows[0]);
         },
     };
 
-    const onClickJumpToVex = (record)=>{
+    const onClickJumpToVex = (record: { index: any; key: React.SetStateAction<number>; })=>{
         changeData({selectedVertexIndex : record.index});
         setSelectedVertexKey(record.key);
-        const ws = new WebSocket(_SOCKETLINK);
-        ws.binaryType = "arraybuffer";
-        ws.onopen = () => {
-            console.log("连接成功，准备发送更新数据");
-            ws.send(
-                JSON.stringify({
-                    type: "modify",
-                    selectedVertexIndex : record.index
-                })
-            );
-        }
-        ws.onerror = () =>{
-            console.log("连接渲染服务器出错！");
-            message.error("连接渲染服务器出错！");
+    }
+
+    const initSelectedKey = () => {
+        for( let i = 0 ; i < data.graphs.length ; i ++ ){
+            if(data.graphs[i].index = data.selectedMapIndex){
+                setSelectedMapKey(i);
+                return;
+            }
         }
     }
 
@@ -188,7 +184,7 @@ const Format: React.FC = () => {
         if(_data && data){
             console.log("changedata:",data)
             setData({...data,..._data});
-            const ws = new WebSocket(_SOCKETLINK);
+            const ws = WebSocket(_SOCKETLINK);
             ws.binaryType = "arraybuffer";
             ws.onopen = () => {
                 console.log("连接成功，准备发送更新数据");
@@ -203,23 +199,55 @@ const Format: React.FC = () => {
                 console.log("连接渲染服务器出错！");
                 message.error("连接渲染服务器出错！");
             }
+            ws.onmessage = (msg) => {
+                const { data } = msg;
+                if (typeof msg.data === "object") {
+                  const bytes = new Uint8Array(msg.data);
+                  const blob = new Blob([bytes.buffer], { type: "image/jpeg" });
+                  const url = URL.createObjectURL(blob);
+                  setSrc(url);
+                  return;
+                }  
+                try {
+                  const obj = JSON.parse(data);
+                  if( obj.type == "error" ){
+                    console.log(obj.message);
+                    message.error( obj.message );
+                  }else if( obj.type == "success" ){
+                    console.log(obj.message);
+                    message.success( obj.message );
+                  }else{
+                    console.log(obj);
+                    let p = new Promise(resolve =>{
+                      resolve(setData(obj));
+                    }).then(()=>{
+                      initSelectedKey();
+                    })
+                    console.log(obj.error);
+                  }
+                } catch {
+                  console.log(data);
+                }
+            };
         }
     }
     return (
             <Card>
-                <Row gutter={{ xs: 8, sm: 16, md: 24, lg: 32 }}>
-                    <Col span={4}>
-                    <RenderSelecter />
+                <Layout>
+                <Sider width={500}>
+                <RenderSelecter />
                         <Divider dashed />
                         <SrcTable 
                             rowSelection={rowSelection}
                             onClickJumpToVex={onClickJumpToVex}
                             data={data}
-                            setData={changeData}
+                            setData={setData}
+                            setSrc={setSrc}
+                            initSelectedKey={initSelectedKey}
                             />
                         <Divider dashed />
-                    </Col>
-                    <Col span={12}>
+                </Sider>
+                    <Content>
                         <Row>
                             <Col span={20}>
                             <ToolsHeader handleToolsChange={handleToolsChange}/>
@@ -233,21 +261,23 @@ const Format: React.FC = () => {
                             <Image
                                 selectedTool={selectedTool}
                                 setData={setData}
+                                initSelectedKey={initSelectedKey}
+                                src={src}
+                                setSrc={setSrc}
                             />
                         </Row>
-                    </Col>
-                    <Col offset={1} span={7}>
-                        <TreeVisualization
-                            data={data}
-                            onClickJumpToVex={onClickJumpToVex}
-                            selectedMapKey={selectedMapKey}
-                            selectedVertexKey={selectedVertexKey}
-                        />
-                    </Col>
+                    </Content>
+                </Layout>
+                
+                <Row>
+                    <TreeVisualization
+                        data={data}
+                        onClickJumpToVex={onClickJumpToVex}
+                        selectedMapKey={selectedMapKey}
+                        selectedVertexKey={selectedVertexKey}
+                    />
                 </Row>
-                {/* <Row>
-                <TreeVisualization/>
-                </Row> */}
+
             </Card>
     )
 };

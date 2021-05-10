@@ -21,26 +21,6 @@ void WebSocketRequestHandler::handleRequest(
     using WebSocket = Poco::Net::WebSocket;
 
     Application &app = Application::instance();
-    VolumeRenderer block_volume_renderer("BlockVolumeRenderer");
-    // VolumeRenderer lines_renderer("LinesRender");
-    std::cout<<"loading render backend..."<<std::endl;
-#ifdef _WINDOWS
-    block_volume_renderer.set_volume("D:/mouse_23389_29581_10296_9p2_lod3.h264");
-#else
-    block_volume_renderer.set_volume("/media/wyz/Workspace/mouse_23389_29581_10296_512_2_lod3/mouse_23389_29581_10296_9p2_lod3.h264");
-#endif
-    TransferFunction default_tf;
-    default_tf.points.emplace_back(0);
-    default_tf.colors.emplace_back(std::array<double ,4>{0.0,0.1,0.6,0.0});
-    default_tf.points.emplace_back(30);
-    default_tf.colors.emplace_back(std::array<double ,4>{0.25, 0.5, 1.0, 0.9});
-    default_tf.points.emplace_back(64);
-    default_tf.colors.emplace_back(std::array<double ,4>{0.75,0.75,0.75,0.9});
-    default_tf.points.emplace_back(224);
-    default_tf.colors.emplace_back(std::array<double ,4>{1.0,0.5,0.25,0.9});
-    default_tf.points.emplace_back(225);
-    default_tf.colors.emplace_back(std::array<double ,4>{0.6,0.1,0.0,1.0});
-    block_volume_renderer.set_transferfunc(default_tf);
     
     if( neuron_pool->getSelectedLineIndex() == -1 ){
         neuron_pool->initSelectedLineIndex();
@@ -76,7 +56,7 @@ void WebSocketRequestHandler::handleRequest(
                     auto values=objects["camera"].GetObject();
                     Camera camera;
                     seria::deserialize(camera,values);
-                    block_volume_renderer.set_camera(camera);
+                    neuron_pool->setCamera(camera);
                     //lines_renderer.set_camera(camera);
                 }
                 else if(document.HasMember("click"))
@@ -84,9 +64,11 @@ void WebSocketRequestHandler::handleRequest(
                     auto values=objects["click"].GetObject();
                     QueryPoint query_point;
                     seria::deserialize(query_point,values);
-                    block_volume_renderer.set_querypoint({query_point.x,query_point.y});
-                    block_volume_renderer.render_frame();
-                    auto query_res = block_volume_renderer.get_querypoint();
+                    volume_render_lock->lock();
+                    block_volume_renderer->set_querypoint({query_point.x,query_point.y});
+                    block_volume_renderer->render_frame();
+                    auto query_res = block_volume_renderer->get_querypoint();
+                    volume_render_lock->unlock();
                     //进一步确定当前操作
                     if ( document.HasMember("tool") ){
                         rapidjson::Value& toolValue = document["tool"];
@@ -115,45 +97,75 @@ void WebSocketRequestHandler::handleRequest(
                 }
                 else if(document.HasMember("modify")){
                     rapidjson::Value &modify_data = document["modify"];
+                    int line_id = -1;
+                    if( modify_data.HasMember("index") && modify_data["index"].IsInt64() ){
+                        line_id = modify_data["index"].GetInt64();
+                    }
                     if( modify_data.HasMember("selectedVertexIndex") && modify_data["selectedVertexIndex"].IsInt64() ){
                         neuron_pool->selectVertex(modify_data["selectedVertexIndex"].GetInt64());
                     }
                     if( modify_data.HasMember("selectedLineIndex") && modify_data["selectedLineIndex"].IsInt64() ){
                         neuron_pool->selectLine(modify_data["selectedLineIndex"].GetInt64());
                     }
-                    // if( neuron_pool->modifyData(&modify_data) ){
-
-                    // }
+                    if( modify_data.HasMember("name") && modify_data["name"].IsString() ){
+                        neuron_pool->changeName(line_id,modify_data["name"].GetString());
+                    }
+                    if( modify_data.HasMember("color") && modify_data["color"].IsString() ){
+                        neuron_pool->changeColor(line_id,modify_data["color"].GetString());
+                    }
+                    if( modify_data.HasMember("visible") ){
+                        neuron_pool->changeVisible(line_id,modify_data["visible"].GetBool());
+                    }
                 }
                 else if(document.HasMember("addline")){
                     if (neuron_pool->addLine()){
-                        ErrorMessage em("修改成功","success");
+                        ErrorMessage em("添加成功","success");
                         std::string str = em.ToJson();
-                        ws.sendFrame(str.c_str(),str.size(),WebSocket::FRAME_BINARY);
+                        ws.sendFrame(str.c_str(),str.size(),WebSocket::FRAME_TEXT);
                     }else{
-                        ErrorMessage em("修改失败");
+                        ErrorMessage em("添加失败");
                         std::string str = em.ToJson();
                         ws.sendFrame(str.c_str(),str.size(),WebSocket::FRAME_TEXT);
                     }
-
                 }
-                block_volume_renderer.render_frame();
-                auto &image = block_volume_renderer.get_frame();
+                else if(document.HasMember("deleteline")){
+                    int line_id = -1;
+                    if( document.HasMember("index") && document["index"].IsInt64() ){
+                        line_id = document["index"].GetInt64();
+                    }
+                    if (neuron_pool->deleteLine(line_id)){
+                        ErrorMessage em("删除成功","success");
+                        std::string str = em.ToJson();
+                        ws.sendFrame(str.c_str(),str.size(),WebSocket::FRAME_TEXT);
+                    }else{
+                        ErrorMessage em("删除失败");
+                        std::string str = em.ToJson();
+                        ws.sendFrame(str.c_str(),str.size(),WebSocket::FRAME_TEXT);
+                    }
+                }
+                volume_render_lock->lock();
+                block_volume_renderer->set_camera(neuron_pool->getCamera());
+                block_volume_renderer->render_frame();
+                auto &image = block_volume_renderer->get_frame();
                 std::cout<<image.width<<" "<<image.height<<std::endl;
                 auto encoded = Image::encode(image, Image::Format::JPEG);
                 ws.sendFrame(encoded.data.data(), encoded.data.size(),WebSocket::FRAME_BINARY);
                 std::string structureInfo = neuron_pool->getLinestoJson();
                 ws.sendFrame(structureInfo.c_str(),structureInfo.size(),WebSocket::FRAME_TEXT);
+                volume_render_lock->unlock();
             }
             catch (std::exception& error)
             {
                 ws.sendFrame(error.what(), std::strlen(error.what()),WebSocket::FRAME_TEXT);
+                volume_render_lock->unlock();
             }
+            volume_render_lock->unlock();
         }while(len>0 && (flags & WebSocket::FRAME_OP_BITMASK) !=WebSocket::FRAME_OP_CLOSE);
-
+        volume_render_lock->unlock();
     }//try
     catch (Poco::Net::WebSocketException &exc)
     {
+        volume_render_lock->unlock();
         app.logger().log(exc);
         switch (exc.code())
         {
