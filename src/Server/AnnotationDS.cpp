@@ -127,8 +127,8 @@ bool NeuronPool::addVertex(Vertex *v){
             return true;
         }
    }else{ // draw a line
-        v->linked_vertex_ids[m_selected_line_index] = true;
-        if( graph->addSegment(m_selected_line_index,v) ){
+        v->linked_vertex_ids[m_selected_vertex_index] = true;
+        if( graph->addSegment(m_selected_vertex_index,v) ){
             m_selected_vertex_index = v->id;
             return true;
         }
@@ -317,6 +317,7 @@ int NeuronGraph::getDefaultSelectedVertexIndex(int line_id){
 
 void NeuronPool::setCamera(Camera c){
     m_camera = c;
+    b_set_camera = true;
 }
 Camera NeuronPool::getCamera(){
     return m_camera;
@@ -391,4 +392,8 @@ bool NeuronGraph::deleteLine(int line_id){
     }
     free(l);
     return true;
+}
+
+bool NeuronPool::hasCamera(){
+    return b_set_camera;
 }

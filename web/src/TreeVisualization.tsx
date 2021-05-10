@@ -61,7 +61,8 @@ interface ArcType{
     distance: number;
 }
 
-const GraphToNewick = ( graph:DataType, key:number ) =>{
+const GraphToNewick = ( graph:DataType, pkey:number ) =>{
+    console.log(graph);
     var maxLength = 0;
     for( let i = 0 ; i < graph.sub.length ; i ++ ){
         for( let j = 0 ; j < graph.sub[i].arc.length ; j ++ ){
@@ -78,12 +79,13 @@ const GraphToNewick = ( graph:DataType, key:number ) =>{
     }
     const dfs = (graph:DataType,key:number,length:number) =>{
         let parsedStr = "";
+        console.log("visite:",key);
         visitedArray[key] = true;
         for( let i = 0 ; i < graph.sub[key].arc.length ; i ++ ){
             if( graph.sub[key].arc[i].headVex == graph.sub[key].index ){
-                let vex = dicMap.get(graph.sub[key].arc[i].tailVex);
-                if( !visitedArray[vex] ){
-                    let subStr = dfs(graph,vex,graph.sub[key].arc[i].distance);
+                let vexKey = dicMap.get(graph.sub[key].arc[i].tailVex);
+                if( !visitedArray[vexKey] ){
+                    let subStr = dfs(graph,vexKey,graph.sub[key].arc[i].distance);
                     if( parsedStr.charAt(parsedStr.length - 1) >= '0' && parsedStr.charAt(parsedStr.length - 1) <= '9' ) 
                         parsedStr = parsedStr + "," + subStr;
                     else{
@@ -91,11 +93,14 @@ const GraphToNewick = ( graph:DataType, key:number ) =>{
                     }
                 }
             } else if( graph.sub[key].arc[i].tailVex == graph.sub[key].index ){
-                let vex = dicMap.get(graph.sub[key].arc[i].headVex);
-                if( !visitedArray[vex] ){ 
-                    let subStr = dfs(graph,vex,graph.sub[key].arc[i].distance);
+                let vexKey = dicMap.get(graph.sub[key].arc[i].headVex);
+                if( !visitedArray[vexKey] ){ 
+                    let subStr = dfs(graph,vexKey,graph.sub[key].arc[i].distance);
                     if( parsedStr.charAt(parsedStr.length - 1) >= '0' && parsedStr.charAt(parsedStr.length - 1) <= '9' ) 
                         parsedStr = parsedStr + "," + subStr;
+                    else{
+                        parsedStr = parsedStr + subStr;
+                    }
                 }
             }
         }
@@ -109,8 +114,10 @@ const GraphToNewick = ( graph:DataType, key:number ) =>{
             return "(" + parsedStr + ")" + key + ":" + length/maxLength;
         }
     }
-
-    return dfs(graph,key,0);
+    console.log(visitedArray);
+    let x = dfs(graph,pkey,0);
+    console.log(x);
+    return x;
 }
 
 
@@ -344,7 +351,7 @@ class TreeVisualization extends React.Component {
         .on("click",(d,i)=>{
             let record = {
                 index:self.props.data.graphs[self.props.selectedMapKey].sub[i.thisLabel?i.thisLabel:0].index,
-                key:i.thisLabel
+                key:i.thisLabel ? i.thisLabel : 0
             };
             self.props.onClickJumpToVex(record);
         })

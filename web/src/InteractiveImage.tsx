@@ -16,8 +16,8 @@ const DEBOUNCE = 5;
 
 const Image: React.FC = (props) => {
   const [src, setSrc] = useState("");
-  const [width, setWidth] = useState(500);
-  const [height, setHeight] = useState(500);
+  const [width, setWidth] = useState(800);
+  const [height, setHeight] = useState(800);
   const [recording, setRecording] = useState(false); //标注模式
   const img = useRef<HTMLImageElement>(null);
   useEffect(() => {

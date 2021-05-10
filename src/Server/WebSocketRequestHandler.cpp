@@ -57,7 +57,6 @@ void WebSocketRequestHandler::handleRequest(
                     Camera camera;
                     seria::deserialize(camera,values);
                     neuron_pool->setCamera(camera);
-                    //lines_renderer.set_camera(camera);
                 }
                 else if(document.HasMember("click"))
                 {
@@ -77,8 +76,17 @@ void WebSocketRequestHandler::handleRequest(
                             case Drag:
                             break;
                             case Insert:
-                                if( query_res[7] > 0.7f )
-                                    neuron_pool->addVertex(query_res[0],query_res[1],query_res[3]);
+                                if( query_res[7] > 0.5f ){
+                                    if(neuron_pool->addVertex(query_res[0],query_res[1],query_res[3])){
+                                        ErrorMessage em("添加成功","success");
+                                        std::string str = em.ToJson();
+                                        ws.sendFrame(str.c_str(),str.size(),WebSocket::FRAME_TEXT);
+                                    }else{
+                                        ErrorMessage em("添加失败");
+                                        std::string str = em.ToJson();
+                                        ws.sendFrame(str.c_str(),str.size(),WebSocket::FRAME_TEXT);
+                                    }
+                                }
                                 else{
                                     printf("%lf Alpha is too low!\n",query_res[7]);
                                     ErrorMessage em("选择点透明度低，请重新选择");
@@ -143,13 +151,15 @@ void WebSocketRequestHandler::handleRequest(
                         ws.sendFrame(str.c_str(),str.size(),WebSocket::FRAME_TEXT);
                     }
                 }
-                volume_render_lock->lock();
-                block_volume_renderer->set_camera(neuron_pool->getCamera());
-                block_volume_renderer->render_frame();
-                auto &image = block_volume_renderer->get_frame();
-                std::cout<<image.width<<" "<<image.height<<std::endl;
-                auto encoded = Image::encode(image, Image::Format::JPEG);
-                ws.sendFrame(encoded.data.data(), encoded.data.size(),WebSocket::FRAME_BINARY);
+                if(neuron_pool->hasCamera()){
+                    volume_render_lock->lock();
+                    block_volume_renderer->set_camera(neuron_pool->getCamera());
+                    block_volume_renderer->render_frame();
+                    auto &image = block_volume_renderer->get_frame();
+                    std::cout<<image.width<<" "<<image.height<<std::endl;
+                    auto encoded = Image::encode(image, Image::Format::JPEG);
+                    ws.sendFrame(encoded.data.data(), encoded.data.size(),WebSocket::FRAME_BINARY);
+                }
                 std::string structureInfo = neuron_pool->getLinestoJson();
                 ws.sendFrame(structureInfo.c_str(),structureInfo.size(),WebSocket::FRAME_TEXT);
                 volume_render_lock->unlock();

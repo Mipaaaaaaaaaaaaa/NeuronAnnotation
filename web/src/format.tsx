@@ -45,6 +45,11 @@ const Format: React.FC = () => {
                     "index":3,
                     "lastEditTime":"2021-11-10 20:20:20",
                     "arc":[
+                        {
+                            "headVex" : 1,
+                            "tailVex" : 3,
+                            "distance" : 10.332
+                        },
                         {                        
                             "headVex" : 3,
                             "tailVex" : 8,
@@ -120,7 +125,7 @@ const Format: React.FC = () => {
                         {
                             "headVex":3,
                             "tailVex":8,
-                            "distance":9
+                            "distance":11
                         }
                     ]
                 },{
@@ -130,7 +135,8 @@ const Format: React.FC = () => {
                     "arc":[
                         {
                             "headVex":3,
-                            "index":4,
+                            "tailVex":9,
+                            "distance":17
                         }
                     ]
                 }
@@ -184,14 +190,15 @@ const Format: React.FC = () => {
         if(_data && data){
             console.log("changedata:",data)
             setData({...data,..._data});
-            const ws = WebSocket(_SOCKETLINK);
+            const ws = new WebSocket(_SOCKETLINK);
             ws.binaryType = "arraybuffer";
             ws.onopen = () => {
                 console.log("连接成功，准备发送更新数据");
                 ws.send(
                     JSON.stringify({
-                        type: "modify",
+                        modify : {
                         ..._data
+                        }
                     })
                 );
             }

@@ -246,6 +246,7 @@ public:
     NeuronPool(){
         m_selected_vertex_index = -1;
         m_selected_line_index = -1;
+        b_set_camera = false;
     }
     string getLinestoJson();
     bool getLineVisible(int id);
@@ -258,7 +259,7 @@ public:
     bool changeVisible(int line_id, bool visible);
     bool changeColor(int line_id, string color);
     bool changeName(int line_id, string name);
-
+    bool hasCamera();
     void setGraph( NeuronGraph * pN){
         graph = pN;
     };
@@ -267,6 +268,7 @@ public:
     }
 
 private:
+    bool b_set_camera;
     Camera m_camera; //视角信息
     int m_selected_vertex_index; //当前编辑顶点
     int m_selected_line_index; //当前选择路径
