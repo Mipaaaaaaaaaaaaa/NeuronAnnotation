@@ -156,7 +156,7 @@ const Format: React.FC = () => {
 
     const rowSelection = {
         //设置默认选中的map
-        selectedRowKeys: [0],
+        selectedRowKeys: [1],
         onChange: (selectedRowKeys: React.Key[], selectedRows: any[]) => {
             changeData({selectedMapIndex: selectedRows[0].index}); //index是服务器存储的顺序
             setSelectedMapKey(selectedRows[0].key); //key是客户端存储的顺序
@@ -167,6 +167,21 @@ const Format: React.FC = () => {
     const onClickJumpToVex = (record)=>{
         changeData({selectedVertexIndex : record.index});
         setSelectedVertexKey(record.key);
+        const ws = new WebSocket(_SOCKETLINK);
+        ws.binaryType = "arraybuffer";
+        ws.onopen = () => {
+            console.log("连接成功，准备发送更新数据");
+            ws.send(
+                JSON.stringify({
+                    type: "modify",
+                    selectedVertexIndex : record.index
+                })
+            );
+        }
+        ws.onerror = () =>{
+            console.log("连接渲染服务器出错！");
+            message.error("连接渲染服务器出错！");
+        }
     }
 
     const changeData = (_data) => {
@@ -179,7 +194,8 @@ const Format: React.FC = () => {
                 console.log("连接成功，准备发送更新数据");
                 ws.send(
                     JSON.stringify({
-                        data: data
+                        type: "modify",
+                        ..._data
                     })
                 );
             }

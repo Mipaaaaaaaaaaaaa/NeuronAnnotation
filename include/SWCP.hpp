@@ -243,6 +243,11 @@ namespace SWCP
 				if( infoStr[i].find("timestamp") != infoStr[i].npos ){
 					int startPos = infoStr[i].find(":");
 					swc.timestamp = atoi(infoStr[i].c_str()+startPos+1);
+					if( swc.timestamp == -1 ){
+						time_t timestamp;
+						swc.timestamp = time(&timestamp);
+						std::cout << time(&timestamp) << std::endl;//秒级时间戳
+					}
 					continue;
 				}
 				if( infoStr[i].find("color") != infoStr[i].npos ){

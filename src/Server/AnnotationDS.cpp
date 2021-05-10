@@ -50,7 +50,8 @@ string NeuronGraph::getLinestoJson(NeuronPool * np){
         graphs.add(line);
     }
     package.set("graphs",graphs);
-
+    package.set("selectedVertexIndex",np->getSelectedVertexIndex());
+    package.set("selectedMapIndex",np->getSelectedLineIndex());
     Poco::Dynamic::Var json(package);
     return json.toString();
 }
@@ -89,8 +90,30 @@ bool NeuronPool::getLineVisible(int id){
     return true;
 }
 
+bool NeuronPool::addLine(){
+    int line_id = graph->addLine();
+    if( line_id == -1 ) return false;
+    m_selected_line_index = line_id;
+    m_selected_vertex_index = -1;
+}
+
+long int NeuronGraph::addLine(){
+    int line_id = getNewLineId();
+    if( line_id == -1 ) return -1;
+
+    Line l;
+    stringstream fmt;
+    l.id = line_id;
+    fmt << "路径" << line_id;
+    l.name = fmt.str();
+    l.color = "#aa0000";
+    l.block_id = 1;
+    lines[line_id] = l;
+    return line_id;
+}
+
 bool NeuronPool::addVertex(Vertex *v){
-   if( m_selected_line_index != -1 ){
+   if( m_selected_line_index == -1 ){
        std::cout << "用户未选择路径" << std::endl;
        return false;
    }
@@ -130,7 +153,6 @@ bool NeuronPool::addVertex(float x, float y, float z){
     }
     return false;
 }
-
 
 NeuronGraph::NeuronGraph(const char * filePath){
     SWCP::Parser parser;
@@ -176,6 +198,8 @@ bool NeuronGraph::addVertex(Vertex *v){
     swc.z = v->z;
     swc.r = 1;
     swc.type = Type(1);
+    time_t t;
+    swc.timestamp = v->timestamp = time(&t);
     swc.color = v->color = lines[v->line_id].color;
     list_and_hash_mutex.lock();
     {
@@ -207,7 +231,8 @@ bool NeuronGraph::addSegment(int id, Vertex *v){
     vEndswc.seg_id = segId;
     vEndswc.seg_in_id = 1;
     vEndswc.seg_size = 2;
-
+    time_t t;
+    vEndswc.timestamp = v->timestamp = time(&t);
     //连接两个点
     v->linked_vertex_ids[id] = true;
     lines[v->line_id].hash_vertexes[id].linked_vertex_ids[v->id] = true;
@@ -257,4 +282,34 @@ void NeuronGraph::setMaxLineId(long int id){
 
 void NeuronGraph::setMaxSegmentId(long int id){
     cur_max_seg_id = id;
+}
+
+int NeuronPool::getSelectedLineIndex(){
+    return m_selected_line_index;
+}
+
+int NeuronPool::getSelectedVertexIndex(){
+    return m_selected_vertex_index;
+}
+
+void NeuronPool::initSelectedLineIndex(){
+    m_selected_line_index = graph->getDefaultSelectedLineIndex();
+}
+
+void NeuronPool::initSelectedVertexIndex(){
+    if( m_selected_line_index == -1 )initSelectedLineIndex();
+    m_selected_vertex_index = graph->getDefaultSelectedVertexIndex(m_selected_line_index);
+}
+
+int NeuronGraph::getDefaultSelectedLineIndex(){
+    auto it = lines.begin();
+    if( it != lines.end() ) return it->first;
+    return -1;
+}
+
+int NeuronGraph::getDefaultSelectedVertexIndex(int line_id){
+    if( line_id == -1 ) return -1;
+    auto v = lines[line_id].hash_vertexes.begin();
+    if( v != lines[line_id].hash_vertexes.end() ) return v->first;
+    return -1;
 }

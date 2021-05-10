@@ -1,3 +1,4 @@
+import { message } from "antd";
 import { OmitProps } from "antd/lib/transfer/ListBody";
 import React, { useEffect, useRef, useState } from "react";
 import TrackballControl from "./FirstPersonController";
@@ -19,7 +20,6 @@ const Image: React.FC = (props) => {
   const [height, setHeight] = useState(900);
   const [recording, setRecording] = useState(false); //标注模式
   const img = useRef<HTMLImageElement>(null);
-
   useEffect(() => {
     let loop = 0;
     let lastPosition = [1024, 1408, 1286];
@@ -122,9 +122,17 @@ const Image: React.FC = (props) => {
       }  
       try {
         const obj = JSON.parse(data);
-        console.log(obj);
-        props.setData(obj);
-        console.log(obj.error);
+        if( obj.type == "error" ){
+          console.log(obj.message);
+          message.error( obj.message );
+        }else if( obj.type == "success" ){
+          console.log(obj.message);
+          message.success( obj.message );
+        }else{
+          console.log(obj);
+          props.setData(obj);
+          console.log(obj.error);
+        }
       } catch {
         console.log(data);
       }

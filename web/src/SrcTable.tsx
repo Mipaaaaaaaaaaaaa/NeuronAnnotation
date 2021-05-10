@@ -292,7 +292,7 @@ class SrcTable extends React.Component<EditableTableProps, EditableTableState>{
             console.log("连接成功，添加路径");
             ws.send(
                 JSON.stringify({
-                    type: "addMap"
+                  addline : 1
                 })
             );
             const hide = message.loading('正在添加...', 0);
@@ -308,6 +308,7 @@ class SrcTable extends React.Component<EditableTableProps, EditableTableState>{
         
         item.color = color.hex;
         const ws = new WebSocket(_SOCKETLINK);
+  
         ws.onopen = () => {
             console.log("连接成功，准备发送更新数据");
             ws.send(
@@ -401,8 +402,8 @@ class SrcTable extends React.Component<EditableTableProps, EditableTableState>{
         }
         const expandedRowRender = (data: { sub: readonly any[] | undefined; }) => {
           const columns = [
-            { title: '', dataIndex: 'name', key: 'name' },
-            { title: '最后编辑时间', dataIndex: 'lastEditTime', key: 'lastEditTime', render:(_,record)=>(<a>{self.timestampToTime(record.lastEditTime)}</a>)},
+            { title: 'id', dataIndex: 'key', key: 'key'},
+            { title: '最后编辑时间', dataIndex: 'lastEditTime', key: 'lastEditTime', render:(_,record)=>(<p>{self.timestampToTime(record.lastEditTime)}</p>)},
             { title: '操作', key:'action', dataIndex: 'action',
             render: ( _, record)=>(
               //如何传入row TODO

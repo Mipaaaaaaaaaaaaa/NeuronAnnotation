@@ -177,18 +177,25 @@ public:
     bool deleteCurSelectLines();
     bool addVertex(Vertex* v);
     bool addSegment(int id, Vertex* v);
+
+    long int addLine();
     long int getNewVertexId();
     long int getNewSegmentId();
     long int getNewLineId();
     long int getCurMaxVertexId();
     long int getCurMaxLineId();
     long int getCurMaxSegmentId();
+
     void setMaxVertexId(long int id);
     void setMaxLineId(long int id);
     void setMaxSegmentId(long int id);
+
     double getDistance(int seg_id);
     double getDistance( float x1, float y1, float z1, float x2, float y2, float z2 );
     string getLinestoJson(NeuronPool * np);
+
+    int getDefaultSelectedLineIndex();
+    int getDefaultSelectedVertexIndex(int line_id);
 
     string file; //文件源
     vector<NeuronSWC> list_swc; //list_swc中间删除时，需要对hash_swc_id重新计算
@@ -256,6 +263,12 @@ private:
     int m_selected_vertex_index; //当前编辑顶点
     int m_selected_line_index; //当前选择路径
     map<int,bool> line_id_visible; //路径可视映射
+
+public:
+    int getSelectedLineIndex();
+    int getSelectedVertexIndex();
+    void initSelectedLineIndex();
+    void initSelectedVertexIndex();
 
 private:
     int user_id;

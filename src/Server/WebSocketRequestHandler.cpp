@@ -42,6 +42,13 @@ void WebSocketRequestHandler::handleRequest(
     default_tf.colors.emplace_back(std::array<double ,4>{0.6,0.1,0.0,1.0});
     block_volume_renderer.set_transferfunc(default_tf);
     
+    if( neuron_pool->getSelectedLineIndex() == -1 ){
+        neuron_pool->initSelectedLineIndex();
+    }
+    if( neuron_pool->getSelectedVertexIndex() == -1 ){
+        neuron_pool->initSelectedVertexIndex();
+    }
+
     try
     {
         char buffer[4096];
@@ -51,7 +58,6 @@ void WebSocketRequestHandler::handleRequest(
         WebSocket ws(request, response);
         auto one_hour = Poco::Timespan(0, 1, 0, 0, 0);
         ws.setReceiveTimeout(one_hour);
-
         rapidjson::Document document{};
 
         do{
@@ -95,7 +101,7 @@ void WebSocketRequestHandler::handleRequest(
                                     printf("%lf Alpha is too low!\n",query_res[7]);
                                     ErrorMessage em("选择点透明度低，请重新选择");
                                     std::string str = em.ToJson();
-                                    ws.sendFrame(str.c_str(),str.size(),WebSocket::FRAME_BINARY);
+                                    ws.sendFrame(str.c_str(),str.size(),WebSocket::FRAME_TEXT);
                                 }
                             break;
                             case Cut:
@@ -109,11 +115,27 @@ void WebSocketRequestHandler::handleRequest(
                 }
                 else if(document.HasMember("modify")){
                     rapidjson::Value &modify_data = document["modify"];
+                    if( modify_data.HasMember("selectedVertexIndex") && modify_data["selectedVertexIndex"].IsInt64() ){
+                        neuron_pool->selectVertex(modify_data["selectedVertexIndex"].GetInt64());
+                    }
+                    if( modify_data.HasMember("selectedLineIndex") && modify_data["selectedLineIndex"].IsInt64() ){
+                        neuron_pool->selectLine(modify_data["selectedLineIndex"].GetInt64());
+                    }
                     // if( neuron_pool->modifyData(&modify_data) ){
-                    //     ErrorMessage em("修改成功","success");
-                    //     std::string str = em.ToJson();
-                    //     ws.sendFrame(str.c_str(),str.size(),WebSocket::FRAME_BINARY);
+
                     // }
+                }
+                else if(document.HasMember("addline")){
+                    if (neuron_pool->addLine()){
+                        ErrorMessage em("修改成功","success");
+                        std::string str = em.ToJson();
+                        ws.sendFrame(str.c_str(),str.size(),WebSocket::FRAME_BINARY);
+                    }else{
+                        ErrorMessage em("修改失败");
+                        std::string str = em.ToJson();
+                        ws.sendFrame(str.c_str(),str.size(),WebSocket::FRAME_TEXT);
+                    }
+
                 }
                 block_volume_renderer.render_frame();
                 auto &image = block_volume_renderer.get_frame();
