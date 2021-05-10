@@ -9,7 +9,7 @@ import InputColor, { Color } from 'react-input-color';
 import { FormInstance } from 'antd/lib/form';
 
 const EditableContext = React.createContext<FormInstance<any> | null>(null);
-const _SOCKETLINK = "ws://127.0.0.1:12121/render";
+const _SOCKETLINK = "ws://10.76.3.92:12121/render";
 
 interface Item {
   key: string;
@@ -287,6 +287,7 @@ class SrcTable extends React.Component<EditableTableProps, EditableTableState>{
     };
 
     handleAdd = () => {
+        let self = this;
         const ws = new WebSocket(_SOCKETLINK);
         ws.onopen = () => {
             console.log("连接成功，添加路径");
@@ -298,6 +299,34 @@ class SrcTable extends React.Component<EditableTableProps, EditableTableState>{
             const hide = message.loading('正在添加...', 0);
             setTimeout(hide, 500);
         }
+        ws.onmessage = (msg) => {
+          const { data } = msg;
+          if (typeof msg.data === "object") {
+            const bytes = new Uint8Array(msg.data);
+            const blob = new Blob([bytes.buffer], { type: "image/jpeg" });
+            const url = URL.createObjectURL(blob);
+            self.props.setSrc(url);
+            return;
+          }  
+          try {
+            const obj = JSON.parse(data);
+            if( obj.type == "error" ){
+              console.log(obj.message);
+              message.error( obj.message );
+            }else if( obj.type == "success" ){
+              console.log(obj.message);
+              message.success( obj.message );
+            }else{
+              let p = new Promise(resolve =>{
+                resolve(self.props.setData(obj));
+              }).then(()=>{
+                self.props.initSelectedKey();
+              })
+            }
+          } catch {
+            console.log(data);
+          }
+        };
       };
 
     setColor = (color:Color,row:DataType) =>{

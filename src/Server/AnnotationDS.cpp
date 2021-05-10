@@ -95,6 +95,7 @@ bool NeuronPool::addLine(){
     if( line_id == -1 ) return false;
     m_selected_line_index = line_id;
     m_selected_vertex_index = -1;
+    return true;
 }
 
 long int NeuronGraph::addLine(){
@@ -312,4 +313,82 @@ int NeuronGraph::getDefaultSelectedVertexIndex(int line_id){
     auto v = lines[line_id].hash_vertexes.begin();
     if( v != lines[line_id].hash_vertexes.end() ) return v->first;
     return -1;
+}
+
+void NeuronPool::setCamera(Camera c){
+    m_camera = c;
+}
+Camera NeuronPool::getCamera(){
+    return m_camera;
+}
+
+bool NeuronPool::changeVisible(int line_id, bool visible){
+    line_id_visible[line_id] = visible;
+    return true;
+}
+
+bool NeuronPool::changeColor(int line_id, string color){
+    return graph->changeColor(line_id,color);
+}
+
+bool NeuronPool::changeName(int line_id, string name){
+    return graph->changeName(line_id,name);
+}
+
+bool NeuronGraph::changeName(int line_id, string name){
+    lines[line_id].name = name;
+    for( auto v = lines[line_id].hash_vertexes.begin() ; v != lines[line_id].hash_vertexes.end() ; v++ ){
+        v->second.name = name;
+        NeuronSWC *swc = &list_swc[hash_swc_ids[v->second.id]];
+        swc->name = name;
+        for( auto seg = v->second.hash_linked_seg_ids.begin() ; seg != v->second.hash_linked_seg_ids.end() ; seg++ ){
+            Segment *s = &segments[seg->first];
+            s->name = name;
+            for( auto p = s->segment_vertex_ids.begin() ; p != s->segment_vertex_ids.end() ; p ++ ){
+                NeuronSWC *pSWC = &list_swc[hash_swc_ids[p->second]];
+                pSWC->name = name;
+            }
+        }
+    }
+    return true;
+}
+
+bool NeuronGraph::changeColor(int line_id, string color){
+    lines[line_id].color = color;
+    for( auto v = lines[line_id].hash_vertexes.begin() ; v != lines[line_id].hash_vertexes.end() ; v++ ){
+        v->second.color = color;
+        NeuronSWC *swc = &list_swc[hash_swc_ids[v->second.id]];
+        swc->color = color;
+        for( auto seg = v->second.hash_linked_seg_ids.begin() ; seg != v->second.hash_linked_seg_ids.end() ; seg++ ){
+            Segment *s = &segments[seg->first];
+            s->color = color;
+            for( auto p = s->segment_vertex_ids.begin() ; p != s->segment_vertex_ids.end() ; p ++ ){
+                NeuronSWC *pSWC = &list_swc[hash_swc_ids[p->second]];
+                pSWC->color = color;
+            }
+        }
+    }
+    return true;
+}
+
+bool NeuronPool::deleteLine(int line_id){
+    return graph->deleteLine(line_id);
+}
+
+bool NeuronGraph::deleteLine(int line_id){
+    Line *l = &lines[line_id];
+    lines.erase(line_id);
+    for( auto v = lines[line_id].hash_vertexes.begin() ; v != lines[line_id].hash_vertexes.end() ; v++ ){
+        //NeuronSWC *swc = &list_swc[hash_swc_ids[v->second.id]]; 数据库删除该节点TODO
+        for( auto seg = v->second.hash_linked_seg_ids.begin() ; seg != v->second.hash_linked_seg_ids.end() ; seg++ ){
+            Segment *s = &segments[seg->first];
+            for( auto p = s->segment_vertex_ids.begin() ; p != s->segment_vertex_ids.end() ; p ++ ){
+                // NeuronSWC *pSWC = &list_swc[hash_swc_ids[p->second]]; 数据库删除该节点TODO
+            }
+            free(s);
+        }
+        free(&v->second);
+    }
+    free(l);
+    return true;
 }

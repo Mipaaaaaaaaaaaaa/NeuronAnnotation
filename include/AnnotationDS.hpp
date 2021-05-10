@@ -185,10 +185,14 @@ public:
     long int getCurMaxVertexId();
     long int getCurMaxLineId();
     long int getCurMaxSegmentId();
+    bool deleteLine(int line_id);
 
     void setMaxVertexId(long int id);
     void setMaxLineId(long int id);
     void setMaxSegmentId(long int id);
+
+    bool changeName(int line_id, string name);
+    bool changeColor(int line_id, string color);
 
     double getDistance(int seg_id);
     double getDistance( float x1, float y1, float z1, float x2, float y2, float z2 );
@@ -248,9 +252,13 @@ public:
     bool addVertex(Vertex *v);
     bool addVertex(float x, float y, float z);
     bool addLine();
-    bool deleteLine();
+    bool deleteLine(int line_id);
     bool jumpToVertex(int id);
-    bool modifyData(const rapidjson::Value *v);
+
+    bool changeVisible(int line_id, bool visible);
+    bool changeColor(int line_id, string color);
+    bool changeName(int line_id, string name);
+
     void setGraph( NeuronGraph * pN){
         graph = pN;
     };
@@ -265,6 +273,8 @@ private:
     map<int,bool> line_id_visible; //路径可视映射
 
 public:
+    void setCamera(Camera c);
+    Camera getCamera();
     int getSelectedLineIndex();
     int getSelectedVertexIndex();
     void initSelectedLineIndex();
