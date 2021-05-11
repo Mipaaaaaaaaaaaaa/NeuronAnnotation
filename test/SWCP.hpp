@@ -116,7 +116,7 @@ namespace SWCP
 		int64_t seg_size; //线段的swc大小
 		int64_t seg_id; //线段的id
 		int64_t seg_in_id; //该点在线段内的id
-		int64_t block_id; //点所在脑数据中的block
+		int64_t user_id; //点所在脑数据中的block
 		int64_t timestamp; //时间戳
 		NeuronSWC(){
 			id=0;
@@ -128,7 +128,7 @@ namespace SWCP
 			seg_id=1;
 			seg_size=-1;
 			seg_in_id=-1;
-			block_id=1;
+			user_id=1;
 			timestamp=-1;
 		}
 	} NeuronSWC;
@@ -178,14 +178,14 @@ namespace SWCP
 	struct Line : public BasicObj //Line是有关关键Vertex的集合
 	{
 		map< int, Vertex > hash_vertexes;
-		int block_id;
+		int user_id;
 		Line(){
 			id=0;
 			color="#000000";
 			selected=false;
 			visible=true;
 			name="";
-			block_id = -1;
+			user_id = -1;
 		}
 	};
 	
@@ -420,9 +420,9 @@ namespace SWCP
 					swc.seg_size = atoi(infoStr[i].c_str()+startPos+1);
 					continue;
 				}
-				if( infoStr[i].find("block_id") != infoStr[i].npos ){
+				if( infoStr[i].find("user_id") != infoStr[i].npos ){
 					int startPos = infoStr[i].find(":");
-					swc.block_id = atoi(infoStr[i].c_str()+startPos+1);
+					swc.user_id = atoi(infoStr[i].c_str()+startPos+1);
 					continue;
 				}
 				if( infoStr[i].find("timestamp") != infoStr[i].npos ){
@@ -449,7 +449,7 @@ namespace SWCP
 			graph.lines[swc.line_id].id = swc.line_id;
 			graph.lines[swc.line_id].color = swc.color;
 			graph.lines[swc.line_id].name = swc.name;
-			graph.lines[swc.line_id].block_id = swc.block_id;
+			graph.lines[swc.line_id].user_id = swc.user_id;
 		}
 		if( swc.seg_in_id == 0 || swc.seg_in_id == swc.seg_size - 1 ){ //关键节点
 			Vertex v;
@@ -555,7 +555,7 @@ namespace SWCP
 		for (std::vector<NeuronSWC>::const_iterator it = graph.list_swc.begin(); it != graph.list_swc.end(); ++it)
 		{
 			char buff[MaxLineSize];
-			sprintf(buff, " %lld %d %.15g %.15g %.15g %.7g %lld #name:%s color:%s line_id:%d seg_id:%d seg_size:%d seg_in_id:%d block_id:%d timestamp:%lld\n",
+			sprintf(buff, " %lld %d %.15g %.15g %.15g %.7g %lld #name:%s color:%s line_id:%d seg_id:%d seg_size:%d seg_in_id:%d user_id:%d timestamp:%lld\n",
 					it->id,
 					it->type,
 					it->x,
@@ -569,7 +569,7 @@ namespace SWCP
 					it->seg_id,
 					it->seg_size,
 					it->seg_in_id,
-					it->block_id,
+					it->user_id,
 					it->timestamp);
 			outStream << buff;
 		}

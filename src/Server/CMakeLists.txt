@@ -13,9 +13,11 @@ list(
         VolumeRenderer.cpp
         AnnotationDS.cpp
         Image.cpp
+        DataBase.cpp
 )
 
 add_library( AnnotationDS SHARED AnnotationDS.cpp )
+add_library( DataBase SHARED DataBase.cpp )
 
 add_executable(NeuronAnnotateServer ${SERVER_SRCS})
 target_include_directories(NeuronAnnotateServer PRIVATE
@@ -28,6 +30,7 @@ target_link_libraries(NeuronAnnotateServer PRIVATE
         Threads::Threads
         glm::glm
         seria::seria
+        Poco::MongoDB
         ${OPENGL_LIBRARIES}
         ${CUDA_CUDA_LIBRARY}
         ${CMAKE_DL_LIBS}

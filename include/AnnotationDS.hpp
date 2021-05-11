@@ -9,11 +9,9 @@
 #include<list>
 #include<memory>
 #include<map>
-#include<glm/glm.hpp>
 #include<Poco/Mutex.h>
 #include<Camera.hpp>
-#include <seria/deserialize.hpp>
-
+#include<seria/deserialize.hpp>
 using namespace std;
 
 class NeuronPool;
@@ -78,8 +76,8 @@ typedef struct NeuronSWC : public BasicObj
     Type type;
     double x,y,z;
     union{
-        float r;
-        float radius;
+        double r;
+        double radius;
     };
     union
     {
@@ -90,7 +88,7 @@ typedef struct NeuronSWC : public BasicObj
     int64_t seg_size; //线段的swc大小
     int64_t seg_id; //线段的id
     int64_t seg_in_id; //该点在线段内的id
-    int64_t block_id; //点所在脑数据中的block
+    int64_t user_id; //点所在脑数据中的block
     int64_t timestamp; //时间戳
     NeuronSWC(){
         id=0;
@@ -102,7 +100,7 @@ typedef struct NeuronSWC : public BasicObj
         seg_id=1;
         seg_size=-1;
         seg_in_id=-1;
-        block_id=1;
+        user_id=1;
         timestamp=-1;
     }
 } NeuronSWC;
@@ -153,14 +151,14 @@ typedef struct Segment : public BasicObj //路径中的单个线段
 struct Line : public BasicObj //Line是有关关键Vertex的集合
 {
     map< int, Vertex > hash_vertexes;
-    int block_id;
+    int user_id;
     Line(){
         id=0;
         color="#000000";
         selected=false;
         visible=true;
         name="";
-        block_id = -1;
+        user_id = -1;
     }
 };
 	
