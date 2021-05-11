@@ -18,8 +18,9 @@
 #include <Poco/MongoDB/ObjectId.h>
 #include <Poco/MongoDB/PoolableConnectionFactory.h>
 #include <Poco/UUIDGenerator.h>
-
 #include "AnnotationDS.hpp"
+
+#define MAX_LINE_SIZE 4096
 
 class DataBase{
 private:

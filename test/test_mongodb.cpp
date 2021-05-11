@@ -16,10 +16,16 @@ int main()
     DataBase::connect();
 	std::vector<std::shared_ptr<NeuronSWC> > s;
     for( int i = 0 ; i < graph.list_swc.size() ; i ++ ){
-        DataBase::insertSWC(graph.list_swc[i],"test1");
 		s.push_back(make_shared<NeuronSWC>(graph.list_swc[i]));
     }
-	DataBase::insertSWCs(s,"test2");
-	
+    // DataBase::insertSWCs(s,"test2");
+    std::cout << DataBase::getSWCFileStringFromTable("test2") << std::endl;
+	DataBase::modifySWCs(s,"test2");
+    DataBase::modifySWC(graph.list_swc[2],"test2");
+    std::cout << DataBase::findTable("test2") << std::endl;
+    std::cout << DataBase::findTable("test1") << std::endl;
+	std::cout << DataBase::getSWCFileStringFromTable("test2") << std::endl;
+
+
 	return 0;
 }
