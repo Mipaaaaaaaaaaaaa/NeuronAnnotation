@@ -8,8 +8,10 @@
 #include <Poco/Util/HelpFormatter.h>
 #include <Poco/Util/IntValidator.h>
 #include <iostream>
+#include <DataBase.hpp>
 
-void NeuronAnnotaterApplication::initialize(Application &self) {}
+void NeuronAnnotaterApplication::initialize(Application &self) {
+}
 
 void NeuronAnnotaterApplication::defineOptions(Poco::Util::OptionSet &options) {
   using Option = Poco::Util::Option;
@@ -64,7 +66,7 @@ int NeuronAnnotaterApplication::main(const std::vector<std::string> &args) {
   ServerSocket svs(m_port);//tcp socket
   HTTPServer srv(Poco::makeShared<RequestHandlerFactory>(), svs,
                  Poco::makeAuto<HTTPServerParams>());
-
+  DataBase::connect();
   srv.start();
 
   this->logger().information("server starts at port: " +

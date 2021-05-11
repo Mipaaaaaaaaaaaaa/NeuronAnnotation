@@ -26,11 +26,11 @@ target_link_libraries(NeuronAnnotateServer PRIVATE
         Poco::Net
         Poco::Util
         Poco::JSON
+        Poco::MongoDB
         spdlog::spdlog
         Threads::Threads
         glm::glm
         seria::seria
-        Poco::MongoDB
         ${OPENGL_LIBRARIES}
         ${CUDA_CUDA_LIBRARY}
         ${CMAKE_DL_LIBS}

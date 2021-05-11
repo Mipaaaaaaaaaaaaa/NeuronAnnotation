@@ -6,6 +6,7 @@
 #include <Poco/JSON/Object.h>
 #include <Poco/JSON/Array.h>
 #include <Poco/Dynamic/Var.h>
+#include <DataBase.hpp>
 
 using namespace std;
 using Poco::Dynamic::Var;
@@ -155,8 +156,20 @@ bool NeuronPool::addVertex(float x, float y, float z){
     return false;
 }
 
-NeuronGraph::NeuronGraph(const char * filePath){
+NeuronGraph::NeuronGraph(const char * filePath, const char * tableName){
     SWCP::Parser parser;
+    this->tableName = tableName;
+    this->cur_max_vertex_id = -1;
+    this->cur_max_seg_id = -1;
+    this->cur_max_line_id = -1;
+    bool result = parser.ReadSWCFromFile(filePath, *this);
+    if( result )std::cout << " Build Graph From File Successfully!" << std::endl;
+    else std::cout << " Build Graph From File Error!" << std::endl;
+}
+
+NeuronGraph::NeuronGraph(char const * filePath){
+    SWCP::Parser parser;
+    this->tableName = "default";
     this->cur_max_vertex_id = -1;
     this->cur_max_seg_id = -1;
     this->cur_max_line_id = -1;
@@ -209,7 +222,8 @@ bool NeuronGraph::addVertex(Vertex *v){
     }
     list_and_hash_mutex.unlock();
     lines[v->line_id].hash_vertexes[v->id] = *v;
-    return true;
+    if( DataBase::insertSWC(swc,tableName) ) return true;
+    return false;
 }
 
 bool NeuronGraph::addSegment(int id, Vertex *v){
@@ -256,9 +270,9 @@ bool NeuronGraph::addSegment(int id, Vertex *v){
         hash_swc_ids[v->id] = list_swc.size() - 1;
     }
     list_and_hash_mutex.unlock();
-
     lines[v->line_id].hash_vertexes[v->id] = *v;
-    return true;
+    if( DataBase::insertSWC(vEndswc,tableName) ) return true;
+    return false;
 }
 
 long int NeuronGraph::getCurMaxVertexId(){
@@ -338,9 +352,11 @@ bool NeuronPool::changeName(int line_id, string name){
 
 bool NeuronGraph::changeName(int line_id, string name){
     lines[line_id].name = name;
+    std::vector<std::shared_ptr<NeuronSWC> > modifySWCs;
     for( auto v = lines[line_id].hash_vertexes.begin() ; v != lines[line_id].hash_vertexes.end() ; v++ ){
         v->second.name = name;
         NeuronSWC *swc = &list_swc[hash_swc_ids[v->second.id]];
+        modifySWCs.push_back(make_shared<NeuronSWC>(*swc));
         swc->name = name;
         for( auto seg = v->second.hash_linked_seg_ids.begin() ; seg != v->second.hash_linked_seg_ids.end() ; seg++ ){
             Segment *s = &segments[seg->first];
@@ -351,7 +367,8 @@ bool NeuronGraph::changeName(int line_id, string name){
             }
         }
     }
-    return true;
+    if( DataBase::modifySWCs(modifySWCs,tableName) ) return true;
+    else return false;
 }
 
 bool NeuronGraph::changeColor(int line_id, string color){

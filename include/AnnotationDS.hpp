@@ -164,7 +164,8 @@ struct Line : public BasicObj //Line是有关关键Vertex的集合
 	
 class NeuronGraph : public BasicObj{
 public:
-    NeuronGraph::NeuronGraph(const char * filePath);
+    NeuronGraph(const char * filePath);
+    NeuronGraph(const char * filePath, const char * tableName);
     NeuronGraph(){};
     // explicit NeuronGraph(int idx):graph_index(idx){}
     bool selectVertices(std::vector<int> idxes);
@@ -200,6 +201,7 @@ public:
     int getDefaultSelectedVertexIndex(int line_id);
 
     string file; //文件源
+    string tableName; //保存在数据库的表名
     vector<NeuronSWC> list_swc; //list_swc中间删除时，需要对hash_swc_id重新计算
     map<int,int> hash_swc_ids; //方便查询，点与相关联SWC文件的映射索引
     map<int,Line> lines; //路径合集（点合辑）
