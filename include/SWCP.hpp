@@ -14,23 +14,24 @@
 
 namespace SWCP 
 {
+	using namespace std;
 	class Parser
 	{
 	public:
 		// Reads SWC from filespecified by *filename*. 
 		// Output is written to *graph*, old content is errased. 
 		// If no error have happened returns true
-		bool ReadSWCFromFile(const char *filename, NeuronGraph& graph);
+		bool ReadSWCFromFile(const char *filename, NeuronGraph& graph, int type);
 
 		// Reads SWC from filestream. 
 		// Output is written to graph, old content is errased. 
 		// If no error have happened returns true
-		bool ReadSWC(std::istream &inStream, NeuronGraph& graph);
+		bool ReadSWC(std::istream &inStream, NeuronGraph& graph, int type);
 
 		// Reads SWC from string. 
 		// Output is written to graph, old content is errased. 
 		// If no error have happened returns true
-		bool ReadSWC(const char *string, NeuronGraph& graph);
+		bool ReadSWC(const char *string, NeuronGraph& graph, int type);
 		
 		// Returns error message for the last parsing if error have happened.
 		std::string GetErrorMessage();
@@ -41,6 +42,7 @@ namespace SWCP
 		bool Accept(char symbol);
 		bool AcceptWhightSpace();
 		bool AcceptLine(NeuronGraph& graph);
+		bool AcceptSWCLine(NeuronGraph& graph);
 		bool AcceptEndOfLine();
 		bool AcceptInteger(int64_t& integer);
 		bool AcceptInteger(uint64_t& integer);
@@ -67,7 +69,7 @@ namespace SWCP
 		std::stringstream m_errorMessage;
 	};
 
-	inline bool Parser::ReadSWCFromFile(const char *filename, NeuronGraph& graph)
+	inline bool Parser::ReadSWCFromFile(const char *filename, NeuronGraph& graph, int type=0)
 	{
 		std::ifstream file(filename, std::ios::binary | std::ios::ate);
 		std::streamsize size = file.tellg();
@@ -85,14 +87,14 @@ namespace SWCP
 
 		content[size] = '\0';
 		graph.file = filename;
-		bool result = ReadSWC(content, graph);
+		bool result = ReadSWC(content, graph, type);
 
 		delete[] content;
 
 		return result;
 	}
 
-	inline bool Parser::ReadSWC(std::istream &inStream, NeuronGraph& graph)
+	inline bool Parser::ReadSWC(std::istream &inStream, NeuronGraph& graph, int type)
 	{
 		std::string str;
 		char buffer[4096];
@@ -101,10 +103,10 @@ namespace SWCP
 			str.append(buffer, sizeof(buffer));
 		}
 		str.append(buffer, static_cast<unsigned int>(inStream.gcount()));
-		return str.c_str();
+		return ReadSWC(str.c_str(),graph,type);
 	}
 
-	inline bool Parser::ReadSWC(const char *string, NeuronGraph& graph){	
+	inline bool Parser::ReadSWC(const char *string, NeuronGraph& graph, int type){	
 		m_errorMessage.clear();
 		graph.list_swc.clear();
 		graph.hash_swc_ids.clear();
@@ -115,19 +117,37 @@ namespace SWCP
 		m_line = 1;
 		m_iterator = string;
 
-		while (AcceptLine(graph))
-		{
-			++m_line;
-		}
+		if( type == 0 ){
+			while (AcceptSWCLine(graph))
+			{
+				++m_line;
+			}
 
-		if (*m_iterator == '\0')
-		{
-			return true;
-		}
-		else
-		{
-			m_errorMessage << "Error at line: " << m_line << ", unexpected symbol:" << *m_iterator << '\n';
-			return false;
+			if (*m_iterator == '\0')
+			{
+				graph.formatGraphFromSWCList();
+				return true;
+			}
+			else
+			{
+				m_errorMessage << "Error at line: " << m_line << ", unexpected symbol:" << *m_iterator << '\n';
+				return false;
+			}
+		}else{
+			while (AcceptLine(graph))
+			{
+				++m_line;
+			}
+
+			if (*m_iterator == '\0')
+			{
+				return true;
+			}
+			else
+			{
+				m_errorMessage << "Error at line: " << m_line << ", unexpected symbol:" << *m_iterator << '\n';
+				return false;
+			}
 		}
 	}
 
@@ -137,6 +157,76 @@ namespace SWCP
 			std::sregex_token_iterator(in.begin(), in.end(), re, -1),
 			std::sregex_token_iterator()
 		};
+	}
+
+	inline bool Parser::AcceptSWCLine(NeuronGraph& graph){
+		while( AcceptWhightSpace() ){}
+		if ( AcceptEndOfLine() ) return true;
+		if (Accept('#')) //纯注释行
+		{
+			const char* commentStart = m_iterator;
+			const char* commentEnd = m_iterator;
+			while (!AcceptEndOfLine() && *m_iterator != '\0')
+			{
+				NextSymbol();
+				commentEnd = m_iterator;
+			}
+			graph.meta.push_back(std::string(commentStart, commentEnd));
+			return true;
+		}
+		NeuronSWC swc;
+		for( int i = 0 ; i < 7 ; i ++ ){
+			char* endp_int = NULL;
+			char* endp_double = NULL;
+			int64_t result_int = strtoll(m_iterator,&endp_int,0);
+			double result_double = strtod(m_iterator, &endp_double);
+			if (endp_int > m_iterator || endp_double > m_iterator){
+				switch( i ){
+					case 0: //id
+						swc.id = result_int;
+						m_iterator = endp_int;
+						break;
+					case 1: //type
+						swc.type = Type(result_int);
+						m_iterator = endp_int;
+						break;
+					case 2: //x
+						swc.x = result_double;
+						m_iterator = endp_double;
+						break;
+					case 3: //y
+						swc.y = result_double;
+						m_iterator = endp_double;
+						break;
+					case 4: //z
+						swc.z = result_double;
+						m_iterator = endp_double;
+						break;
+					case 5: //r
+						swc.r = result_double;
+						m_iterator = endp_double;
+						break;
+					case 6: //pn
+						swc.pn = result_int;
+						m_iterator = endp_int;
+						break;
+					default:
+						m_errorMessage << "Error at Line:" << m_line;
+						return false;
+				}
+			}
+			else{
+				return false;
+			}
+		}
+		graph.list_swc.push_back(swc);
+		graph.hash_swc_ids[swc.id] = graph.list_swc.size()-1;
+		if( swc.id > graph.getCurMaxVertexId() ) graph.setMaxVertexId(swc.id);
+		if( swc.line_id > graph.getCurMaxLineId() ) graph.setMaxLineId(swc.line_id);
+		if( swc.seg_id > graph.getCurMaxSegmentId() ) graph.setMaxSegmentId(swc.seg_id);
+		while (AcceptWhightSpace()){}
+		AcceptEndOfLine();
+		return true;
 	}
 
 	inline bool Parser::AcceptLine(NeuronGraph& graph){
@@ -198,7 +288,6 @@ namespace SWCP
 			else{
 				return false;
 			}
-			while (AcceptWhightSpace()){}
 		}
 		if( Accept('#') ){ //其他相关SWC
 			const char* infoStart = m_iterator;

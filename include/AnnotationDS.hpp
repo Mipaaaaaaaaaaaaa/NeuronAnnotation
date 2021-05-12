@@ -225,6 +225,9 @@ private:
     // std::vector<Segment*> cur_select_segments;//last add edge or current select edge
     // std::vector<Line*> cur_select_lines;
     // int select_obj;//0 for nothing, 1 for point, 2 for edge, 3 for points, 4 for edges,5 for line,6 for lines
+public:
+    bool formatGraphFromSWCList();
+    int formatSegments(std::map<int,vector<int>> &vertexLinkedCount, int index);
 };
 
 // class NeuronGraphDB{

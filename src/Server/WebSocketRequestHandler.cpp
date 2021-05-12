@@ -77,7 +77,7 @@ void WebSocketRequestHandler::handleRequest(
                             break;
                             case Insert:
                                 if( query_res[7] > 0.5f ){
-                                    if(neuron_pool->addVertex(query_res[0],query_res[1],query_res[3])){
+                                    if(neuron_pool->addVertex(query_res[0],query_res[1],query_res[2])){
                                         ErrorMessage em("添加成功","success");
                                         std::string str = em.ToJson();
                                         ws.sendFrame(str.c_str(),str.size(),WebSocket::FRAME_TEXT);
