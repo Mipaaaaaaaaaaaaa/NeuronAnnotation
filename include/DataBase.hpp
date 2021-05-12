@@ -27,6 +27,7 @@ private:
     static std::string name;
     static std::string host;
     static std::string port;
+	static bool connected;
 
 public:
 	static std::string getName();
@@ -41,6 +42,12 @@ public:
 	DataBase(){};
 
 	static void connect();
+
+	/**
+	 * @return show the DataBase whether is connected or not.
+	 * */
+
+	static bool isConnected();
 
 	/**
 	 * @param swc : a swc document which is already in Database

@@ -10,7 +10,7 @@
 
 std::shared_ptr<Poco::Mutex> RequestHandlerFactory::volume_render_lock =  make_shared<Poco::Mutex>();
 int RequestHandlerFactory::max_linked_id = 0;
-NeuronGraph* RequestHandlerFactory::neuronGraph = new NeuronGraph("test");
+std::shared_ptr<NeuronGraph> RequestHandlerFactory::neuronGraph;
 map<int,NeuronPool*> RequestHandlerFactory::neuronPools;
 map<string,int> RequestHandlerFactory::userList;
 std::shared_ptr<VolumeRenderer> RequestHandlerFactory::block_volume_renderer;
@@ -52,13 +52,14 @@ Poco::Net::HTTPRequestHandler *RequestHandlerFactory::createRequestHandler(
         WebSocketRequestHandler *n = new WebSocketRequestHandler();
         n->block_volume_renderer = block_volume_renderer;
         n->volume_render_lock = volume_render_lock;
-        if( userList.find(host.toString()) != userList.end() ){
+        if( userList.find(host.toString()) != userList.end() ){ //已有
             n->user_id = userList[host.toString()];
             n->neuron_pool = neuronPools[n->user_id];
         }else{
             n->user_id = ++max_linked_id;
             userList[host.toString()] = n->user_id;
             n->neuron_pool = new NeuronPool();
+            neuronGraph = make_shared<NeuronGraph>("test");
             n->neuron_pool->setGraph(neuronGraph);
             n->neuron_pool->setUserId(n->user_id);
             neuronPools[n->user_id] = n->neuron_pool;

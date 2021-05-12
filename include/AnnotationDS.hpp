@@ -263,7 +263,7 @@ public:
     bool changeColor(int line_id, string color);
     bool changeName(int line_id, string name);
     bool hasCamera();
-    void setGraph( NeuronGraph * pN){
+    void setGraph( std::shared_ptr<NeuronGraph> pN){
         graph = pN;
     };
     void setUserId( int id ){
@@ -287,7 +287,7 @@ public:
 
 private:
     int user_id;
-    NeuronGraph* graph;
+    std::shared_ptr<NeuronGraph> graph;
     //std::shared_ptr<NeuronGraph> graph;
 };
 

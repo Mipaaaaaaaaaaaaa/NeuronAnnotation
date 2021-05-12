@@ -132,13 +132,13 @@ class TreeVisualization extends React.Component {
 
     componentDidUpdate(){
         console.log(this.props);
-        if(this.props.data.graphs[this.props.selectedMapKey].sub && this.props.data.graphs[this.props.selectedMapKey].sub[this.props.selectedVertexKey].arc){
-            if (this.state.nowPage == '1') {
-                this.RectPhyloPlot();
-            } else if (this.state.nowPage == '3') {
-                this.UnrootedPhyloPlot();
-            }
-        }
+        // if(this.props.data.graphs[this.props.selectedMapKey].sub && this.props.data.graphs[this.props.selectedMapKey].sub[this.props.selectedVertexKey].arc){
+        //     if (this.state.nowPage == '1') {
+        //         this.RectPhyloPlot();
+        //     } else if (this.state.nowPage == '3') {
+        //         this.UnrootedPhyloPlot();
+        //     }
+        // }
     }
 
     componentDidMount() {

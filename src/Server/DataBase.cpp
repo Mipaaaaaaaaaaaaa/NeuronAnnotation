@@ -6,6 +6,7 @@ using Poco::Int64;
 std::string DataBase::port("27017");
 std::string DataBase::host("127.0.0.1");
 std::string DataBase::name("Test");
+bool DataBase::connected(false);
 bool DataBase::isPoolRunning(false);
 size_t DataBase::poolCapacity(16);
 size_t DataBase::poolPeakCapacity(256);
@@ -20,6 +21,11 @@ void DataBase::connect()
 	g_connectionFactory.reset(new MongoDBConnectionFactory(connetsionStr));
 	g_connectionPool.reset(new MongoDBConnectionPool(
 	*g_connectionFactory, poolCapacity, poolPeakCapacity));
+    connected = true;
+}
+
+bool DataBase::isConnected(){
+    return connected;
 }
 
 std::string DataBase::getName(){

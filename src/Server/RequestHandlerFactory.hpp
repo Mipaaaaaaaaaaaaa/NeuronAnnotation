@@ -9,7 +9,7 @@
 class RequestHandlerFactory : public Poco::Net::HTTPRequestHandlerFactory {
 private:
   static int max_linked_id;
-  static NeuronGraph *neuronGraph;
+  static std::shared_ptr<NeuronGraph> neuronGraph;
   static map<string,int> userList;
   static map<int,NeuronPool*> neuronPools;
   static std::shared_ptr<VolumeRenderer> block_volume_renderer;
