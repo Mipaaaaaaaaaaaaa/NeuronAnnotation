@@ -164,7 +164,7 @@ struct Line : public BasicObj //Line是有关关键Vertex的集合
 	
 class NeuronGraph : public BasicObj{
 public:
-    NeuronGraph(const char * filePath);
+    NeuronGraph(const char * string, int type=0);
     NeuronGraph(const char * filePath, const char * tableName);
     NeuronGraph(){};
     // explicit NeuronGraph(int idx):graph_index(idx){}

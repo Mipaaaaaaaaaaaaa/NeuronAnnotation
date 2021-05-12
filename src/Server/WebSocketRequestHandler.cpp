@@ -57,6 +57,14 @@ void WebSocketRequestHandler::handleRequest(
                     Camera camera;
                     seria::deserialize(camera,values);
                     neuron_pool->setCamera(camera);
+                    volume_render_lock->lock();
+                    block_volume_renderer->set_camera(neuron_pool->getCamera());
+                    block_volume_renderer->render_frame();
+                    auto &image = block_volume_renderer->get_frame();
+                    std::cout<<image.width<<" "<<image.height<<std::endl;
+                    auto encoded = Image::encode(image, Image::Format::JPEG);
+                    ws.sendFrame(encoded.data.data(), encoded.data.size(),WebSocket::FRAME_BINARY);
+                    volume_render_lock->unlock();
                 }
                 else if(document.HasMember("click"))
                 {
@@ -106,6 +114,8 @@ void WebSocketRequestHandler::handleRequest(
                 else if(document.HasMember("modify")){
                     rapidjson::Value &modify_data = document["modify"];
                     int line_id = -1;
+                    bool result = true;
+                    bool select = false;
                     if( modify_data.HasMember("index") && modify_data["index"].IsInt64() ){
                         line_id = modify_data["index"].GetInt64();
                     }
@@ -116,13 +126,22 @@ void WebSocketRequestHandler::handleRequest(
                         neuron_pool->selectLine(modify_data["selectedLineIndex"].GetInt64());
                     }
                     if( modify_data.HasMember("name") && modify_data["name"].IsString() ){
-                        neuron_pool->changeName(line_id,modify_data["name"].GetString());
+                        result &= neuron_pool->changeName(line_id,modify_data["name"].GetString());
                     }
                     if( modify_data.HasMember("color") && modify_data["color"].IsString() ){
-                        neuron_pool->changeColor(line_id,modify_data["color"].GetString());
+                        result &= neuron_pool->changeColor(line_id,modify_data["color"].GetString());
                     }
                     if( modify_data.HasMember("visible") ){
-                        neuron_pool->changeVisible(line_id,modify_data["visible"].GetBool());
+                        result &= neuron_pool->changeVisible(line_id,modify_data["visible"].GetBool());
+                    }
+                    if( result ){
+                        ErrorMessage em("修改成功","success");
+                        std::string str = em.ToJson();
+                        ws.sendFrame(str.c_str(),str.size(),WebSocket::FRAME_TEXT);
+                    }else{
+                        ErrorMessage em("修改失败");
+                        std::string str = em.ToJson();
+                        ws.sendFrame(str.c_str(),str.size(),WebSocket::FRAME_TEXT);
                     }
                 }
                 else if(document.HasMember("addline")){
@@ -150,15 +169,6 @@ void WebSocketRequestHandler::handleRequest(
                         std::string str = em.ToJson();
                         ws.sendFrame(str.c_str(),str.size(),WebSocket::FRAME_TEXT);
                     }
-                }
-                if(neuron_pool->hasCamera()){
-                    volume_render_lock->lock();
-                    block_volume_renderer->set_camera(neuron_pool->getCamera());
-                    block_volume_renderer->render_frame();
-                    auto &image = block_volume_renderer->get_frame();
-                    std::cout<<image.width<<" "<<image.height<<std::endl;
-                    auto encoded = Image::encode(image, Image::Format::JPEG);
-                    ws.sendFrame(encoded.data.data(), encoded.data.size(),WebSocket::FRAME_BINARY);
                 }
                 std::string structureInfo = neuron_pool->getLinestoJson();
                 ws.sendFrame(structureInfo.c_str(),structureInfo.size(),WebSocket::FRAME_TEXT);

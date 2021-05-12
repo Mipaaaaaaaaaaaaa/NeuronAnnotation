@@ -9,8 +9,8 @@ class WebSocketRequestHandler : public Poco::Net::HTTPRequestHandler {
 public:
   int user_id;
   NeuronPool *neuron_pool;
-  VolumeRenderer *block_volume_renderer;
-  Poco::Mutex *volume_render_lock;
+  std::shared_ptr<VolumeRenderer> block_volume_renderer;
+  std::shared_ptr<Poco::Mutex> volume_render_lock;
   void handleRequest(Poco::Net::HTTPServerRequest &request,
                      Poco::Net::HTTPServerResponse &response) override;
 };

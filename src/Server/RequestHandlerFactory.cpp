@@ -8,17 +8,17 @@
 #include <TransferFunction.hpp>
 
 
-Poco::Mutex *RequestHandlerFactory::volume_render_lock = new Poco::Mutex();
+std::shared_ptr<Poco::Mutex> RequestHandlerFactory::volume_render_lock =  make_shared<Poco::Mutex>();
 int RequestHandlerFactory::max_linked_id = 0;
-NeuronGraph* RequestHandlerFactory::neuronGraph = new NeuronGraph("./test.swc");
+NeuronGraph* RequestHandlerFactory::neuronGraph = new NeuronGraph("test");
 map<int,NeuronPool*> RequestHandlerFactory::neuronPools;
 map<string,int> RequestHandlerFactory::userList;
-VolumeRenderer* RequestHandlerFactory::block_volume_renderer;
+std::shared_ptr<VolumeRenderer> RequestHandlerFactory::block_volume_renderer;
 bool RequestHandlerFactory::isInited = false;
 
 void RequestHandlerFactory::initBlockVolumeRender(){
     std::cout<<"loading render backend..."<<std::endl;
-    block_volume_renderer = new VolumeRenderer("BlockVolumeRenderer");
+    block_volume_renderer = make_shared<VolumeRenderer>("BlockVolumeRenderer");
 #ifdef _WINDOWS
     block_volume_renderer->set_volume("D:/mouse_23389_29581_10296_9p2_lod3.h264");
 #else

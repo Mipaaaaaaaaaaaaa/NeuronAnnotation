@@ -70,9 +70,6 @@ int NeuronGraph::formatSegments(std::map<int,vector<int>> &vertexLinkedCount, in
             formatSegments(vertexLinkedCount,hash_swc_ids[list_swc[index].pn]);
         }
         int seg_id;
-        std::cout <<  list_swc[hash_swc_ids[list_swc[index].pn]].seg_size  << std::endl;
-        std::cout <<  list_swc[hash_swc_ids[list_swc[index].pn]].seg_in_id  << std::endl;
-        std::cout <<  list_swc[hash_swc_ids[list_swc[index].pn]].seg_size - 2  << std::endl;
         if( list_swc[hash_swc_ids[list_swc[index].pn]].seg_size != -1 && list_swc[hash_swc_ids[list_swc[index].pn]].seg_in_id == list_swc[hash_swc_ids[list_swc[index].pn]].seg_size - 2){
             //上一段已经结束，该段为新段 针对只有两个点的节点
             seg_id = getNewSegmentId();
@@ -281,7 +278,7 @@ long int NeuronGraph::addLine(){
     Line l;
     stringstream fmt;
     l.id = line_id;
-    fmt << "路径" << line_id;
+    fmt << "deault" << line_id;
     l.name = fmt.str();
     l.color = "#aa0000";
     l.user_id = 1;
@@ -296,6 +293,7 @@ bool NeuronPool::addVertex(Vertex *v){
    }
    v->id = graph->getNewVertexId();
    v->name = graph->lines[m_selected_line_index].name;
+   v->color = graph->lines[m_selected_line_index].color;
    v->line_id = m_selected_line_index;
    if( m_selected_vertex_index == -1 ){ // this vertex is the first picked vertex in this line
         if( graph->addVertex(v) ){
@@ -342,15 +340,28 @@ NeuronGraph::NeuronGraph(const char * filePath, const char * tableName){
     else std::cout << " Build Graph From File Error!" << std::endl;
 }
 
-NeuronGraph::NeuronGraph(char const * filePath){
-    SWCP::Parser parser;
-    this->tableName = "default";
-    this->cur_max_vertex_id = -1;
-    this->cur_max_seg_id = -1;
-    this->cur_max_line_id = -1;
-    bool result = parser.ReadSWCFromFile(filePath, *this,0);
-    if( result )std::cout << " Build Graph From File Successfully!" << std::endl;
-    else std::cout << " Build Graph From File Error!" << std::endl;
+
+NeuronGraph::NeuronGraph(const char * string, int type){
+    if( type == 0 ){// built by DataBase
+        SWCP::Parser parser;
+        this->tableName = string;
+        this->cur_max_vertex_id = -1;
+        this->cur_max_seg_id = -1;
+        this->cur_max_line_id = -1;
+        std::string str = DataBase::getSWCFileStringFromTable(string);
+        bool result = parser.ReadSWC(str.c_str(), *this,0);
+        if( result )std::cout << " Build Graph From File Successfully!" << std::endl;
+        else std::cout << " Build Graph From File Error!" << std::endl;
+    }else{
+        SWCP::Parser parser;
+        this->tableName = "default";
+        this->cur_max_vertex_id = -1;
+        this->cur_max_seg_id = -1;
+        this->cur_max_line_id = -1;
+        bool result = parser.ReadSWCFromFile(string, *this,0);
+        if( result )std::cout << " Build Graph From File Successfully!" << std::endl;
+        else std::cout << " Build Graph From File Error!" << std::endl;
+    }
 }
 
 long int NeuronGraph::getNewVertexId(){
