@@ -97,10 +97,10 @@ typedef struct NeuronSWC : public BasicObj
         r=1;
         pn=-1;
         line_id=-1;
-        seg_id=1;
+        seg_id=-1;
         seg_size=-1;
         seg_in_id=-1;
-        user_id=1;
+        user_id=-1;
         timestamp=-1;
     }
 } NeuronSWC;
