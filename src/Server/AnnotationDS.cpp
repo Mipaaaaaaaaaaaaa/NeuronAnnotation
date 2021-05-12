@@ -106,7 +106,7 @@ int NeuronGraph::formatSegments(std::map<int,vector<int>> &vertexLinkedCount, in
             segments[seg_id].segment_vertex_ids[list_swc[index].seg_in_id] = list_swc[index].id;
             segments[seg_id].size = list_swc[index].seg_in_id + 1;
             for( auto v = segments[seg_id].segment_vertex_ids.begin() ; v != segments[seg_id].segment_vertex_ids.end() ; v ++ ){ //更新总长度
-                list_swc[hash_swc_ids[v->second]].seg_size = segments[seg_id].size;
+                if(list_swc[hash_swc_ids[v->second]].seg_id == seg_id)list_swc[hash_swc_ids[v->second]].seg_size = segments[seg_id].size;
             }
         }
         Vertex v;
@@ -172,7 +172,7 @@ int NeuronGraph::formatSegments(std::map<int,vector<int>> &vertexLinkedCount, in
         segments[list_swc[pn].seg_id].segment_vertex_ids[list_swc[hash_swc_ids[pn]].seg_in_id+1] = list_swc[index].id;
         //更新所有前seg节点长度
         for( auto v = segments[list_swc[pn].seg_id].segment_vertex_ids.begin() ; v != segments[list_swc[pn].seg_id].segment_vertex_ids.end() ; v ++ ){ //更新总长度
-                list_swc[hash_swc_ids[v->second]].seg_size = segments[list_swc[pn].seg_id].size;
+                if(list_swc[hash_swc_ids[v->second]].seg_id == list_swc[pn].seg_id ) list_swc[hash_swc_ids[v->second]].seg_size = segments[list_swc[pn].seg_id].size;
         }
         Vertex v; //新节点
         v.line_id = list_swc[index].line_id;

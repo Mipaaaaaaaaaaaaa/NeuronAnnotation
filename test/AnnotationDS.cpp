@@ -6,6 +6,7 @@
 #include <Poco/JSON/Object.h>
 #include <Poco/JSON/Array.h>
 #include <Poco/Dynamic/Var.h>
+#include <DataBase.hpp>
 
 using namespace std;
 using Poco::Dynamic::Var;
@@ -13,6 +14,181 @@ using Poco::JSON::Object;
 
 string NeuronPool::getLinestoJson(){
     return graph->getLinestoJson(this);
+}
+
+// need to initialize the listswc and hashswc first
+// this function will format graph from basic swc file strings
+bool NeuronGraph::formatGraphFromSWCList(){
+    std::map<int,vector<int>> vertexLinkedCount;
+    for( int i = 0 ; i < list_swc.size() ; i ++ ){// new line
+        time_t timestamp;
+        list_swc[i].timestamp = time(&timestamp);
+        if( list_swc[i].pn == -1 ){
+            auto line_id = getNewLineId();
+            Vertex v;
+            list_swc[i].line_id = lines[line_id].id = v.line_id = line_id;
+            list_swc[i].color = lines[line_id].color = v.color = "#aa0000";
+            list_swc[i].name = lines[line_id].name = v.name = "default" + std::to_string(line_id);
+            list_swc[i].user_id = lines[line_id].user_id = -1;
+            v.id = list_swc[i].id;
+            v.radius = list_swc[i].radius;
+            v.x = list_swc[i].x;
+            v.y = list_swc[i].y;
+            v.z = list_swc[i].z;
+            v.type = list_swc[i].type;
+            lines[line_id].hash_vertexes[list_swc[i].id] = v;
+        }else{
+            vertexLinkedCount[list_swc[i].pn].push_back(list_swc[i].id);
+            vertexLinkedCount[list_swc[i].id].push_back(list_swc[i].pn);
+        }
+    }
+    for( int i = 0 ; i < list_swc.size() ; i ++ ){
+        formatSegments(vertexLinkedCount,i);
+    }
+    return true;
+}
+
+int NeuronGraph::formatSegments(std::map<int,vector<int>> &vertexLinkedCount, int index){
+    if( list_swc[index].seg_id != -1 ) return list_swc[index].seg_id;
+    if( list_swc[index].pn == -1 ){ //起点
+        int seg_id = getNewSegmentId();
+        list_swc[index].seg_id = seg_id;
+        list_swc[index].seg_in_id = 0;
+        lines[list_swc[index].line_id].hash_vertexes[list_swc[index].id].hash_linked_seg_ids[seg_id] = seg_id;
+        segments[seg_id].segment_vertex_ids[0] = list_swc[index].id;
+        segments[seg_id].start_id = list_swc[index].id;
+        segments[seg_id].id = seg_id;
+        segments[seg_id].line_id = list_swc[index].line_id;
+        segments[seg_id].name = list_swc[index].name;
+        segments[seg_id].color = list_swc[index].color;
+        segments[seg_id].size = -1; //最后计算
+        return seg_id;
+    }
+    if( vertexLinkedCount[list_swc[index].id].size() == 1 ){ //顶点
+        //终点，关键节点
+        if( list_swc[hash_swc_ids[list_swc[index].pn]].seg_id == -1 ){
+            formatSegments(vertexLinkedCount,hash_swc_ids[list_swc[index].pn]);
+        }
+        int seg_id;
+        std::cout <<  list_swc[hash_swc_ids[list_swc[index].pn]].seg_size  << std::endl;
+        std::cout <<  list_swc[hash_swc_ids[list_swc[index].pn]].seg_in_id  << std::endl;
+        std::cout <<  list_swc[hash_swc_ids[list_swc[index].pn]].seg_size - 2  << std::endl;
+        if( list_swc[hash_swc_ids[list_swc[index].pn]].seg_size != -1 && list_swc[hash_swc_ids[list_swc[index].pn]].seg_in_id == list_swc[hash_swc_ids[list_swc[index].pn]].seg_size - 2){
+            //上一段已经结束，该段为新段 针对只有两个点的节点
+            seg_id = getNewSegmentId();
+            list_swc[index].seg_id = seg_id;
+            list_swc[index].color = list_swc[index].color;
+            list_swc[index].name = list_swc[hash_swc_ids[list_swc[index].pn]].name;
+            list_swc[index].user_id = list_swc[index].user_id;
+            list_swc[index].line_id = list_swc[hash_swc_ids[list_swc[index].pn]].line_id;
+            list_swc[index].seg_in_id = 1;
+            list_swc[index].seg_size = 2;
+            lines[list_swc[index].line_id].hash_vertexes[list_swc[index].pn].hash_linked_seg_ids[seg_id] = true;
+            segments[seg_id].start_id = list_swc[index].pn;
+            segments[seg_id].end_id = list_swc[index].id;
+            segments[seg_id].segment_vertex_ids[0] = list_swc[index].pn;
+            segments[seg_id].segment_vertex_ids[1] = list_swc[index].id;
+            segments[seg_id].id = seg_id;
+            segments[seg_id].line_id = list_swc[index].line_id;
+            segments[seg_id].name = list_swc[index].name;
+            segments[seg_id].color = list_swc[index].color;
+            segments[seg_id].size = 2;
+            
+        }else{
+            seg_id = list_swc[hash_swc_ids[list_swc[index].pn]].seg_id;
+            list_swc[index].color = list_swc[hash_swc_ids[list_swc[index].pn]].color;
+            list_swc[index].name = list_swc[hash_swc_ids[list_swc[index].pn]].name;
+            list_swc[index].user_id = list_swc[hash_swc_ids[list_swc[index].pn]].user_id;
+            list_swc[index].line_id = segments[seg_id].line_id;
+            list_swc[index].seg_id = seg_id;
+            list_swc[index].seg_in_id = list_swc[hash_swc_ids[list_swc[index].pn]].seg_in_id + 1;
+            segments[seg_id].end_id = list_swc[index].id;
+            segments[seg_id].segment_vertex_ids[list_swc[index].seg_in_id] = list_swc[index].id;
+            segments[seg_id].size = list_swc[index].seg_in_id + 1;
+            for( auto v = segments[seg_id].segment_vertex_ids.begin() ; v != segments[seg_id].segment_vertex_ids.end() ; v ++ ){ //更新总长度
+                if(list_swc[hash_swc_ids[v->second]].seg_id == seg_id)list_swc[hash_swc_ids[v->second]].seg_size = segments[seg_id].size;
+            }
+        }
+        Vertex v;
+        v.line_id = list_swc[index].line_id;
+        v.id = list_swc[index].id;
+        v.radius = list_swc[index].radius;
+        v.x = list_swc[index].x;
+        v.y = list_swc[index].y;
+        v.z = list_swc[index].z;
+        v.type = list_swc[index].type;
+        v.hash_linked_seg_ids[seg_id] = true;
+        v.linked_vertex_ids[segments[seg_id].start_id] = true;
+        lines[v.line_id].hash_vertexes[segments[seg_id].start_id].linked_vertex_ids[v.id] = true;
+        lines[v.line_id].hash_vertexes[v.id] = v;
+    }else if( vertexLinkedCount[list_swc[index].id].size() == 2 ){ //段中间节点
+        if( list_swc[hash_swc_ids[list_swc[index].pn]].seg_id == -1 ){ //该节点的父节点尚未被计算
+            formatSegments(vertexLinkedCount,hash_swc_ids[list_swc[index].pn]);
+        }
+        
+        if( list_swc[hash_swc_ids[list_swc[index].pn]].seg_size != -1 ){//&& segments[list_swc[hash_swc_ids[list_swc[index].pn]].seg_id].end_id == list_swc[index].pn){
+            //上一段已经结束，该段为新段
+            int seg_id = getNewSegmentId();
+            list_swc[index].seg_id = seg_id;
+            list_swc[index].color = list_swc[index].color;
+            list_swc[index].name = list_swc[index].name;
+            list_swc[index].user_id = list_swc[index].user_id;
+            list_swc[index].line_id = list_swc[hash_swc_ids[list_swc[index].pn]].line_id;
+            list_swc[index].seg_in_id = 1;
+
+            lines[list_swc[index].line_id].hash_vertexes[list_swc[index].pn].hash_linked_seg_ids[seg_id] = true;
+            segments[seg_id].start_id = list_swc[index].pn;
+            segments[seg_id].segment_vertex_ids[0] = list_swc[index].pn;
+            segments[seg_id].segment_vertex_ids[1] = list_swc[index].id;
+            segments[seg_id].id = seg_id;
+            segments[seg_id].line_id = list_swc[index].line_id;
+            segments[seg_id].name = list_swc[index].name;
+            segments[seg_id].color = list_swc[index].color;
+            segments[seg_id].size = -1;
+        }else{ //中间点
+            int seg_id = list_swc[hash_swc_ids[list_swc[index].pn]].seg_id;
+            list_swc[index].seg_id = seg_id;
+            list_swc[index].seg_in_id = list_swc[hash_swc_ids[list_swc[index].pn]].seg_in_id + 1;
+            list_swc[index].color = list_swc[hash_swc_ids[list_swc[index].pn]].color;
+            list_swc[index].name = list_swc[hash_swc_ids[list_swc[index].pn]].name;
+            list_swc[index].user_id = list_swc[hash_swc_ids[list_swc[index].pn]].user_id;
+            list_swc[index].line_id = segments[seg_id].line_id;
+            segments[seg_id].segment_vertex_ids[list_swc[index].seg_in_id] = list_swc[index].id;
+        }
+
+    }else if( vertexLinkedCount[list_swc[index].id].size() > 2 ){ //关键节点，对每个子节点分段
+        if( list_swc[hash_swc_ids[list_swc[index].pn]].seg_id == -1 ){ //该节点的父节点尚未被计算
+            formatSegments(vertexLinkedCount,hash_swc_ids[list_swc[index].pn]);
+        }
+        //该节点为旧的终点，新的起点
+        int pn = list_swc[index].pn;
+        segments[list_swc[hash_swc_ids[pn]].seg_id].end_id = list_swc[index].id;
+        list_swc[index].color = list_swc[hash_swc_ids[list_swc[index].pn]].color;
+        list_swc[index].name = list_swc[hash_swc_ids[list_swc[index].pn]].name;
+        list_swc[index].user_id = list_swc[hash_swc_ids[list_swc[index].pn]].user_id;
+        list_swc[index].line_id = list_swc[hash_swc_ids[pn]].line_id;
+        list_swc[index].seg_id = list_swc[hash_swc_ids[pn]].seg_id;
+        segments[list_swc[pn].seg_id].size = list_swc[hash_swc_ids[pn]].seg_in_id + 2;
+        segments[list_swc[pn].seg_id].segment_vertex_ids[list_swc[hash_swc_ids[pn]].seg_in_id+1] = list_swc[index].id;
+        //更新所有前seg节点长度
+        for( auto v = segments[list_swc[pn].seg_id].segment_vertex_ids.begin() ; v != segments[list_swc[pn].seg_id].segment_vertex_ids.end() ; v ++ ){ //更新总长度
+                if(list_swc[hash_swc_ids[v->second]].seg_id == list_swc[pn].seg_id ) list_swc[hash_swc_ids[v->second]].seg_size = segments[list_swc[pn].seg_id].size;
+        }
+        Vertex v; //新节点
+        v.line_id = list_swc[index].line_id;
+        v.id = list_swc[index].id;
+        v.radius = list_swc[index].radius;
+        v.x = list_swc[index].x;
+        v.y = list_swc[index].y;
+        v.z = list_swc[index].z;
+        v.type = list_swc[index].type;
+        v.hash_linked_seg_ids[list_swc[hash_swc_ids[pn]].seg_id] = true;
+        v.linked_vertex_ids[segments[list_swc[hash_swc_ids[pn]].seg_id].start_id] = true;
+        lines[v.line_id].hash_vertexes[segments[list_swc[hash_swc_ids[pn]].seg_id].start_id].linked_vertex_ids[v.id] = true;
+        lines[v.line_id].hash_vertexes[v.id] = v;
+        return 0;
+    }
+    return true;
 }
 
 string NeuronGraph::getLinestoJson(NeuronPool * np){
@@ -155,12 +331,24 @@ bool NeuronPool::addVertex(float x, float y, float z){
     return false;
 }
 
-NeuronGraph::NeuronGraph(const char * filePath){
+NeuronGraph::NeuronGraph(const char * filePath, const char * tableName){
     SWCP::Parser parser;
+    this->tableName = tableName;
     this->cur_max_vertex_id = -1;
     this->cur_max_seg_id = -1;
     this->cur_max_line_id = -1;
-    bool result = parser.ReadSWCFromFile(filePath, *this);
+    bool result = parser.ReadSWCFromFile(filePath, *this,0);
+    if( result )std::cout << " Build Graph From File Successfully!" << std::endl;
+    else std::cout << " Build Graph From File Error!" << std::endl;
+}
+
+NeuronGraph::NeuronGraph(char const * filePath){
+    SWCP::Parser parser;
+    this->tableName = "default";
+    this->cur_max_vertex_id = -1;
+    this->cur_max_seg_id = -1;
+    this->cur_max_line_id = -1;
+    bool result = parser.ReadSWCFromFile(filePath, *this,0);
     if( result )std::cout << " Build Graph From File Successfully!" << std::endl;
     else std::cout << " Build Graph From File Error!" << std::endl;
 }
@@ -209,7 +397,8 @@ bool NeuronGraph::addVertex(Vertex *v){
     }
     list_and_hash_mutex.unlock();
     lines[v->line_id].hash_vertexes[v->id] = *v;
-    return true;
+    if( DataBase::insertSWC(swc,tableName) ) return true;
+    return false;
 }
 
 bool NeuronGraph::addSegment(int id, Vertex *v){
@@ -256,9 +445,9 @@ bool NeuronGraph::addSegment(int id, Vertex *v){
         hash_swc_ids[v->id] = list_swc.size() - 1;
     }
     list_and_hash_mutex.unlock();
-
     lines[v->line_id].hash_vertexes[v->id] = *v;
-    return true;
+    if( DataBase::insertSWC(vEndswc,tableName) ) return true;
+    return false;
 }
 
 long int NeuronGraph::getCurMaxVertexId(){
@@ -338,9 +527,11 @@ bool NeuronPool::changeName(int line_id, string name){
 
 bool NeuronGraph::changeName(int line_id, string name){
     lines[line_id].name = name;
+    std::vector<std::shared_ptr<NeuronSWC> > modifySWCs;
     for( auto v = lines[line_id].hash_vertexes.begin() ; v != lines[line_id].hash_vertexes.end() ; v++ ){
         v->second.name = name;
         NeuronSWC *swc = &list_swc[hash_swc_ids[v->second.id]];
+        modifySWCs.push_back(make_shared<NeuronSWC>(*swc));
         swc->name = name;
         for( auto seg = v->second.hash_linked_seg_ids.begin() ; seg != v->second.hash_linked_seg_ids.end() ; seg++ ){
             Segment *s = &segments[seg->first];
@@ -351,7 +542,8 @@ bool NeuronGraph::changeName(int line_id, string name){
             }
         }
     }
-    return true;
+    if( DataBase::modifySWCs(modifySWCs,tableName) ) return true;
+    else return false;
 }
 
 bool NeuronGraph::changeColor(int line_id, string color){
