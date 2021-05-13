@@ -135,7 +135,7 @@ const Image: React.FC = (props) => {
           }).then(()=>{
             props.initSelectedKey();
           })
-          console.log(obj.error);
+          //console.log(obj.error);
         }
       } catch {
         console.log(data);

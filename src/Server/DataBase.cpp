@@ -391,7 +391,6 @@ std::string DataBase::showAllTables(){
     Poco::MongoDB::ResponseMessage response;
     c->sendRequest(*deleteCmd, response);
     auto doc = *(response.documents()[0]);
-    std::cout << doc.toString() << std::endl;
     return doc.toString();
 }
 

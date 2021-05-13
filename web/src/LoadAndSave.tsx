@@ -4,8 +4,9 @@ import { DownloadOutlined } from '@ant-design/icons';
 import { Upload, message } from 'antd';
 import { UploadOutlined } from '@ant-design/icons';
 import { withSuccess } from "antd/lib/modal/confirm";
+import { linkVertical } from "d3-shape";
 
-const _SOCKETLINK = "ws://10.76.3.92:12121/render";
+const _DOWNLOAD = "ws://10.76.3.92:12121/download";
 const { Option } = Select;
 const LoadAndSave: React.FC = (props) => {
   const UPLOAD = {
@@ -29,15 +30,14 @@ const LoadAndSave: React.FC = (props) => {
   };
 
   const downLoad = () =>{
-    const ws = new WebSocket(_SOCKETLINK);
+    const ws = new WebSocket(_DOWNLOAD);
     ws.binaryType = "arraybuffer";
+    console.log("herhe")
     ws.onopen = () => {
         console.log("连接成功，准备下载");
         ws.send(
             JSON.stringify({
-                get : {
-                  tableName : props.data.selectedTableName
-                }
+                tableName : props.data.selectedTableName
             })
         );
     }
@@ -46,12 +46,19 @@ const LoadAndSave: React.FC = (props) => {
         message.error("连接渲染服务器出错！");
     }
     ws.onmessage = (msg) => {
-        const { data } = msg;
-        var reader = new FileReader();
-        reader.onload = function(eve){
-          
-        }
+      if (typeof msg.data === "object") {
         console.log(msg);
+        const bytes = new Uint8Array(msg.data);
+        const blob = new Blob([bytes.buffer], { type: "image/jpeg" });
+        const url = URL.createObjectURL(blob);
+        let link = document.createElement('a');
+        link.style.display = 'none';
+        link.href = url;
+        link.setAttribute('download',props.data.selectedTableName+'.swc');
+        document.body.appendChild(link);
+        link.click();
+        return;
+      }  
         try {
 
         } catch {
@@ -93,7 +100,7 @@ const LoadAndSave: React.FC = (props) => {
             arrowPointAtCenter
             color="blue"
             >
-        <Button icon={<DownloadOutlined />} size="large" onClick={()=>downLoad()}>下载</Button>
+        <Button icon={<DownloadOutlined />} size="large" onclick={()=>this.downLoad()} >下载</Button>
         </Tooltip>
           </Space>
       </div>

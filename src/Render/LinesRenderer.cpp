@@ -62,18 +62,14 @@ LinesRenderer::LinesRenderer(int w, int h)
     //setupSystemInfo();
 }
 
-void LinesRenderer::initResourceContext() {
-    initGL();
-}
-
-void LinesRenderer::initGL() {
+void LinesRenderer::initResourceContext(){
 #ifdef _WINDOWS
-    // auto ins=GetModuleHandle(NULL);
-    // std::random_device dev;
-    // std::mt19937 rng(dev());
-    // std::uniform_real_distribution<float> dist(0.f, 1.f);
-    // std::string idx=std::to_string(dist(rng));
-    // HWND window=create_window(ins,("wgl_invisable"+idx).c_str(),window_width,window_height);
+    auto ins=GetModuleHandle(NULL);
+    std::random_device dev;
+    std::mt19937 rng(dev());
+    std::uniform_real_distribution<float> dist(0.f, 1.f);
+    std::string idx=std::to_string(dist(rng));
+    // HWND window=create_window(ins,("wgl_invisable0"+idx).c_str(),window_width,window_height);
     // this->window_handle=GetDC(window);
     // this->gl_context=create_opengl_context(this->window_handle);
 #else
@@ -141,7 +137,6 @@ void LinesRenderer::initGL() {
 
 #endif
 }
-
 
 void LinesRenderer::setupShaderUniform(){
     line_shader->setInt("window_width",window_width);

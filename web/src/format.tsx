@@ -178,7 +178,7 @@ const Format: React.FC = () => {
     }
 
     const initSelectedKey = () => {
-        console.log("initSelectedKey")
+        //console.log("initSelectedKey")
         for( let i = 0 ; i < data.graphs.length ; i ++ ){
             if(data.graphs[i].index = data.selectedMapIndex){
                 setSelectedMapKey(i);

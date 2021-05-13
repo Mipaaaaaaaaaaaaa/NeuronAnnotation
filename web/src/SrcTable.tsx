@@ -183,7 +183,6 @@ class SrcTable extends React.Component<EditableTableProps, EditableTableState>{
                             <Button danger type="primary" size="small" onClick={()=>this.showPopconfirm()}>删除</Button>
                         </Popconfirm>
                         <Popover content={()=>{
-                          console.log(record);
                           if( ! record )return;
                           var totalLength = 0;
                           var forkCount = 0;

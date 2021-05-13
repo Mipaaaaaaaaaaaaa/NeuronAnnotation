@@ -1,4 +1,4 @@
-import {Tabs, Radio, Space, Tooltip, Card} from 'antd';
+import {Tabs, Radio, Space, Tooltip, Card, InputNumber, message} from 'antd';
 import React from "react";
 import * as lw from "@euphrasiologist/lwphylo";
 import * as d3 from "d3";
@@ -62,7 +62,7 @@ interface ArcType{
 }
 
 const GraphToNewick = ( graph:DataType, pkey:number ) =>{
-    console.log(graph);
+    //console.log(graph);
     var maxLength = 0;
     for( let i = 0 ; i < graph.sub.length ; i ++ ){
         for( let j = 0 ; j < graph.sub[i].arc.length ; j ++ ){
@@ -129,12 +129,12 @@ class TreeVisualization extends React.Component {
     constructor(props) {
         super(props);
         this.state = {
-            nowPage : "1"
+            root : this.props.data.selectedVertexIndex
         };
     }
 
     componentDidUpdate(){
-        console.log(this.props);
+        //console.log(this.props);
         // if(this.props.data.graphs[this.props.selectedMapKey].sub && this.props.data.graphs[this.props.selectedMapKey].sub[this.props.selectedVertexKey].arc){
         //     if (this.state.nowPage == '1') {
         //         this.RectPhyloPlot();
@@ -576,24 +576,28 @@ class TreeVisualization extends React.Component {
 
     }
 
-    onChange = (activeKey : String) => {
-        this.setState({
-            nowPage : activeKey
-        });
-        if (activeKey == '1') {
-            console.log("Rect")
-            this.RectPhyloPlot();
-        } else if (activeKey == '3') {
-            console.log("UnrootedPhyloPlot")
-            this.UnrootedPhyloPlot();
+    onChange = (value) => {
+        console.log("哦耶！")
+        const graph = this.props.data.graphs[this.props.selectedMapKey];
+        for( let i = 0; i < graph.sub.length ; i ++ ){
+            if( value == graph.sub[i].index ){
+                this.setState({root:value})
+                message.success("设置成功！");
+                return
+            }
         }
+        message.error("不存在该节点，请重新输出！");
     }
+
 
     render() {
 
+        
         return (
             <>
             <div>
+                <p>选择端点Index</p>
+                <InputNumber defaultValue={this.props.data.selectedVertexIndex} onChange={(v)=>this.onChange(v)} />
                 <div className="Rectangle" id="Rectangle" ref="Rectangle">
                     <svg></svg>
                 </div>
