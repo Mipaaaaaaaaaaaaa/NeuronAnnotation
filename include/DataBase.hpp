@@ -110,6 +110,12 @@ public:
 	 * @return is in database:true  / not in database:false
 	 **/
 	static bool findSWC(const NeuronSWC &swc, const std::string &tableName);
+	
+	
+	/**
+	 *  @return tables in database json format
+	 **/
+	static std::string showAllTables();
 
 private:
 	// typedefs

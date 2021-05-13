@@ -1,34 +1,22 @@
 find_package(Threads REQUIRED)
 find_package(OpenGL REQUIRED)
 add_executable(test_simple_server test_simple_server.cpp)
-add_executable(test_swcparser test_swcparser.cpp AnnotationDS.cpp )
 add_executable(test_errormessage test_errormessage.cpp)
-add_executable(test_mongodb test_mongodb.cpp AnnotationDS.cpp DataBase.cpp)
-target_include_directories(test_mongodb PRIVATE
-        ${PROJECT_SOURCE_DIR}/third_party)
-target_link_libraries(test_mongodb PRIVATE
-        Poco::Net
-        Poco::Util
-        Poco::MongoDB
-        glm::glm
-        spdlog::spdlog
-        Threads::Threads
-        seria::seria
-        ${OPENGL_LIBRARIES}
-        ${CUDA_CUDA_LIBRARY}
-        ${CMAKE_DL_LIBS}
-        )
-
-target_link_libraries(test_swcparser PRIVATE
-        Poco::Foundation
-        Poco::Net
-        Poco::Util
-        Poco::MongoDB
-        glm::glm
-        spdlog::spdlog
-        Threads::Threads
-        seria::seria
-)
+# add_executable(test_mongodb test_mongodb.cpp AnnotationDS.cpp DataBase.cpp)
+# target_include_directories(test_mongodb PRIVATE
+#         ${PROJECT_SOURCE_DIR}/third_party)
+# target_link_libraries(test_mongodb PRIVATE
+#         Poco::Net
+#         Poco::Util
+#         Poco::MongoDB
+#         glm::glm
+#         spdlog::spdlog
+#         Threads::Threads
+#         seria::seria
+#         ${OPENGL_LIBRARIES}
+#         ${CUDA_CUDA_LIBRARY}
+#         ${CMAKE_DL_LIBS}
+#         )
 
 target_link_libraries(test_errormessage PRIVATE
         Poco::Net

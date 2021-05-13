@@ -5,17 +5,13 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <SWCP.hpp>
-#include"IRenderer.hpp"
+#include "IRenderer.hpp"
 // #include <UserInfo.hpp>
 #ifdef _WINDOWS
 #include <windows.h>
 #endif
-
 #include <Common/utils.hpp>
 #include <unordered_set>
-#include <Common/boundingbox.hpp>
-#include <Common/help_cuda.hpp>
-
 #include "ShaderProgram.hpp"
 
 class LinesRenderer final: public IRenderer{
@@ -31,39 +27,53 @@ private:
 
 public:
     void set_volume(const char* path) override;
+
     void set_camera(Camera camera) noexcept override;
+
     void set_transferfunc(TransferFunction tf) noexcept override;
+
     void set_mousekeyevent(MouseKeyEvent event) noexcept override;
+
+    void set_querypoint(std::array<uint32_t,2> screen_pos) noexcept override;
+
     void render_frame() override;
+
     auto get_frame()->const Image& override;
+
+    auto get_querypoint()->const std::array<float,8> override;
+
     void clear_scene() override;
 
+
 private:
-    std::unique_ptr<sv::Shader> raycasting_shader;
+    std::unique_ptr<sv::Shader> line_shader;
 public:
     void createGLShader();
     void initResourceContext();
     void initGL();
     void initCUDA();
+    void setupShaderUniform();
 private:
     uint32_t window_width,window_height;
-    sv::OBB view_obb;
 
+    Image frame;
 	glm::mat4 viewport;
 	glm::mat4 projection;
 	glm::mat4 model;
 
 private: //用户相关
     Camera camera;
-    UserInfo *cur_user_info;
-    neuronGraph *neuronGraph;
+    std::shared_ptr<NeuronGraph> neuronGraph;
 private:    
-    CUcontext cu_context;
+    //CUcontext cu_context;
 
 #ifdef _WINDOWS
     HDC window_handle;
     HGLRC gl_context;
-#elif LINUX
-
 #endif
 };
+
+extern "C"{
+WIN_API   IRenderer* get_renderer();
+}
+#endif

@@ -1,4 +1,4 @@
-import {Tabs, Radio, Space, Tooltip} from 'antd';
+import {Tabs, Radio, Space, Tooltip, Card} from 'antd';
 import React from "react";
 import * as lw from "@euphrasiologist/lwphylo";
 import * as d3 from "d3";
@@ -120,6 +120,9 @@ const GraphToNewick = ( graph:DataType, pkey:number ) =>{
     return x;
 }
 
+const getTreeData = () =>{
+
+}
 
 
 class TreeVisualization extends React.Component {
@@ -150,7 +153,8 @@ class TreeVisualization extends React.Component {
     }
 
     TreePlot = () => {
-        var treeData =
+        const self = this;
+        var treeData = //getTreeData( this.props.data.graphs[this.props.selectedMapKey] );
         {
             "name": "Top Level",
             "children": [
@@ -166,13 +170,16 @@ class TreeVisualization extends React.Component {
         };
 
         // Set the dimensions and margins of the diagram
-        var margin = {top: 20, right: 90, bottom: 30, left: 90},
-            width = 960 - margin.left - margin.right,
-            height = 300 - margin.top - margin.bottom;
+        var margin = ({top: 50, right: 1500, bottom: 50, left: 40});
+        //var margin = {top: 20, right: 90, bottom: 30, left: 90},
+        var width = 960 - margin.left - margin.right;
+        var height = 300 - margin.top - margin.bottom;
 
         // append the svg object to the body of the page
         // appends a 'group' element to 'svg'
         // moves the 'group' element to the top left margin
+        d3.select("#Rectangle").select("svg").selectAll().remove()
+
         var svg = d3.select("#Rectangle").select("svg")
             .attr("width", width + margin.right + margin.left)
             .attr("height", height + margin.top + margin.bottom)
@@ -236,9 +243,13 @@ class TreeVisualization extends React.Component {
         nodeEnter.append('circle')
             .attr('class', 'node')
             .attr('r', 1e-6)
+            .attr("stroke","black")
+            .attr("stroke-width",2)
             .style("fill", function(d) {
-                return d._children ? "lightsteelblue" : "#fff";
+                return d._children ? "#bbbbbb" : "#fff";
             });
+
+
 
         // Add labels for the nodes
         nodeEnter.append('text')
@@ -249,7 +260,12 @@ class TreeVisualization extends React.Component {
             .attr("text-anchor", function(d) {
                 return d.children || d._children ? "end" : "start";
             })
-            .text(function(d) { return d.data.name; });
+            .text(function(d) {
+                if(d.data.name == self.props.data.selectedVertexIndex)
+                 return d.data.name;
+                else
+                 return ""
+                });
 
         // UPDATE
         var nodeUpdate = nodeEnter.merge(node);
@@ -265,7 +281,7 @@ class TreeVisualization extends React.Component {
         nodeUpdate.select('circle.node')
             .attr('r', 10)
             .style("fill", function(d) {
-                return d._children ? "lightsteelblue" : "#fff";
+                return d._children ? "#bbbbbb" : "#ffffff";
             })
             .attr('cursor', 'pointer');
 
@@ -326,10 +342,7 @@ class TreeVisualization extends React.Component {
         // Creates a curved (diagonal) path from parent to the child nodes
         function diagonal(s, d) {
 
-            let path = `M ${s.y} ${s.x}
-                    C ${(s.y + d.y) / 2} ${s.x},
-                    ${(s.y + d.y) / 2} ${d.x},
-                    ${d.y} ${d.x}`
+            let path = `M ${s.y} ${s.x}, ${d.y} ${d.x}`
 
             return path
         }
@@ -579,37 +592,12 @@ class TreeVisualization extends React.Component {
     render() {
 
         return (
-            <> < Tabs tabPosition = "right" onChange = {
-                (activeKey) => this.onChange(activeKey)
-            }
-            type = {
-                "card"
-            }
-            animated = {{ inkBar: true, tabPane: true }} > <TabPane
-                tab="Rectangle"
-                key="1"
-                forceRender={true}
-                style={{
-                    overflowY: 'auto',
-                    overflowX: 'auto'
-                }}>
+            <>
+            <div>
                 <div className="Rectangle" id="Rectangle" ref="Rectangle">
                     <svg></svg>
                 </div>
-            </TabPane>
-            <TabPane
-                tab="EqualAngle"
-                key="3"
-                forceRender={true}
-                style={{
-                    overflowY: 'auto',
-                    overflowX: 'auto'
-                }}>
-                <div className="EqualAngle" id="EqualAngle" ref="EqualAngle">
-                    <svg></svg>
-                </div>
-            </TabPane>
-        </Tabs>
+            </div>
     </>
         );
     }

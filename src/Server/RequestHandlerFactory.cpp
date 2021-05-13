@@ -10,10 +10,11 @@
 
 std::shared_ptr<Poco::Mutex> RequestHandlerFactory::volume_render_lock =  make_shared<Poco::Mutex>();
 int RequestHandlerFactory::max_linked_id = 0;
-std::shared_ptr<NeuronGraph> RequestHandlerFactory::neuronGraph;
+map<string,std::shared_ptr<NeuronGraph>> RequestHandlerFactory::neuronGraphs;
 map<int,NeuronPool*> RequestHandlerFactory::neuronPools;
 map<string,int> RequestHandlerFactory::userList;
 std::shared_ptr<VolumeRenderer> RequestHandlerFactory::block_volume_renderer;
+std::shared_ptr<VolumeRenderer> RequestHandlerFactory::lines_renderer;
 bool RequestHandlerFactory::isInited = false;
 
 void RequestHandlerFactory::initBlockVolumeRender(){
@@ -38,10 +39,17 @@ void RequestHandlerFactory::initBlockVolumeRender(){
     block_volume_renderer->set_transferfunc(default_tf);
 }
 
+void RequestHandlerFactory::initLinesRender(){
+    std::cout<<"loading lines render backend..."<<std::endl;
+    lines_renderer = make_shared<VolumeRenderer>("LinesRenderer");
+}
+
 Poco::Net::HTTPRequestHandler *RequestHandlerFactory::createRequestHandler(
         const Poco::Net::HTTPServerRequest &request) {
     if( !isInited ){
+        neuronGraphs["test7"] = make_shared<NeuronGraph>("test7");
         initBlockVolumeRender();
+        initLinesRender();
         isInited = true;
     }
     auto &uri = request.getURI();
@@ -59,8 +67,8 @@ Poco::Net::HTTPRequestHandler *RequestHandlerFactory::createRequestHandler(
             n->user_id = ++max_linked_id;
             userList[host.toString()] = n->user_id;
             n->neuron_pool = new NeuronPool();
-            neuronGraph = make_shared<NeuronGraph>("test");
-            n->neuron_pool->setGraph(neuronGraph);
+            n->neuron_pool->setGraph(neuronGraphs["test7"]);
+            n->neuron_pool->setGraphPool(&neuronGraphs);
             n->neuron_pool->setUserId(n->user_id);
             neuronPools[n->user_id] = n->neuron_pool;
         }

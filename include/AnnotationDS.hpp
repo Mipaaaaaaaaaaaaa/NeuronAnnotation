@@ -259,6 +259,7 @@ public:
     bool deleteLine(int line_id);
     bool jumpToVertex(int id);
 
+    bool changeTable(string tableName);
     bool changeVisible(int line_id, bool visible);
     bool changeColor(int line_id, string color);
     bool changeName(int line_id, string name);
@@ -284,10 +285,13 @@ public:
     int getSelectedVertexIndex();
     void initSelectedLineIndex();
     void initSelectedVertexIndex();
-
+    void setGraphPool( std::map<string,std::shared_ptr<NeuronGraph> > *graphs){
+        graphs_pool = graphs;
+    }
 private:
     int user_id;
     std::shared_ptr<NeuronGraph> graph;
+    std::map<string,std::shared_ptr<NeuronGraph> > *graphs_pool;
     //std::shared_ptr<NeuronGraph> graph;
 };
 

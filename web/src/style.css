@@ -41,7 +41,8 @@ body,
 
 .ant-layout-sider {
   color: #fff;
-  line-height: 16px;
+  margin-top: 20px;
+  line-height: 30px;
   background: #ffffff;
   width: 500px;
 }
@@ -50,11 +51,36 @@ body,
   background: #ffffff;
 }
 
-.ant-layout-content {
-  min-height: 120px;
+.ant-layout-header {
+  margin-top: 20px;
+  line-height: 0px;
+  margin-left: 0px;
   color: #fff;
-  line-height: 120px;
   background: rgb(255, 255, 255);
+}
+
+.ant-layout-content {
+  margin-top: 20px;
+  min-height: 120px;
+  line-height: 20px;
+  color: #fff;
+  background: rgb(255, 255, 255);
+}
+
+.ant-card {
+  margin-left: 10px;
+  margin-right: 10px;
+}
+
+.ant-table {
+  margin-left: 10px;
+  margin-right: 10px;
+}
+
+.ls{
+  justify-content: flex-end;
+  float: right;
+  margin-right: 10px;
 }
 
 [data-theme="dark"] .ant-layout-content {
@@ -63,7 +89,7 @@ body,
 
 .node circle {
   fill: #fff;
-  stroke: steelblue;
+  stroke: rgb(0, 106, 192);
   stroke-width: 3px;
 }
 

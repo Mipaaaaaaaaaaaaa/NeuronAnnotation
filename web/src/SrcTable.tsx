@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState, useContext } from 'react';
-import { Table, Input, Button, Popconfirm, Form, Space, message } from 'antd';
+import { Table, Input, Button, Popconfirm, Form, Space, message, Popover } from 'antd';
 import { EditOutlined, SearchOutlined, EyeInvisibleOutlined, EyeOutlined, FileAddOutlined, MenuOutlined } from '@ant-design/icons';
 import { SortableContainer, SortableElement, SortableHandle } from 'react-sortable-hoc';
 import arrayMove from 'array-move';
@@ -7,6 +7,9 @@ import arrayMove from 'array-move';
 import Highlighter from 'react-highlight-words';
 import InputColor, { Color } from 'react-input-color';
 import { FormInstance } from 'antd/lib/form';
+import { arc } from 'd3-shape';
+import { subset } from 'd3-array';
+import { autoType } from 'd3-dsv';
 
 const EditableContext = React.createContext<FormInstance<any> | null>(null);
 const _SOCKETLINK = "ws://10.76.3.92:12121/render";
@@ -179,6 +182,32 @@ class SrcTable extends React.Component<EditableTableProps, EditableTableState>{
                         <Popconfirm title="确定删除吗？" onConfirm={() => this.handleDelete(record)}>
                             <Button danger type="primary" size="small" onClick={()=>this.showPopconfirm()}>删除</Button>
                         </Popconfirm>
+                        <Popover content={()=>{
+                          console.log(record);
+                          if( ! record )return;
+                          var totalLength = 0;
+                          var forkCount = 0;
+                          var leafCount = 0;
+  
+                          for( let i = 0 ; i < record.sub.length ; i ++ ){
+                            if( record.sub[i].arc.length == 1 ) leafCount ++;
+                            if( record.sub[i].arc.length > 2 ) forkCount ++;
+                            for( let j = 0 ; j < record.sub[i].arc.length ; j ++ ){
+                              totalLength += record.sub[i].arc[j].distance;
+                            }
+                          }
+                          return (
+                          <div>
+                            <p>{"顶点数：\t\t"+record.sub.length}</p>
+                            <p>{"总长度：\t\t"+(totalLength/2).toFixed(2)}</p>
+                            <p>{"分叉点数：\t\t"+forkCount}</p>
+                            <p>{"端点数：\t\t"+leafCount}</p>
+                          </div>
+                          )
+                        }
+                        } title={record.name + " 详情"} trigger="focus">
+                            <Button type="primary" size="small">详情</Button>
+                        </Popover>
                     </Space>
                 </div>               
               ),
@@ -431,8 +460,16 @@ class SrcTable extends React.Component<EditableTableProps, EditableTableState>{
         }
         const expandedRowRender = (data: { sub: readonly any[] | undefined; }) => {
           const columns = [
-            { title: 'id', dataIndex: 'key', key: 'key'},
-            { title: '最后编辑时间', dataIndex: 'lastEditTime', key: 'lastEditTime', render:(_,record)=>(<p>{self.timestampToTime(record.lastEditTime)}</p>)},
+            { title: 'id', dataIndex: 'index', key: 'index'},
+            { title: '关联节点数', dataIndex: 'linkedVertexNum', key: 'linkedVertexNum', render:(_,record)=>(<p>{record.arc.length}</p>)},
+            { title: '最远关联点距离', dataIndex: 'maxLinedDistance', key: 'maxLinedDistance', render:(_,record)=>{
+                let max = 0;
+                for( let i = 0 ; i < record.arc.length ; i ++ ){
+                    if( record.arc[i].distance > max ) max = record.arc[i].distance;
+                }
+                return <p>{max.toFixed(2)}</p>;
+              }
+              },
             { title: '操作', key:'action', dataIndex: 'action',
             render: ( _, record)=>(
               //如何传入row TODO
@@ -442,7 +479,7 @@ class SrcTable extends React.Component<EditableTableProps, EditableTableState>{
             )
           }
           ];
-          return <Table columns={columns} dataSource={data.sub} pagination={false} />;
+          return <Table columns={columns} dataSource={data.sub} />;
         };
 
         const components = {

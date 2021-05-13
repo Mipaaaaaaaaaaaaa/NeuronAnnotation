@@ -7,6 +7,7 @@ import ToolsHeader from "./ToolsHeader";
 import RenderSelecter from "./RenderSelecter";
 import TreeVisualization from "./TreeVisualization";
 import "./style.css";
+import Info from "./Info";
 
 const { Header, Footer, Sider, Content } = Layout;
 const _SOCKETLINK = "ws://10.76.3.92:12121/render";
@@ -164,7 +165,6 @@ const Format: React.FC = () => {
     const rowSelection = {
         selectedRowKeys: [data.selectedMapIndex],
         //设置默认选中的map
-
         onChange: (selectedRowKeys: React.Key[], selectedRows: any[]) => {
             changeData({selectedLineIndex: selectedRows[0].index}); //index是服务器存储的顺序
             setSelectedMapKey(selectedRows[0].key); //key是客户端存储的顺序
@@ -178,12 +178,17 @@ const Format: React.FC = () => {
     }
 
     const initSelectedKey = () => {
+        console.log("initSelectedKey")
         for( let i = 0 ; i < data.graphs.length ; i ++ ){
             if(data.graphs[i].index = data.selectedMapIndex){
                 setSelectedMapKey(i);
                 return;
             }
         }
+    }
+
+    const changeTable = (table) =>{
+        changeData({selectedTableName : table});
     }
 
     const changeData = (_data) => {
@@ -239,53 +244,70 @@ const Format: React.FC = () => {
         }
     }
     return (
-            <Card>
+            <div>
+                <Layout>
+                <Header style={{marginTop:40}}>
+                    <Row> 
+                        <Col flex="1 1 300px">
+                            <RenderSelecter />
+                        </Col>
+                        <Col flex="auto">
+                        <ToolsHeader handleToolsChange={handleToolsChange}/>
+                        </Col>
+                        <Col flex="auto">
+                            <LoadAndSave
+                                data={data} 
+                                changeTable={changeTable}
+                            />
+                        </Col>
+                    </Row>
+                </Header>
                 <Layout>
                 <Sider width={500}>
-                <RenderSelecter />
-                        <Divider dashed />
-                        <SrcTable 
-                            rowSelection={rowSelection}
-                            onClickJumpToVex={onClickJumpToVex}
-                            data={data}
-                            setData={setData}
-                            setSrc={setSrc}
-                            initSelectedKey={initSelectedKey}
-                            />
-                        <Divider dashed />
-                </Sider>
-                    <Content>
-                        <Row>
-                            <Col span={20}>
-                            <ToolsHeader handleToolsChange={handleToolsChange}/>
-                            </Col>
-                            <Col span={4}>
-                                <LoadAndSave />
-                            </Col>
-                        </Row>
-                        <Divider dashed />
-                        <Row>
-                            <Image
-                                selectedTool={selectedTool}
-                                setData={setData}
-                                initSelectedKey={initSelectedKey}
-                                src={src}
-                                setSrc={setSrc}
-                            />
-                        </Row>
-                    </Content>
-                </Layout>
-                
-                <Row>
-                    <TreeVisualization
-                        data={data}
+                    <SrcTable
+                        style={{ width: 480 }}
+                        rowSelection={rowSelection}
                         onClickJumpToVex={onClickJumpToVex}
-                        selectedMapKey={selectedMapKey}
-                        selectedVertexKey={selectedVertexKey}
-                    />
-                </Row>
-
-            </Card>
+                        data={data}
+                        setData={setData}
+                        setSrc={setSrc}
+                        initSelectedKey={initSelectedKey}
+                        />
+                    <Divider dashed />
+                    <Card style={{ width: 480 }}>
+                        <Info
+                            data={data}
+                            selectedMapKey={selectedMapKey}
+                        />
+                    </Card>
+                </Sider>
+                <Content >
+                    <Divider dashed />
+                    <Row>
+                        <Image
+                            selectedTool={selectedTool}
+                            setData={setData}
+                            initSelectedKey={initSelectedKey}
+                            src={src}
+                            setSrc={setSrc}
+                        />
+                    </Row>
+                </Content>
+                </Layout>
+                </Layout>
+                <Footer>
+                    <Col span={24}>
+                        <Card>
+                            <TreeVisualization
+                                data={data}
+                                onClickJumpToVex={onClickJumpToVex}
+                                selectedMapKey={selectedMapKey}
+                                selectedVertexKey={selectedVertexKey}
+                            />
+                        </Card>
+                    </Col>
+                </Footer>
+            </div>
     )
 };
 

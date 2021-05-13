@@ -357,6 +357,7 @@ std::string DataBase::getSWCFileStringFromTable(const std::string &tableName){
                 stoll(response.documents()[i]->get("timestamp")->toString()));
         sstream << buff;
     }
+
     return sstream.str();
 }
 
@@ -378,6 +379,20 @@ bool DataBase::findTable(const std::string &tableName){
         return false;
     }
     else return true;
+}
+
+std::string DataBase::showAllTables(){
+    auto con = takeConnection();
+    auto c = static_cast<Poco::MongoDB::Connection::Ptr>(con);
+
+    auto deleteCmd = g_db.createCommand();
+    deleteCmd->selector().add("listCollections","1.0").add("nameOnly","true");
+
+    Poco::MongoDB::ResponseMessage response;
+    c->sendRequest(*deleteCmd, response);
+    auto doc = *(response.documents()[0]);
+    std::cout << doc.toString() << std::endl;
+    return doc.toString();
 }
 
 Poco::MongoDB::PooledConnection DataBase::takeConnection()

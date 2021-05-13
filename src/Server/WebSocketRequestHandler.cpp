@@ -11,8 +11,7 @@
 #include <AnnotationDS.hpp>
 #include <ErrorMessage.hpp>
 #include <SWCP.hpp>
-
-
+#include <DataBase.hpp>
 using Poco::Util::Application;
 
 void WebSocketRequestHandler::handleRequest(
@@ -134,6 +133,9 @@ void WebSocketRequestHandler::handleRequest(
                     if( modify_data.HasMember("visible") ){
                         result &= neuron_pool->changeVisible(line_id,modify_data["visible"].GetBool());
                     }
+                    if( modify_data.HasMember("selectedTableName") ){
+                        result &= neuron_pool->changeTable(modify_data["selectedTableName"].GetString());
+                    }
                     if( result ){
                         ErrorMessage em("修改成功","success");
                         std::string str = em.ToJson();
@@ -171,6 +173,7 @@ void WebSocketRequestHandler::handleRequest(
                     }
                 }
                 std::string structureInfo = neuron_pool->getLinestoJson();
+                std::cout << structureInfo << std::endl;
                 ws.sendFrame(structureInfo.c_str(),structureInfo.size(),WebSocket::FRAME_TEXT);
                 volume_render_lock->unlock();
             }

@@ -4,6 +4,7 @@
 #include <Poco/Mutex.h>
 #include <Poco/JSON/JSON.h>
 #include <Poco/JSON/Object.h>
+#include <Poco/JSON/Parser.h>
 #include <Poco/JSON/Array.h>
 #include <Poco/Dynamic/Var.h>
 #include <DataBase.hpp>
@@ -19,6 +20,7 @@ string NeuronPool::getLinestoJson(){
 // need to initialize the listswc and hashswc first
 // this function will format graph from basic swc file strings
 bool NeuronGraph::formatGraphFromSWCList(){
+    if( list_swc.size() == 0 ) return true;
     std::map<int,vector<int>> vertexLinkedCount;
     for( int i = 0 ; i < list_swc.size() ; i ++ ){// new line
         time_t timestamp;
@@ -191,7 +193,7 @@ int NeuronGraph::formatSegments(std::map<int,vector<int>> &vertexLinkedCount, in
 string NeuronGraph::getLinestoJson(NeuronPool * np){
     Poco::JSON::Object package;
     package.set("type","structure");
-
+    Poco::JSON::Parser parser;
     Poco::JSON::Array graphs;
     int count = 0;
     for( auto it = lines.begin() ; it != lines.end() ; it ++ ){
@@ -222,9 +224,29 @@ string NeuronGraph::getLinestoJson(NeuronPool * np){
         line.set("sub",Vertexes);
         graphs.add(line);
     }
+    std::string result = DataBase::showAllTables();
+    Poco::Dynamic::Var cur = parser.parse(result);
+    Poco::JSON::Object curObj = *cur.extract<Poco::JSON::Object::Ptr>();
+    cur = curObj.get("cursor");
+    curObj = *cur.extract<Poco::JSON::Object::Ptr>();
+    Poco::Dynamic::Var batch = curObj.get("firstBatch");
+    Poco::JSON::Array batchArray = *batch.extract<Poco::JSON::Array::Ptr>();
+
+    Poco::JSON::Array tableList;
+    for( int i = 0 ; i < batchArray.size(); i ++ ){
+        Poco::JSON::Object table;
+        Poco::Dynamic::Var t = batchArray.get(i);
+        Poco::JSON::Object tObj = *t.extract<Poco::JSON::Object::Ptr>();
+        table.set("value",tObj.get("name").toString());
+        table.set("label",tObj.get("name").toString());
+        table.set("title",tObj.get("name").toString());
+        tableList.add(table);
+    }
+    package.set("tableList",tableList); 
     package.set("graphs",graphs);
     package.set("selectedVertexIndex",np->getSelectedVertexIndex());
     package.set("selectedMapIndex",np->getSelectedLineIndex());
+    package.set("selectedTableName",tableName);
     Poco::Dynamic::Var json(package);
     return json.toString();
 }
@@ -599,4 +621,20 @@ bool NeuronGraph::deleteLine(int line_id){
 
 bool NeuronPool::hasCamera(){
     return b_set_camera;
+}
+
+bool NeuronPool::changeTable(string tableName){
+    if( graphs_pool->find(tableName) != graphs_pool->end() ){
+        graph = graphs_pool->at(tableName);
+        initSelectedLineIndex();
+        initSelectedVertexIndex();
+        return true;
+    }else{
+        (*graphs_pool)[tableName] = make_shared<NeuronGraph>(tableName.c_str(),0);
+        graph = graphs_pool->at(tableName);
+        initSelectedLineIndex();
+        initSelectedVertexIndex();
+        return true;
+    }
+    return false;
 }

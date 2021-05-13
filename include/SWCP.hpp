@@ -69,7 +69,7 @@ namespace SWCP
 		std::stringstream m_errorMessage;
 	};
 
-	inline bool Parser::ReadSWCFromFile(const char *filename, NeuronGraph& graph, int type=0)
+	inline bool Parser::ReadSWCFromFile(const char *filename, NeuronGraph& graph, int type = 0)
 	{
 		std::ifstream file(filename, std::ios::binary | std::ios::ate);
 		std::streamsize size = file.tellg();
