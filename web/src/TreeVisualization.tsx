@@ -62,6 +62,7 @@ interface ArcType{
 }
 
 const GraphToNewick = ( graph:DataType, pkey:number ) =>{
+
     //console.log(graph);
     var maxLength = 0;
     for( let i = 0 ; i < graph.sub.length ; i ++ ){
@@ -114,14 +115,67 @@ const GraphToNewick = ( graph:DataType, pkey:number ) =>{
             return "(" + parsedStr + ")" + key + ":" + length/maxLength;
         }
     }
-    console.log(visitedArray);
-    let x = dfs(graph,pkey,0);
+
+    console.log(dicMap.get(pkey));
+    let x = dfs(graph,dicMap.get(pkey),0);
     console.log(x);
     return x;
 }
 
-const getTreeData = () =>{
-
+const getTreeData = ( graph:DataType, root:number ) =>{
+    //console.log(graph);
+    var maxLength = 0;
+    for( let i = 0 ; i < graph.sub.length ; i ++ ){
+        for( let j = 0 ; j < graph.sub[i].arc.length ; j ++ ){
+            if( maxLength < graph.sub[i].arc[j].distance ){
+                maxLength = graph.sub[i].arc[j].distance; //找到最大值，权重为1
+            }
+        }
+    }
+    let dicMap = new Map(); //index和key转换
+    var visitedArray = new Array(graph.sub.length);
+    for( let i = 0; i < graph.sub.length ; i ++ ){
+        visitedArray[i] = false;
+        dicMap.set(graph.sub[i].index,i); //服务器的index,对应客户端的key
+        if(graph.sub[i].index == root ){
+            root = i
+        }
+    }
+    const dfs = (graph:DataType,key:number) =>{
+        let parsedStr = "";
+        console.log("visite:",key);
+        visitedArray[key] = true;
+        for( let i = 0 ; i < graph.sub[key].arc.length ; i ++ ){
+            if( graph.sub[key].arc[i].headVex == graph.sub[key].index ){
+                let vexKey = dicMap.get(graph.sub[key].arc[i].tailVex);
+                if( !visitedArray[vexKey] ){
+                    let subStr = dfs(graph,vexKey);
+                    if( parsedStr.charAt(parsedStr.length - 1) == '}' ) 
+                        parsedStr = parsedStr + "," + subStr;
+                    else{
+                        parsedStr = parsedStr + subStr;
+                    }
+                }
+            } else if( graph.sub[key].arc[i].tailVex == graph.sub[key].index ){
+                let vexKey = dicMap.get(graph.sub[key].arc[i].headVex);
+                if( !visitedArray[vexKey] ){ 
+                    let subStr = dfs(graph,vexKey);
+                    if( parsedStr.charAt(parsedStr.length - 1) == '}' ) 
+                        parsedStr = parsedStr + "," + subStr;
+                    else{
+                        parsedStr = parsedStr + subStr;
+                    }
+                }
+            }
+        }
+        if( parsedStr != "" ) parsedStr = `, "children":[ ` + parsedStr + `]`
+        return `{"name":"` + graph.sub[key].index + `"` + parsedStr + "}";
+    }
+    console.log(visitedArray);
+    console.log("???"+dicMap.get(root));
+    let x = dfs(graph,root);
+    console.log(x);
+    return x;
 }
 
 
@@ -129,19 +183,12 @@ class TreeVisualization extends React.Component {
     constructor(props) {
         super(props);
         this.state = {
-            root : this.props.data.selectedVertexIndex
+            rootIndex : this.props.data.selectedVertexIndex
         };
     }
 
     componentDidUpdate(){
-        //console.log(this.props);
-        // if(this.props.data.graphs[this.props.selectedMapKey].sub && this.props.data.graphs[this.props.selectedMapKey].sub[this.props.selectedVertexKey].arc){
-        //     if (this.state.nowPage == '1') {
-        //         this.RectPhyloPlot();
-        //     } else if (this.state.nowPage == '3') {
-        //         this.UnrootedPhyloPlot();
-        //     }
-        // }
+        this.TreePlot();
     }
 
     componentDidMount() {
@@ -154,23 +201,10 @@ class TreeVisualization extends React.Component {
 
     TreePlot = () => {
         const self = this;
-        var treeData = //getTreeData( this.props.data.graphs[this.props.selectedMapKey] );
-        {
-            "name": "Top Level",
-            "children": [
-            { 
-                "name": "Level 2: A",
-                "children": [
-                { "name": "Son of A" },
-                { "name": "Daughter of A" }
-                ]
-            },
-            { "name": "Level 2: B" }
-            ]
-        };
+        var treeData = JSON.parse(getTreeData( this.props.data.graphs[this.props.selectedMapKey] ,self.state.rootIndex));
 
         // Set the dimensions and margins of the diagram
-        var margin = ({top: 50, right: 1500, bottom: 50, left: 40});
+        var margin = ({top: 50, right: 1500, bottom: 50, left: 50});
         //var margin = {top: 20, right: 90, bottom: 30, left: 90},
         var width = 960 - margin.left - margin.right;
         var height = 300 - margin.top - margin.bottom;
@@ -178,7 +212,11 @@ class TreeVisualization extends React.Component {
         // append the svg object to the body of the page
         // appends a 'group' element to 'svg'
         // moves the 'group' element to the top left margin
-        d3.select("#Rectangle").select("svg").selectAll().remove()
+        d3
+            .select("#Rectangle")
+            .select("svg")
+            .selectAll("*")
+            .remove()
 
         var svg = d3.select("#Rectangle").select("svg")
             .attr("width", width + margin.right + margin.left)
@@ -188,16 +226,18 @@ class TreeVisualization extends React.Component {
                 + margin.left + "," + margin.top + ")");
 
         var i = 0,
-            duration = 750,
-            root;
+            duration = 750;
 
         // declares a tree layout and assigns the size
         var treemap = d3.tree().size([height, width]);
 
+        var root;
         // Assigns parent, children, height, depth
         root = d3.hierarchy(treeData, function(d) { return d.children; });
         root.x0 = height / 2;
         root.y0 = 0;
+
+        console.log(this.state.rootIndex);
 
         // Collapse after the second level
         root.children.forEach(collapse);
@@ -246,7 +286,7 @@ class TreeVisualization extends React.Component {
             .attr("stroke","black")
             .attr("stroke-width",2)
             .style("fill", function(d) {
-                return d._children ? "#bbbbbb" : "#fff";
+                return d._children ? "#B0C4DE" : "#fff";
             });
 
 
@@ -261,10 +301,12 @@ class TreeVisualization extends React.Component {
                 return d.children || d._children ? "end" : "start";
             })
             .text(function(d) {
-                if(d.data.name == self.props.data.selectedVertexIndex)
-                 return d.data.name;
+                if(d.data.name == self.state.rootIndex)
+                 return "Root";
+                else if(d.data.name == self.props.data.selectedVertexIndex)
+                 return "Selected:" + d.data.name;
                 else
-                 return ""
+                 return "Index:" + d.data.name;
                 });
 
         // UPDATE
@@ -281,7 +323,7 @@ class TreeVisualization extends React.Component {
         nodeUpdate.select('circle.node')
             .attr('r', 10)
             .style("fill", function(d) {
-                return d._children ? "#bbbbbb" : "#ffffff";
+                return d._children ? "#B0C4DE" : "#ffffff";
             })
             .attr('cursor', 'pointer');
 
@@ -581,8 +623,9 @@ class TreeVisualization extends React.Component {
         const graph = this.props.data.graphs[this.props.selectedMapKey];
         for( let i = 0; i < graph.sub.length ; i ++ ){
             if( value == graph.sub[i].index ){
-                this.setState({root:value})
+                this.setState( {rootIndex:value} )
                 message.success("设置成功！");
+                this.TreePlot();
                 return
             }
         }

@@ -89,7 +89,7 @@ body,
 
 .node circle {
   fill: #fff;
-  stroke: rgb(0, 106, 192);
+  stroke: 	#4682B4;
   stroke-width: 3px;
 }
 
