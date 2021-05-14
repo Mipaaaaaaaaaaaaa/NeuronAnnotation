@@ -10,7 +10,7 @@ import "./style.css";
 import Info from "./Info";
 
 const { Header, Footer, Sider, Content } = Layout;
-const _SOCKETLINK = "ws://10.76.3.92:12121/render";
+const _SOCKETLINK = "ws://127.0.0.1:12121/info";
 
 const Format: React.FC = () => {
 
@@ -149,7 +149,7 @@ const Format: React.FC = () => {
                 "key":0
                 }
             ],
-            "selectedVertexIndex":0,
+            "selectedVertexIndex":1,
             "selectedMapIndex":0,
             "selectedTool":0
         }
@@ -218,6 +218,7 @@ const Format: React.FC = () => {
                   const blob = new Blob([bytes.buffer], { type: "image/jpeg" });
                   const url = URL.createObjectURL(blob);
                   setSrc(url);
+                  ws.close();
                   return;
                 }  
                 try {
@@ -237,6 +238,7 @@ const Format: React.FC = () => {
                     })
                     console.log(obj.error);
                   }
+                  ws.close();
                 } catch {
                   console.log(data);
                 }

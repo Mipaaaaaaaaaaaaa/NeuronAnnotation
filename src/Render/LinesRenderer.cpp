@@ -151,16 +151,12 @@ void LinesRenderer::render_frame(){
         }
             glColor3f(0.5,0.5,0.5);
             glLineWidth(3);
-            glBindVertexArray(hash_lineid_vao_vbo[pl->first].first); // vao
-            glDrawElements(GL_LINES, line_num_of_path_,
-                        GL_UNSIGNED_INT, nullptr);
+            glBindVertexArray(neuronGraph->graphDrawManager.hash_lineid_vao_vbo[pl->first].first); // vao
+            // glDrawElements(GL_LINES, line_num_of_path_,
+            //             GL_UNSIGNED_INT, nullptr);
     }
 
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-}
-
-void LinesRenderer::Setup(){
-
 }
 
 void LinesRenderer::set_volume(const char* path){

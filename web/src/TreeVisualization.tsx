@@ -2,6 +2,7 @@ import {Tabs, Radio, Space, Tooltip, Card, InputNumber, message} from 'antd';
 import React from "react";
 import * as lw from "@euphrasiologist/lwphylo";
 import * as d3 from "d3";
+import { subset } from 'd3';
 
 const {TabPane} = Tabs;
 const w = 1024;
@@ -64,62 +65,63 @@ interface ArcType{
 const GraphToNewick = ( graph:DataType, pkey:number ) =>{
 
     //console.log(graph);
-    var maxLength = 0;
-    for( let i = 0 ; i < graph.sub.length ; i ++ ){
-        for( let j = 0 ; j < graph.sub[i].arc.length ; j ++ ){
-            if( maxLength < graph.sub[i].arc[j].distance ){
-                maxLength = graph.sub[i].arc[j].distance; //找到最大值，权重为1
-            }
-        }
-    }
-    let dicMap = new Map(); //index和key转换
-    var visitedArray = new Array(graph.sub.length);
-    for( let i = 0; i < graph.sub.length ; i ++ ){
-        visitedArray[i] = false;
-        dicMap.set(graph.sub[i].index,i); //服务器的index,对应客户端的key
-    }
-    const dfs = (graph:DataType,key:number,length:number) =>{
-        let parsedStr = "";
-        console.log("visite:",key);
-        visitedArray[key] = true;
-        for( let i = 0 ; i < graph.sub[key].arc.length ; i ++ ){
-            if( graph.sub[key].arc[i].headVex == graph.sub[key].index ){
-                let vexKey = dicMap.get(graph.sub[key].arc[i].tailVex);
-                if( !visitedArray[vexKey] ){
-                    let subStr = dfs(graph,vexKey,graph.sub[key].arc[i].distance);
-                    if( parsedStr.charAt(parsedStr.length - 1) >= '0' && parsedStr.charAt(parsedStr.length - 1) <= '9' ) 
-                        parsedStr = parsedStr + "," + subStr;
-                    else{
-                        parsedStr = parsedStr + subStr;
-                    }
-                }
-            } else if( graph.sub[key].arc[i].tailVex == graph.sub[key].index ){
-                let vexKey = dicMap.get(graph.sub[key].arc[i].headVex);
-                if( !visitedArray[vexKey] ){ 
-                    let subStr = dfs(graph,vexKey,graph.sub[key].arc[i].distance);
-                    if( parsedStr.charAt(parsedStr.length - 1) >= '0' && parsedStr.charAt(parsedStr.length - 1) <= '9' ) 
-                        parsedStr = parsedStr + "," + subStr;
-                    else{
-                        parsedStr = parsedStr + subStr;
-                    }
-                }
-            }
-        }
-        if( parsedStr == "" ){
-            return key + ":" + length/maxLength;
-        }
-        if( length == 0 ){ //最后一个顶点
-            return "(" + parsedStr + ")" ;
-        }
-        else {
-            return "(" + parsedStr + ")" + key + ":" + length/maxLength;
-        }
-    }
+    // var maxLength = 0;
+    // if( pkey == -1 ) return "";
+    // for( let i = 0 ; i < graph.sub.length ; i ++ ){
+    //     for( let j = 0 ; j < graph.sub[i].arc.length ; j ++ ){
+    //         if( maxLength < graph.sub[i].arc[j].distance ){
+    //             maxLength = graph.sub[i].arc[j].distance; //找到最大值，权重为1
+    //         }
+    //     }
+    // }
+    // let dicMap = new Map(); //index和key转换
+    // var visitedArray = new Array(graph.sub.length);
+    // for( let i = 0; i < graph.sub.length ; i ++ ){
+    //     visitedArray[i] = false;
+    //     dicMap.set(graph.sub[i].index,i); //服务器的index,对应客户端的key
+    // }
+    // const dfs = (graph:DataType,key:number,length:number) =>{
+    //     let parsedStr = "";
+    //     console.log("visite:",key);
+    //     visitedArray[key] = true;
+    //     for( let i = 0 ; i < graph.sub[key].arc.length ; i ++ ){
+    //         if( graph.sub[key].arc[i].headVex == graph.sub[key].index ){
+    //             let vexKey = dicMap.get(graph.sub[key].arc[i].tailVex);
+    //             if( !visitedArray[vexKey] ){
+    //                 let subStr = dfs(graph,vexKey,graph.sub[key].arc[i].distance);
+    //                 if( parsedStr.charAt(parsedStr.length - 1) >= '0' && parsedStr.charAt(parsedStr.length - 1) <= '9' ) 
+    //                     parsedStr = parsedStr + "," + subStr;
+    //                 else{
+    //                     parsedStr = parsedStr + subStr;
+    //                 }
+    //             }
+    //         } else if( graph.sub[key].arc[i].tailVex == graph.sub[key].index ){
+    //             let vexKey = dicMap.get(graph.sub[key].arc[i].headVex);
+    //             if( !visitedArray[vexKey] ){ 
+    //                 let subStr = dfs(graph,vexKey,graph.sub[key].arc[i].distance);
+    //                 if( parsedStr.charAt(parsedStr.length - 1) >= '0' && parsedStr.charAt(parsedStr.length - 1) <= '9' ) 
+    //                     parsedStr = parsedStr + "," + subStr;
+    //                 else{
+    //                     parsedStr = parsedStr + subStr;
+    //                 }
+    //             }
+    //         }
+    //     }
+    //     if( parsedStr == "" ){
+    //         return key + ":" + length/maxLength;
+    //     }
+    //     if( length == 0 ){ //最后一个顶点
+    //         return "(" + parsedStr + ")" ;
+    //     }
+    //     else {
+    //         return "(" + parsedStr + ")" + key + ":" + length/maxLength;
+    //     }
+    // }
 
-    console.log(dicMap.get(pkey));
-    let x = dfs(graph,dicMap.get(pkey),0);
-    console.log(x);
-    return x;
+    // console.log(dicMap.get(pkey));
+    // let x = dfs(graph,dicMap.get(pkey),0);
+    // console.log(x);
+    // return x;
 }
 
 const getTreeData = ( graph:DataType, root:number ) =>{
@@ -142,7 +144,9 @@ const getTreeData = ( graph:DataType, root:number ) =>{
         }
     }
     const dfs = (graph:DataType,key:number) =>{
+        if( !graph.sub[key] ) return "";
         let parsedStr = "";
+        console.log("visite"+key);
         visitedArray[key] = true;
         for( let i = 0 ; i < graph.sub[key].arc.length ; i ++ ){
             if( graph.sub[key].arc[i].headVex == graph.sub[key].index ){
@@ -170,6 +174,7 @@ const getTreeData = ( graph:DataType, root:number ) =>{
         if( parsedStr != "" ) parsedStr = `, "children":[ ` + parsedStr + `]`
         return `{"name":"` + graph.sub[key].index + `"` + parsedStr + "}";
     }
+    console.log(root,dicMap.get(root))
     let x = dfs(graph,root);
     return x;
 }
@@ -208,7 +213,7 @@ class TreeVisualization extends React.Component {
         var treeData = JSON.parse(getTreeData( this.props.data.graphs[this.props.selectedMapKey] ,self.state.rootIndex));
 
         // Set the dimensions and margins of the diagram
-        var margin = ({top: 50, right: 1500, bottom: 50, left: 50});
+        var margin = ({top: 50, right: 100, bottom: 50, left: 50});
         //var margin = {top: 20, right: 90, bottom: 30, left: 90},
         var width = 960 - margin.left - margin.right;
         var height = 300 - margin.top - margin.bottom;
@@ -305,8 +310,10 @@ class TreeVisualization extends React.Component {
                 return d.children || d._children ? "end" : "start";
             })
             .text(function(d) {
-                if(d.data.name == self.state.rootIndex)
-                 return "Root";
+                if(d.data.name == root.data.name){
+                    console.log("root"+d.data.name);
+                    return "Root";
+                }
                 else if(d.data.name == self.props.data.selectedVertexIndex)
                  return "Selected:" + d.data.name;
                 else

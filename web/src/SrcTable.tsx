@@ -12,7 +12,7 @@ import { subset } from 'd3-array';
 import { autoType } from 'd3-dsv';
 
 const EditableContext = React.createContext<FormInstance<any> | null>(null);
-const _SOCKETLINK = "ws://10.76.3.92:12121/render";
+const _SOCKETLINK = "ws://127.0.0.1:12121/info";
 
 interface Item {
   key: string;
@@ -301,7 +301,7 @@ class SrcTable extends React.Component<EditableTableProps, EditableTableState>{
 
     handleDelete = (record) => {
         //服务器自删除后更新数据，并提示删除成功
-        const ws = new WebSocket("ws://192.168.1.26:9999");
+        const ws = new WebSocket("ws://127.0.0.1:12121:9999");
             ws.binaryType = "arraybuffer";
             ws.onopen = () => {
                 console.log("连接成功，准备发送更新数据");

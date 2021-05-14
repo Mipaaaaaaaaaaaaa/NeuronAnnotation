@@ -20,6 +20,8 @@ if(WIN32)
         LinesRenderer_SRCS
         LinesRenderer.cpp
         Image.cpp
+        ${PROJECT_SOURCE_DIR}/src/Server/AnnotationDS.cpp
+        ${PROJECT_SOURCE_DIR}/src/Server/DataBase.cpp
         ${PROJECT_SOURCE_DIR}/third_party/glad_wgl/src/gl.c
         ${PROJECT_SOURCE_DIR}/third_party/glad_wgl/src/wgl.c
     )
@@ -78,6 +80,7 @@ target_link_libraries(
         Poco::Net
         Poco::Util
         Poco::JSON
+        Poco::MongoDB
         ${CUDA_CUDA_LIBRARY}
 
         PUBLIC

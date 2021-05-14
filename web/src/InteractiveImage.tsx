@@ -16,8 +16,8 @@ const DEBOUNCE = 5;
 
 const Image: React.FC = (props) => {
   const [src, setSrc] = useState("");
-  const [width, setWidth] = useState(800);
-  const [height, setHeight] = useState(800);
+  const [width, setWidth] = useState(1200);
+  const [height, setHeight] = useState(700);
   const [recording, setRecording] = useState(false); //标注模式
   const img = useRef<HTMLImageElement>(null);
   useEffect(() => {
@@ -26,7 +26,7 @@ const Image: React.FC = (props) => {
     let lastTarget = [0, 0, -1];
     let lastUp = [0, 1, 0];
     let lastZoom = 20.0;
-    const ws = new WebSocket("ws://10.76.3.92:12121/render");
+    const ws = new WebSocket("ws://127.0.0.1:12121/render");
     ws.binaryType = "arraybuffer";
     ws.onopen = () => {
       console.log("连接渲染服务成功");

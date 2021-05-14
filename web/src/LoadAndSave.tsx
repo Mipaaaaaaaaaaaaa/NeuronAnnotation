@@ -6,7 +6,7 @@ import { UploadOutlined } from '@ant-design/icons';
 import { withSuccess } from "antd/lib/modal/confirm";
 import { linkVertical } from "d3-shape";
 
-const _DOWNLOAD = "ws://10.76.3.92:12121/download";
+const _DOWNLOAD = "ws://127.0.0.1:12121/download";
 const { Option } = Select;
 const LoadAndSave: React.FC = (props) => {
   const UPLOAD = {

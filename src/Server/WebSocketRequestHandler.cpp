@@ -110,68 +110,6 @@ void WebSocketRequestHandler::handleRequest(
                         }
                     }
                 }
-                else if(document.HasMember("modify")){
-                    rapidjson::Value &modify_data = document["modify"];
-                    int line_id = -1;
-                    bool result = true;
-                    bool select = false;
-                    if( modify_data.HasMember("index") && modify_data["index"].IsInt64() ){
-                        line_id = modify_data["index"].GetInt64();
-                    }
-                    if( modify_data.HasMember("selectedVertexIndex") && modify_data["selectedVertexIndex"].IsInt64() ){
-                        neuron_pool->selectVertex(modify_data["selectedVertexIndex"].GetInt64());
-                    }
-                    if( modify_data.HasMember("selectedLineIndex") && modify_data["selectedLineIndex"].IsInt64() ){
-                        neuron_pool->selectLine(modify_data["selectedLineIndex"].GetInt64());
-                    }
-                    if( modify_data.HasMember("name") && modify_data["name"].IsString() ){
-                        result &= neuron_pool->changeName(line_id,modify_data["name"].GetString());
-                    }
-                    if( modify_data.HasMember("color") && modify_data["color"].IsString() ){
-                        result &= neuron_pool->changeColor(line_id,modify_data["color"].GetString());
-                    }
-                    if( modify_data.HasMember("visible") ){
-                        result &= neuron_pool->changeVisible(line_id,modify_data["visible"].GetBool());
-                    }
-                    if( modify_data.HasMember("selectedTableName") ){
-                        result &= neuron_pool->changeTable(modify_data["selectedTableName"].GetString());
-                    }
-                    if( result ){
-                        ErrorMessage em("修改成功","success");
-                        std::string str = em.ToJson();
-                        ws.sendFrame(str.c_str(),str.size(),WebSocket::FRAME_TEXT);
-                    }else{
-                        ErrorMessage em("修改失败");
-                        std::string str = em.ToJson();
-                        ws.sendFrame(str.c_str(),str.size(),WebSocket::FRAME_TEXT);
-                    }
-                }
-                else if(document.HasMember("addline")){
-                    if (neuron_pool->addLine()){
-                        ErrorMessage em("添加成功","success");
-                        std::string str = em.ToJson();
-                        ws.sendFrame(str.c_str(),str.size(),WebSocket::FRAME_TEXT);
-                    }else{
-                        ErrorMessage em("添加失败");
-                        std::string str = em.ToJson();
-                        ws.sendFrame(str.c_str(),str.size(),WebSocket::FRAME_TEXT);
-                    }
-                }
-                else if(document.HasMember("deleteline")){
-                    int line_id = -1;
-                    if( document.HasMember("index") && document["index"].IsInt64() ){
-                        line_id = document["index"].GetInt64();
-                    }
-                    if (neuron_pool->deleteLine(line_id)){
-                        ErrorMessage em("删除成功","success");
-                        std::string str = em.ToJson();
-                        ws.sendFrame(str.c_str(),str.size(),WebSocket::FRAME_TEXT);
-                    }else{
-                        ErrorMessage em("删除失败");
-                        std::string str = em.ToJson();
-                        ws.sendFrame(str.c_str(),str.size(),WebSocket::FRAME_TEXT);
-                    }
-                }
                 std::string structureInfo = neuron_pool->getLinestoJson();
                 ws.sendFrame(structureInfo.c_str(),structureInfo.size(),WebSocket::FRAME_TEXT);
                 volume_render_lock->unlock();

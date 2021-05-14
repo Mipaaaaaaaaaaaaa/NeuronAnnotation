@@ -47,7 +47,7 @@ void RequestHandlerFactory::initLinesRender(){
 Poco::Net::HTTPRequestHandler *RequestHandlerFactory::createRequestHandler(
         const Poco::Net::HTTPServerRequest &request) {
     if( !isInited ){
-        neuronGraphs["test7"] = make_shared<NeuronGraph>("test7");
+        neuronGraphs["test"] = make_shared<NeuronGraph>("./test.swc","test");
         initBlockVolumeRender();
         initLinesRender();
         isInited = true;
@@ -55,6 +55,8 @@ Poco::Net::HTTPRequestHandler *RequestHandlerFactory::createRequestHandler(
     auto &uri = request.getURI();
     auto address =  request.clientAddress();
     auto host = address.host();
+    std::cout << "Who are you?? I am" <<uri << std::endl;
+
     if (uri == "/render") {
         std::cout << "create WebSocketRequestHandler" << std::endl;
         WebSocketRequestHandler *n = new WebSocketRequestHandler();
@@ -67,14 +69,31 @@ Poco::Net::HTTPRequestHandler *RequestHandlerFactory::createRequestHandler(
             n->user_id = ++max_linked_id;
             userList[host.toString()] = n->user_id;
             n->neuron_pool = new NeuronPool();
-            n->neuron_pool->setGraph(neuronGraphs["test7"]);
+            n->neuron_pool->setGraph(neuronGraphs["test"]);
             n->neuron_pool->setGraphPool(&neuronGraphs);
             n->neuron_pool->setUserId(n->user_id);
             neuronPools[n->user_id] = n->neuron_pool;
         }
         return n;
     }
-    std::cout << uri << std::endl;
+
+
     std::cout << "create MyHTTPRequestHandler" << std::endl;
-    return new MyHTTPRequestHandler();
+    if (uri == "/info"){
+        MyHTTPRequestHandler *n = new MyHTTPRequestHandler();
+        if( userList.find(host.toString()) != userList.end() ){ //已有
+            n->user_id = userList[host.toString()];
+            n->neuron_pool = neuronPools[n->user_id];
+        }else{
+            n->user_id = ++max_linked_id;
+            userList[host.toString()] = n->user_id;
+            n->neuron_pool = new NeuronPool();
+            n->neuron_pool->setGraph(neuronGraphs["test"]);
+            n->neuron_pool->setGraphPool(&neuronGraphs);
+            n->neuron_pool->setUserId(n->user_id);
+            neuronPools[n->user_id] = n->neuron_pool;
+        }
+        return n;
+    }
+
 }

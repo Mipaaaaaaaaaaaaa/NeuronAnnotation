@@ -57,7 +57,7 @@ bool NeuronGraph::formatGraphFromSWCList(){
             segments[seg_id].name = list_swc[index].name;
             segments[seg_id].color = list_swc[index].color;
             segments[seg_id].size = -1; //最后计算
-            return seg_id;
+            continue;
         }
         if( vertexLinkedCount[list_swc[index].id].size() == 1 ){ //顶点
             //终点，关键节点
@@ -168,9 +168,7 @@ bool NeuronGraph::formatGraphFromSWCList(){
             v.linked_vertex_ids[segments[list_swc[hash_swc_ids[pn]].seg_id].start_id] = true;
             lines[v.line_id].hash_vertexes[segments[list_swc[hash_swc_ids[pn]].seg_id].start_id].linked_vertex_ids[v.id] = true;
             lines[v.line_id].hash_vertexes[v.id] = v;
-            return 0;
         }
-        return true;
     }
     return true;
 }
@@ -344,6 +342,12 @@ NeuronGraph::NeuronGraph(const char * filePath, const char * tableName){
     this->cur_max_seg_id = -1;
     this->cur_max_line_id = -1;
     bool result = parser.ReadSWCFromFile(filePath, *this,0);
+    
+    std::vector<std::shared_ptr<NeuronSWC> > SWCs;
+    for( int i = 0 ; i < list_swc.size() ; i ++ ){
+        SWCs.push_back(make_shared<NeuronSWC>(list_swc[i]));
+    }
+    DataBase::insertSWCs(SWCs,tableName);
     if( result )std::cout << " Build Graph From File Successfully!" << std::endl;
     else std::cout << " Build Graph From File Error!" << std::endl;
 }
