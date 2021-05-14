@@ -74,6 +74,7 @@ Poco::Net::HTTPRequestHandler *RequestHandlerFactory::createRequestHandler(
         }
         return n;
     }
+    std::cout << uri << std::endl;
     std::cout << "create MyHTTPRequestHandler" << std::endl;
     return new MyHTTPRequestHandler();
 }

@@ -12,6 +12,7 @@
 #include<Poco/Mutex.h>
 #include<Camera.hpp>
 #include<seria/deserialize.hpp>
+#include "GraphDrawManager.hpp"
 using namespace std;
 
 class NeuronPool;
@@ -160,6 +161,7 @@ struct Line : public BasicObj //Line是有关关键Vertex的集合
         name="";
         user_id = -1;
     }
+    unsigned int vao, ebo;
 };
 	
 class NeuronGraph : public BasicObj{
@@ -228,6 +230,9 @@ private:
 public:
     bool formatGraphFromSWCList();
     int formatSegments(std::map<int,vector<int>> &vertexLinkedCount, int index);
+
+public:
+    GraphDrawManager GraphDrawManager;
 };
 
 // class NeuronGraphDB{
@@ -269,6 +274,9 @@ public:
     };
     void setUserId( int id ){
         user_id = id;
+    }
+    std::shared_ptr<NeuronGraph> getGraph(){
+        return graph;
     }
 
 private:

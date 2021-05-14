@@ -44,151 +44,137 @@ bool NeuronGraph::formatGraphFromSWCList(){
             vertexLinkedCount[list_swc[i].id].push_back(list_swc[i].pn);
         }
     }
-    for( int i = 0 ; i < list_swc.size() ; i ++ ){
-        formatSegments(vertexLinkedCount,i);
-    }
-    return true;
-}
-
-int NeuronGraph::formatSegments(std::map<int,vector<int>> &vertexLinkedCount, int index){
-    if( list_swc[index].seg_id != -1 ) return list_swc[index].seg_id;
-    if( list_swc[index].pn == -1 ){ //起点
-        int seg_id = getNewSegmentId();
-        list_swc[index].seg_id = seg_id;
-        list_swc[index].seg_in_id = 0;
-        lines[list_swc[index].line_id].hash_vertexes[list_swc[index].id].hash_linked_seg_ids[seg_id] = seg_id;
-        segments[seg_id].segment_vertex_ids[0] = list_swc[index].id;
-        segments[seg_id].start_id = list_swc[index].id;
-        segments[seg_id].id = seg_id;
-        segments[seg_id].line_id = list_swc[index].line_id;
-        segments[seg_id].name = list_swc[index].name;
-        segments[seg_id].color = list_swc[index].color;
-        segments[seg_id].size = -1; //最后计算
-        return seg_id;
-    }
-    if( vertexLinkedCount[list_swc[index].id].size() == 1 ){ //顶点
-        //终点，关键节点
-        if( list_swc[hash_swc_ids[list_swc[index].pn]].seg_id == -1 ){
-            formatSegments(vertexLinkedCount,hash_swc_ids[list_swc[index].pn]);
-        }
-        int seg_id;
-        if( list_swc[hash_swc_ids[list_swc[index].pn]].seg_size != -1 && list_swc[hash_swc_ids[list_swc[index].pn]].seg_in_id == list_swc[hash_swc_ids[list_swc[index].pn]].seg_size - 2){
-            //上一段已经结束，该段为新段 针对只有两个点的节点
-            seg_id = getNewSegmentId();
-            list_swc[index].seg_id = seg_id;
-            list_swc[index].color = list_swc[index].color;
-            list_swc[index].name = list_swc[hash_swc_ids[list_swc[index].pn]].name;
-            list_swc[index].user_id = list_swc[index].user_id;
-            list_swc[index].line_id = list_swc[hash_swc_ids[list_swc[index].pn]].line_id;
-            list_swc[index].seg_in_id = 1;
-            list_swc[index].seg_size = 2;
-            lines[list_swc[index].line_id].hash_vertexes[list_swc[index].pn].hash_linked_seg_ids[seg_id] = true;
-            segments[seg_id].start_id = list_swc[index].pn;
-            segments[seg_id].end_id = list_swc[index].id;
-            segments[seg_id].segment_vertex_ids[0] = list_swc[index].pn;
-            segments[seg_id].segment_vertex_ids[1] = list_swc[index].id;
-            segments[seg_id].id = seg_id;
-            segments[seg_id].line_id = list_swc[index].line_id;
-            segments[seg_id].name = list_swc[index].name;
-            segments[seg_id].color = list_swc[index].color;
-            segments[seg_id].size = 2;
-            
-        }else{
-            seg_id = list_swc[hash_swc_ids[list_swc[index].pn]].seg_id;
-            list_swc[index].color = list_swc[hash_swc_ids[list_swc[index].pn]].color;
-            list_swc[index].name = list_swc[hash_swc_ids[list_swc[index].pn]].name;
-            list_swc[index].user_id = list_swc[hash_swc_ids[list_swc[index].pn]].user_id;
-            list_swc[index].line_id = segments[seg_id].line_id;
-            list_swc[index].seg_id = seg_id;
-            list_swc[index].seg_in_id = list_swc[hash_swc_ids[list_swc[index].pn]].seg_in_id + 1;
-            segments[seg_id].end_id = list_swc[index].id;
-            segments[seg_id].segment_vertex_ids[list_swc[index].seg_in_id] = list_swc[index].id;
-            segments[seg_id].size = list_swc[index].seg_in_id + 1;
-            for( auto v = segments[seg_id].segment_vertex_ids.begin() ; v != segments[seg_id].segment_vertex_ids.end() ; v ++ ){ //更新总长度
-                if(list_swc[hash_swc_ids[v->second]].seg_id == seg_id)list_swc[hash_swc_ids[v->second]].seg_size = segments[seg_id].size;
-            }
-        }
-        Vertex v;
-        v.line_id = list_swc[index].line_id;
-        v.id = list_swc[index].id;
-        v.radius = list_swc[index].radius;
-        v.x = list_swc[index].x;
-        v.y = list_swc[index].y;
-        v.z = list_swc[index].z;
-        v.type = list_swc[index].type;
-        v.hash_linked_seg_ids[seg_id] = true;
-        v.linked_vertex_ids[segments[seg_id].start_id] = true;
-        lines[v.line_id].hash_vertexes[segments[seg_id].start_id].linked_vertex_ids[v.id] = true;
-        lines[v.line_id].hash_vertexes[v.id] = v;
-    }else if( vertexLinkedCount[list_swc[index].id].size() == 2 ){ //段中间节点
-        if( list_swc[hash_swc_ids[list_swc[index].pn]].seg_id == -1 ){ //该节点的父节点尚未被计算
-            formatSegments(vertexLinkedCount,hash_swc_ids[list_swc[index].pn]);
-        }
-        
-        if( list_swc[hash_swc_ids[list_swc[index].pn]].seg_size != -1 ){//&& segments[list_swc[hash_swc_ids[list_swc[index].pn]].seg_id].end_id == list_swc[index].pn){
-            //上一段已经结束，该段为新段
+    for( int index = 0 ; index < list_swc.size() ; index ++ ){
+        if( list_swc[index].pn == -1 ){ //起点
             int seg_id = getNewSegmentId();
             list_swc[index].seg_id = seg_id;
-            list_swc[index].color = list_swc[index].color;
-            list_swc[index].name = list_swc[index].name;
-            list_swc[index].user_id = list_swc[index].user_id;
-            list_swc[index].line_id = list_swc[hash_swc_ids[list_swc[index].pn]].line_id;
-            list_swc[index].seg_in_id = 1;
-
-            lines[list_swc[index].line_id].hash_vertexes[list_swc[index].pn].hash_linked_seg_ids[seg_id] = true;
-            segments[seg_id].start_id = list_swc[index].pn;
-            segments[seg_id].segment_vertex_ids[0] = list_swc[index].pn;
-            segments[seg_id].segment_vertex_ids[1] = list_swc[index].id;
+            list_swc[index].seg_in_id = 0;
+            lines[list_swc[index].line_id].hash_vertexes[list_swc[index].id].hash_linked_seg_ids[seg_id] = seg_id;
+            segments[seg_id].segment_vertex_ids[0] = list_swc[index].id;
+            segments[seg_id].start_id = list_swc[index].id;
             segments[seg_id].id = seg_id;
             segments[seg_id].line_id = list_swc[index].line_id;
             segments[seg_id].name = list_swc[index].name;
             segments[seg_id].color = list_swc[index].color;
-            segments[seg_id].size = -1;
-        }else{ //中间点
-            int seg_id = list_swc[hash_swc_ids[list_swc[index].pn]].seg_id;
-            list_swc[index].seg_id = seg_id;
-            list_swc[index].seg_in_id = list_swc[hash_swc_ids[list_swc[index].pn]].seg_in_id + 1;
+            segments[seg_id].size = -1; //最后计算
+            return seg_id;
+        }
+        if( vertexLinkedCount[list_swc[index].id].size() == 1 ){ //顶点
+            //终点，关键节点
+            int seg_id;
+            if( list_swc[hash_swc_ids[list_swc[index].pn]].seg_size != -1 && list_swc[hash_swc_ids[list_swc[index].pn]].seg_in_id == list_swc[hash_swc_ids[list_swc[index].pn]].seg_size - 2){
+                //上一段已经结束，该段为新段 针对只有两个点的节点
+                seg_id = getNewSegmentId();
+                list_swc[index].seg_id = seg_id;
+                list_swc[index].color = list_swc[index].color;
+                list_swc[index].name = list_swc[hash_swc_ids[list_swc[index].pn]].name;
+                list_swc[index].user_id = list_swc[index].user_id;
+                list_swc[index].line_id = list_swc[hash_swc_ids[list_swc[index].pn]].line_id;
+                list_swc[index].seg_in_id = 1;
+                list_swc[index].seg_size = 2;
+                lines[list_swc[index].line_id].hash_vertexes[list_swc[index].pn].hash_linked_seg_ids[seg_id] = true;
+                segments[seg_id].start_id = list_swc[index].pn;
+                segments[seg_id].end_id = list_swc[index].id;
+                segments[seg_id].segment_vertex_ids[0] = list_swc[index].pn;
+                segments[seg_id].segment_vertex_ids[1] = list_swc[index].id;
+                segments[seg_id].id = seg_id;
+                segments[seg_id].line_id = list_swc[index].line_id;
+                segments[seg_id].name = list_swc[index].name;
+                segments[seg_id].color = list_swc[index].color;
+                segments[seg_id].size = 2;
+                
+            }else{
+                seg_id = list_swc[hash_swc_ids[list_swc[index].pn]].seg_id;
+                list_swc[index].color = list_swc[hash_swc_ids[list_swc[index].pn]].color;
+                list_swc[index].name = list_swc[hash_swc_ids[list_swc[index].pn]].name;
+                list_swc[index].user_id = list_swc[hash_swc_ids[list_swc[index].pn]].user_id;
+                list_swc[index].line_id = segments[seg_id].line_id;
+                list_swc[index].seg_id = seg_id;
+                list_swc[index].seg_in_id = list_swc[hash_swc_ids[list_swc[index].pn]].seg_in_id + 1;
+                segments[seg_id].end_id = list_swc[index].id;
+                segments[seg_id].segment_vertex_ids[list_swc[index].seg_in_id] = list_swc[index].id;
+                segments[seg_id].size = list_swc[index].seg_in_id + 1;
+                for( auto v = segments[seg_id].segment_vertex_ids.begin() ; v != segments[seg_id].segment_vertex_ids.end() ; v ++ ){ //更新总长度
+                    if(list_swc[hash_swc_ids[v->second]].seg_id == seg_id)list_swc[hash_swc_ids[v->second]].seg_size = segments[seg_id].size;
+                }
+            }
+            Vertex v;
+            v.line_id = list_swc[index].line_id;
+            v.id = list_swc[index].id;
+            v.radius = list_swc[index].radius;
+            v.x = list_swc[index].x;
+            v.y = list_swc[index].y;
+            v.z = list_swc[index].z;
+            v.type = list_swc[index].type;
+            v.hash_linked_seg_ids[seg_id] = true;
+            v.linked_vertex_ids[segments[seg_id].start_id] = true;
+            lines[v.line_id].hash_vertexes[segments[seg_id].start_id].linked_vertex_ids[v.id] = true;
+            lines[v.line_id].hash_vertexes[v.id] = v;
+        }else if( vertexLinkedCount[list_swc[index].id].size() == 2 ){ //段中间节点
+            if( list_swc[hash_swc_ids[list_swc[index].pn]].seg_size != -1 ){//&& segments[list_swc[hash_swc_ids[list_swc[index].pn]].seg_id].end_id == list_swc[index].pn){
+                //上一段已经结束，该段为新段
+                int seg_id = getNewSegmentId();
+                list_swc[index].seg_id = seg_id;
+                list_swc[index].color = list_swc[index].color;
+                list_swc[index].name = list_swc[index].name;
+                list_swc[index].user_id = list_swc[index].user_id;
+                list_swc[index].line_id = list_swc[hash_swc_ids[list_swc[index].pn]].line_id;
+                list_swc[index].seg_in_id = 1;
+
+                lines[list_swc[index].line_id].hash_vertexes[list_swc[index].pn].hash_linked_seg_ids[seg_id] = true;
+                segments[seg_id].start_id = list_swc[index].pn;
+                segments[seg_id].segment_vertex_ids[0] = list_swc[index].pn;
+                segments[seg_id].segment_vertex_ids[1] = list_swc[index].id;
+                segments[seg_id].id = seg_id;
+                segments[seg_id].line_id = list_swc[index].line_id;
+                segments[seg_id].name = list_swc[index].name;
+                segments[seg_id].color = list_swc[index].color;
+                segments[seg_id].size = -1;
+            }else{ //中间点
+                int seg_id = list_swc[hash_swc_ids[list_swc[index].pn]].seg_id;
+                list_swc[index].seg_id = seg_id;
+                list_swc[index].seg_in_id = list_swc[hash_swc_ids[list_swc[index].pn]].seg_in_id + 1;
+                list_swc[index].color = list_swc[hash_swc_ids[list_swc[index].pn]].color;
+                list_swc[index].name = list_swc[hash_swc_ids[list_swc[index].pn]].name;
+                list_swc[index].user_id = list_swc[hash_swc_ids[list_swc[index].pn]].user_id;
+                list_swc[index].line_id = segments[seg_id].line_id;
+                segments[seg_id].segment_vertex_ids[list_swc[index].seg_in_id] = list_swc[index].id;
+            }
+
+        }else if( vertexLinkedCount[list_swc[index].id].size() > 2 ){ //关键节点，对每个子节点分段
+            //该节点为旧的终点，新的起点
+            int pn = list_swc[index].pn;
+            segments[list_swc[hash_swc_ids[pn]].seg_id].end_id = list_swc[index].id;
             list_swc[index].color = list_swc[hash_swc_ids[list_swc[index].pn]].color;
             list_swc[index].name = list_swc[hash_swc_ids[list_swc[index].pn]].name;
             list_swc[index].user_id = list_swc[hash_swc_ids[list_swc[index].pn]].user_id;
-            list_swc[index].line_id = segments[seg_id].line_id;
-            segments[seg_id].segment_vertex_ids[list_swc[index].seg_in_id] = list_swc[index].id;
+            list_swc[index].line_id = list_swc[hash_swc_ids[pn]].line_id;
+            list_swc[index].seg_id = list_swc[hash_swc_ids[pn]].seg_id;
+            segments[list_swc[pn].seg_id].size = list_swc[hash_swc_ids[pn]].seg_in_id + 2;
+            segments[list_swc[pn].seg_id].segment_vertex_ids[list_swc[hash_swc_ids[pn]].seg_in_id+1] = list_swc[index].id;
+            //更新所有前seg节点长度
+            for( auto v = segments[list_swc[pn].seg_id].segment_vertex_ids.begin() ; v != segments[list_swc[pn].seg_id].segment_vertex_ids.end() ; v ++ ){ //更新总长度
+                    if(list_swc[hash_swc_ids[v->second]].seg_id == list_swc[pn].seg_id ) list_swc[hash_swc_ids[v->second]].seg_size = segments[list_swc[pn].seg_id].size;
+            }
+            Vertex v; //新节点
+            v.line_id = list_swc[index].line_id;
+            v.id = list_swc[index].id;
+            v.radius = list_swc[index].radius;
+            v.x = list_swc[index].x;
+            v.y = list_swc[index].y;
+            v.z = list_swc[index].z;
+            v.type = list_swc[index].type;
+            v.hash_linked_seg_ids[list_swc[hash_swc_ids[pn]].seg_id] = true;
+            v.linked_vertex_ids[segments[list_swc[hash_swc_ids[pn]].seg_id].start_id] = true;
+            lines[v.line_id].hash_vertexes[segments[list_swc[hash_swc_ids[pn]].seg_id].start_id].linked_vertex_ids[v.id] = true;
+            lines[v.line_id].hash_vertexes[v.id] = v;
+            return 0;
         }
-
-    }else if( vertexLinkedCount[list_swc[index].id].size() > 2 ){ //关键节点，对每个子节点分段
-        if( list_swc[hash_swc_ids[list_swc[index].pn]].seg_id == -1 ){ //该节点的父节点尚未被计算
-            formatSegments(vertexLinkedCount,hash_swc_ids[list_swc[index].pn]);
-        }
-        //该节点为旧的终点，新的起点
-        int pn = list_swc[index].pn;
-        segments[list_swc[hash_swc_ids[pn]].seg_id].end_id = list_swc[index].id;
-        list_swc[index].color = list_swc[hash_swc_ids[list_swc[index].pn]].color;
-        list_swc[index].name = list_swc[hash_swc_ids[list_swc[index].pn]].name;
-        list_swc[index].user_id = list_swc[hash_swc_ids[list_swc[index].pn]].user_id;
-        list_swc[index].line_id = list_swc[hash_swc_ids[pn]].line_id;
-        list_swc[index].seg_id = list_swc[hash_swc_ids[pn]].seg_id;
-        segments[list_swc[pn].seg_id].size = list_swc[hash_swc_ids[pn]].seg_in_id + 2;
-        segments[list_swc[pn].seg_id].segment_vertex_ids[list_swc[hash_swc_ids[pn]].seg_in_id+1] = list_swc[index].id;
-        //更新所有前seg节点长度
-        for( auto v = segments[list_swc[pn].seg_id].segment_vertex_ids.begin() ; v != segments[list_swc[pn].seg_id].segment_vertex_ids.end() ; v ++ ){ //更新总长度
-                if(list_swc[hash_swc_ids[v->second]].seg_id == list_swc[pn].seg_id ) list_swc[hash_swc_ids[v->second]].seg_size = segments[list_swc[pn].seg_id].size;
-        }
-        Vertex v; //新节点
-        v.line_id = list_swc[index].line_id;
-        v.id = list_swc[index].id;
-        v.radius = list_swc[index].radius;
-        v.x = list_swc[index].x;
-        v.y = list_swc[index].y;
-        v.z = list_swc[index].z;
-        v.type = list_swc[index].type;
-        v.hash_linked_seg_ids[list_swc[hash_swc_ids[pn]].seg_id] = true;
-        v.linked_vertex_ids[segments[list_swc[hash_swc_ids[pn]].seg_id].start_id] = true;
-        lines[v.line_id].hash_vertexes[segments[list_swc[hash_swc_ids[pn]].seg_id].start_id].linked_vertex_ids[v.id] = true;
-        lines[v.line_id].hash_vertexes[v.id] = v;
-        return 0;
+        return true;
     }
     return true;
 }
+
 
 string NeuronGraph::getLinestoJson(NeuronPool * np){
     Poco::JSON::Object package;

@@ -44,6 +44,7 @@ public:
 
     void clear_scene() override;
 
+    void set_user(std::shared_ptr<NeuronPool> pool);
 
 private:
     std::unique_ptr<sv::Shader> line_shader;
@@ -63,6 +64,7 @@ private:
 
 private: //用户相关
     Camera camera;
+    std::shared_ptr<NeuronPool> userPool;
     std::shared_ptr<NeuronGraph> neuronGraph;
 private:    
     //CUcontext cu_context;

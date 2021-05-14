@@ -173,7 +173,6 @@ void WebSocketRequestHandler::handleRequest(
                     }
                 }
                 std::string structureInfo = neuron_pool->getLinestoJson();
-                std::cout << structureInfo << std::endl;
                 ws.sendFrame(structureInfo.c_str(),structureInfo.size(),WebSocket::FRAME_TEXT);
                 volume_render_lock->unlock();
             }

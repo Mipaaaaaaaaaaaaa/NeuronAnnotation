@@ -1,9 +1,11 @@
 #include "MyHTTPRequestHandler.hpp"
+#include <iostream>
 
 void MyHTTPRequestHandler::handleRequest(
     Poco::Net::HTTPServerRequest &request,
     Poco::Net::HTTPServerResponse &response) {
-  response.setContentType("text/plain");
-  std::ostream &ostr = response.send();
-  ostr << "TODO... not implement";
+  
+
+    response.setContentType("application/octet-stream");
+    std::ostream &ostr = response.send();
 }

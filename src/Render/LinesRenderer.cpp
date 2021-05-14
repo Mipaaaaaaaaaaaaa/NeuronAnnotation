@@ -58,84 +58,6 @@ LinesRenderer::LinesRenderer(int w, int h)
     if(w>2048 || h>2048 || w<1 || h<1){
         throw std::runtime_error("bad width or height");
     }
-    initResourceContext();
-    //setupSystemInfo();
-}
-
-void LinesRenderer::initResourceContext(){
-#ifdef _WINDOWS
-    auto ins=GetModuleHandle(NULL);
-    std::random_device dev;
-    std::mt19937 rng(dev());
-    std::uniform_real_distribution<float> dist(0.f, 1.f);
-    std::string idx=std::to_string(dist(rng));
-    // HWND window=create_window(ins,("wgl_invisable0"+idx).c_str(),window_width,window_height);
-    // this->window_handle=GetDC(window);
-    // this->gl_context=create_opengl_context(this->window_handle);
-#else
-    static const int MAX_DEVICES = 4;
-    EGLDeviceEXT egl_devices[MAX_DEVICES];
-    EGLint num_devices;
-
-    auto eglQueryDevicesEXT =
-            (PFNEGLQUERYDEVICESEXTPROC)eglGetProcAddress("eglQueryDevicesEXT");
-    eglQueryDevicesEXT(4, egl_devices, &num_devices);
-
-    auto eglGetPlatformDisplayEXT =
-            (PFNEGLGETPLATFORMDISPLAYEXTPROC)eglGetProcAddress(
-                    "eglGetPlatformDisplayEXT");
-
-    auto m_egl_display = eglGetPlatformDisplayEXT(EGL_PLATFORM_DEVICE_EXT,
-                                                  egl_devices[0], nullptr);
-    EGLCheck("eglGetDisplay");
-
-    EGLint major, minor;
-    eglInitialize(m_egl_display, &major, &minor);
-    EGLCheck("eglInitialize");
-
-    EGLint num_configs;
-    EGLConfig egl_config;
-
-    eglChooseConfig(m_egl_display, egl_config_attribs, &egl_config, 1,
-                    &num_configs);
-    EGLCheck("eglChooseConfig");
-
-    const EGLint pbuffer_attribs[] = {
-            EGL_WIDTH, (EGLint)window_width, EGL_HEIGHT, (EGLint)window_height, EGL_NONE,
-    };
-    EGLSurface egl_surface =
-            eglCreatePbufferSurface(m_egl_display, egl_config, pbuffer_attribs);
-    EGLCheck("eglCreatePbufferSurface");
-
-    eglBindAPI(EGL_OPENGL_API);
-    EGLCheck("eglBindAPI");
-
-    const EGLint context_attri[] = {EGL_CONTEXT_MAJOR_VERSION,
-                                    4,
-                                    EGL_CONTEXT_MINOR_VERSION,
-                                    6,
-                                    EGL_CONTEXT_OPENGL_PROFILE_MASK,
-                                    EGL_CONTEXT_OPENGL_CORE_PROFILE_BIT,
-                                    EGL_NONE};
-    EGLContext egl_context = eglCreateContext(m_egl_display, egl_config,
-                                              EGL_NO_CONTEXT, context_attri);
-    EGLCheck("eglCreateContext");
-
-    eglMakeCurrent(m_egl_display, egl_surface, egl_surface, egl_context);
-    EGLCheck("eglMakeCurrent");
-
-    if (!gladLoadGLLoader((void *(*)(const char *))(&eglGetProcAddress))) {
-        throw runtime_error("Failed to load gl");
-    }
-
-    std::cout << "OpenGLVolumeRenderer: Detected " << std::to_string(num_devices)
-              << " devices, using first one, OpenGL "
-                 "version "
-              << std::to_string(GLVersion.major) << "."
-              << std::to_string(GLVersion.minor) << std::endl;
-    glEnable(GL_DEPTH_TEST);
-
-#endif
 }
 
 void LinesRenderer::setupShaderUniform(){
@@ -156,7 +78,6 @@ void LinesRenderer::setupShaderUniform(){
     line_shader->setFloat("view_up_space",space);
     line_shader->setFloat("step",1.f);
 }
-
 
 void LinesRenderer::set_camera(Camera camera) noexcept {
     this->camera=camera;
@@ -211,24 +132,35 @@ void LinesRenderer::set_camera(Camera camera) noexcept {
 // 	return best_ind; 
 // }
 
-void LinesRenderer::render_frame(){
-    // raycasting_shader->use();
-    // raycasting_shader->setMat4("MVPMatrix", model*projection*viewport);
-    // glDrawBuffer(GL_COLOR_ATTACHMENT0);
-    // glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    // glColor3f(0.5,0.5,0);
-    // for (int i = 0; i < marking_maps.size() ; i ++ ){
-    //     if(marking_maps[marking_map_index].IsVisible() ){
-    //         glLineWidth(3);
-    //         glBindVertexArray(marking_maps[i].vao);
-    //         glDrawElements(GL_LINES, 2 * (marking_maps[i].getVexNum() - 1),
-    //                         GL_UNSIGNED_INT, nullptr);
-    //     }
-    // }
-    // glBindVertexArray(0);
-    // glBindFramebuffer(GL_FRAMEBUFFER, 0);
+void LinesRenderer::set_user( std::shared_ptr<NeuronPool> user){
+    this->userPool = user;
+    this->neuronGraph = this->userPool->getGraph();
+}
 
-    // glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+void LinesRenderer::render_frame(){
+    line_shader->use();
+    line_shader->setMat4("MVPMatrix", model*projection*viewport);
+    glDrawBuffer(GL_COLOR_ATTACHMENT0);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    glColor3f(0.5,0.5,0);
+    glBindVertexArray(0);
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    for( auto pl = neuronGraph->lines.begin(); pl != neuronGraph->lines.end() ; pl ++ ){
+        if( !userPool->getLineVisible(pl->first) ){
+            continue; //不绘制非可视的线
+        }
+            glColor3f(0.5,0.5,0.5);
+            glLineWidth(3);
+            glBindVertexArray(hash_lineid_vao_vbo[pl->first].first); // vao
+            glDrawElements(GL_LINES, line_num_of_path_,
+                        GL_UNSIGNED_INT, nullptr);
+    }
+
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+}
+
+void LinesRenderer::Setup(){
+
 }
 
 void LinesRenderer::set_volume(const char* path){
