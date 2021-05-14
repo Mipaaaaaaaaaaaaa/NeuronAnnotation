@@ -11,28 +11,28 @@ const { Option } = Select;
 const LoadAndSave: React.FC = (props) => {
   const UPLOAD = {
     name: 'file',
-    action: 'https://www.mocky.io/v2/5cc8019d300000980a055e76',
+    action: 'http://127.0.0.1:12121/upload',
+    method: 'post',
     headers: {
       authorization: 'authorization-text',
     },
-    showUploadList: false,
+    showUploadList: true,
     showPreviewIcon: true,
+ 
     onChange(info) {
       if (info.file.status !== 'uploading') {
         console.log(info.file, info.fileList);
-      }
-      if (info.file.status === 'done') {
+      } else if (info.file.status === 'done') {
         message.success(`${info.file.name} 上传成功`);
       } else if (info.file.status === 'error') {
         message.error(`${info.file.name} 上传失败`);
       }
-    },
-  };
+    }
+  } 
 
   const downLoad = () =>{
     const ws = new WebSocket(_DOWNLOAD);
-    ws.binaryType = "arraybuffer";
-    console.log("herhe")
+    ws.binaryType="blob";
     ws.onopen = () => {
         console.log("连接成功，准备下载");
         ws.send(
@@ -46,24 +46,7 @@ const LoadAndSave: React.FC = (props) => {
         message.error("连接渲染服务器出错！");
     }
     ws.onmessage = (msg) => {
-      if (typeof msg.data === "object") {
-        console.log(msg);
-        const bytes = new Uint8Array(msg.data);
-        const blob = new Blob([bytes.buffer], { type: "image/jpeg" });
-        const url = URL.createObjectURL(blob);
-        let link = document.createElement('a');
-        link.style.display = 'none';
-        link.href = url;
-        link.setAttribute('download',props.data.selectedTableName+'.swc');
-        document.body.appendChild(link);
-        link.click();
-        return;
-      }  
-        try {
-
-        } catch {
-          console.log(data);
-        }
+      console.log(msg)
     };
   }
 
@@ -100,7 +83,7 @@ const LoadAndSave: React.FC = (props) => {
             arrowPointAtCenter
             color="blue"
             >
-        <Button icon={<DownloadOutlined />} size="large" onclick={()=>this.downLoad()} >下载</Button>
+        <Button icon={<DownloadOutlined />} size="large" onClick={downLoad} >下载</Button>
         </Tooltip>
           </Space>
       </div>

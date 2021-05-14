@@ -10,6 +10,7 @@ list(
         RequestHandlerFactory.cpp
         MyHTTPRequestHandler.cpp
         UploadRequestHandler.cpp
+        DownloadRequestHandler.cpp
         WebSocketRequestHandler.cpp
         VolumeRenderer.cpp
         AnnotationDS.cpp

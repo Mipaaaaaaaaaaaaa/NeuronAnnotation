@@ -7,6 +7,7 @@
 #include <iostream>
 #include <VolumeRenderer.hpp>
 #include <TransferFunction.hpp>
+#include "DownloadRequestHandler.hpp"
 
 
 std::shared_ptr<Poco::Mutex> RequestHandlerFactory::volume_render_lock =  make_shared<Poco::Mutex>();
@@ -116,4 +117,21 @@ Poco::Net::HTTPRequestHandler *RequestHandlerFactory::createRequestHandler(
         return n;
     }
 
+    if (uri == "/download"){
+        std::cout << "create DownloadRequestHandler" << std::endl;
+        DownloadRequestHandler *n = new DownloadRequestHandler();
+        if( userList.find(host.toString()) != userList.end() ){ //已有
+            n->user_id = userList[host.toString()];
+            n->neuron_pool = neuronPools[n->user_id];
+        }else{
+            n->user_id = ++max_linked_id;
+            userList[host.toString()] = n->user_id;
+            n->neuron_pool = new NeuronPool();
+            n->neuron_pool->setGraph(neuronGraphs["test"]);
+            n->neuron_pool->setGraphPool(&neuronGraphs);
+            n->neuron_pool->setUserId(n->user_id);
+            neuronPools[n->user_id] = n->neuron_pool;
+        }
+        return n;
+    }
 }
