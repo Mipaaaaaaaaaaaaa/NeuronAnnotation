@@ -143,7 +143,6 @@ const getTreeData = ( graph:DataType, root:number ) =>{
     }
     const dfs = (graph:DataType,key:number) =>{
         let parsedStr = "";
-        console.log("visite:",key);
         visitedArray[key] = true;
         for( let i = 0 ; i < graph.sub[key].arc.length ; i ++ ){
             if( graph.sub[key].arc[i].headVex == graph.sub[key].index ){
@@ -171,10 +170,7 @@ const getTreeData = ( graph:DataType, root:number ) =>{
         if( parsedStr != "" ) parsedStr = `, "children":[ ` + parsedStr + `]`
         return `{"name":"` + graph.sub[key].index + `"` + parsedStr + "}";
     }
-    console.log(visitedArray);
-    console.log("???"+dicMap.get(root));
     let x = dfs(graph,root);
-    console.log(x);
     return x;
 }
 
@@ -183,16 +179,24 @@ class TreeVisualization extends React.Component {
     constructor(props) {
         super(props);
         this.state = {
-            rootIndex : this.props.data.selectedVertexIndex
+            rootIndex : this.props.data.selectedVertexIndex,
+            preData : {}
         };
     }
 
     componentDidUpdate(){
-        this.TreePlot();
+        console.log(this.state.preData)
+        console.log(this.props.data)
+        if( JSON.stringify(this.state.preData) != JSON.stringify(this.props.data) ){
+            this.TreePlot();
+            this.setState({preData:this.props.data });
+        }
+        
     }
 
     componentDidMount() {
         this.TreePlot()
+        this.setState({preData:this.props.data });
         // if(this.props.data.graphs[this.props.selectedMapKey].sub[this.props.selectedVertexKey]){
         //     this.RectPhyloPlot();
         //     this.UnrootedPhyloPlot();
