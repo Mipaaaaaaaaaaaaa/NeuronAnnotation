@@ -12,10 +12,11 @@
 #include<Poco/Mutex.h>
 #include<Camera.hpp>
 #include<seria/deserialize.hpp>
-#include "GraphDrawManager.hpp"
 using namespace std;
 
 class NeuronPool;
+class GraphDrawManager;
+class NeuronGraph;
 
 enum Tools
 {
@@ -163,7 +164,21 @@ struct Line : public BasicObj //Line是有关关键Vertex的集合
     }
     unsigned int vao, ebo;
 };
-	
+
+class GraphDrawManager{
+    public:
+        NeuronGraph * graph;
+        float *line_vertices = nullptr;
+        vector<unsigned int *> paths; //顶点索引从1开始
+        std::map<int, std::pair<unsigned int, unsigned int> > hash_lineid_vao_vbo;
+        vector<unsigned int> line_num_of_path_;
+    public:
+        //GraphDrawManager( NeuronGraph *g ):graph=g;
+        void RebuildLine( int line_id );
+        void InitGraphDrawManager();
+};
+
+
 class NeuronGraph : public BasicObj{
 public:
     NeuronGraph(const char * string, int type=0);
@@ -232,8 +247,9 @@ public:
     int formatSegments(std::map<int,vector<int>> &vertexLinkedCount, int index);
 
 public:
-    GraphDrawManager GraphDrawManager;
+    GraphDrawManager graphDrawManager;
 };
+
 
 // class NeuronGraphDB{
 // public:

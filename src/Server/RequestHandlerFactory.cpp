@@ -1,6 +1,7 @@
 #include "RequestHandlerFactory.hpp"
 #include "MyHTTPRequestHandler.hpp"
 #include "WebSocketRequestHandler.hpp"
+#include "UploadRequestHandler.hpp"
 #include <AnnotationDS.hpp>
 #include <SWCP.hpp>
 #include <iostream>
@@ -78,9 +79,28 @@ Poco::Net::HTTPRequestHandler *RequestHandlerFactory::createRequestHandler(
     }
 
 
-    std::cout << "create MyHTTPRequestHandler" << std::endl;
+    
     if (uri == "/info"){
+        std::cout << "create MyHTTPRequestHandler" << std::endl;
         MyHTTPRequestHandler *n = new MyHTTPRequestHandler();
+        if( userList.find(host.toString()) != userList.end() ){ //已有
+            n->user_id = userList[host.toString()];
+            n->neuron_pool = neuronPools[n->user_id];
+        }else{
+            n->user_id = ++max_linked_id;
+            userList[host.toString()] = n->user_id;
+            n->neuron_pool = new NeuronPool();
+            n->neuron_pool->setGraph(neuronGraphs["test"]);
+            n->neuron_pool->setGraphPool(&neuronGraphs);
+            n->neuron_pool->setUserId(n->user_id);
+            neuronPools[n->user_id] = n->neuron_pool;
+        }
+        return n;
+    }
+
+    if (uri == "/upload"){
+        std::cout << "create UploadRequestHandler" << std::endl;
+        UploadRequestHandler *n = new UploadRequestHandler();
         if( userList.find(host.toString()) != userList.end() ){ //已有
             n->user_id = userList[host.toString()];
             n->neuron_pool = neuronPools[n->user_id];

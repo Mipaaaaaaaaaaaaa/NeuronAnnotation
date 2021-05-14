@@ -9,6 +9,7 @@ list(
         NeuronAnnotaterApplication.cpp
         RequestHandlerFactory.cpp
         MyHTTPRequestHandler.cpp
+        UploadRequestHandler.cpp
         WebSocketRequestHandler.cpp
         VolumeRenderer.cpp
         AnnotationDS.cpp
