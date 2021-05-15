@@ -100,7 +100,7 @@ void WebSocketRequestHandler::handleRequest(
                         }
                     }
                 }
-                sendStructureFream();
+                sendStructureFrame();
             }
             catch (std::exception& error)
             {
