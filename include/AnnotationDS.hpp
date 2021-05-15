@@ -250,7 +250,7 @@ public:
     int formatSegments(std::map<int,vector<int>> &vertexLinkedCount, int index);
 
 public:
-    GraphDrawManager graphDrawManager;
+    GraphDrawManager *graphDrawManager;
 };
 
 
@@ -274,6 +274,8 @@ public:
         m_selected_vertex_index = -1;
         m_selected_line_index = -1;
         b_set_camera = false;
+        m_mode = 0; //默认DVR
+        m_tool = 0; //默认拖拽
     }
     string getLinestoJson();
     bool getLineVisible(int id);
@@ -308,7 +310,10 @@ private:
     int m_selected_line_index; //当前选择路径
     map<int,bool> line_id_visible; //路径可视映射
     int m_mode; //渲染模式
+    int m_tool; //工具的index
 public:
+    void setTool(int toolIndex);
+    int getTool();
     void setCamera(Camera c);
     Camera getCamera();
     int getRenderMode();

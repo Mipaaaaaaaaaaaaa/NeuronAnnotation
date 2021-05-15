@@ -10,18 +10,21 @@ class Info extends React.Component {
         var forkCount = 0;
         var leafCount = 0;
         const graph = this.props.data.graphs[this.props.selectedMapKey];
-        for( let i = 0 ; i < graph.sub.length ; i ++ ){
-        if( graph.sub[i].arc.length == 1 ) leafCount ++;
-        if( graph.sub[i].arc.length > 2 ) forkCount ++;
-        for( let j = 0 ; j < graph.sub[i].arc.length ; j ++ ){
-            totalLength += graph.sub[i].arc[j].distance;
+        if( graph ){
+            for( let i = 0 ; i < graph.sub.length ; i ++ ){
+                if( graph.sub[i].arc.length == 1 ) leafCount ++;
+                if( graph.sub[i].arc.length > 2 ) forkCount ++;
+                for( let j = 0 ; j < graph.sub[i].arc.length ; j ++ ){
+                    totalLength += graph.sub[i].arc[j].distance;
+                }
+            }
         }
-        }
+
         return (
             <div>
                 <Row gutter={16}>
                 <Col span={12}>
-                    <Statistic title="总顶点数" value={graph.sub.length} />
+                    <Statistic title="总顶点数" value={graph ? graph.sub.length : 0} />
                 </Col>
                 <Col span={12}>
                     <Statistic title="总距离" value={(totalLength/2).toFixed(2)} precision={2} />

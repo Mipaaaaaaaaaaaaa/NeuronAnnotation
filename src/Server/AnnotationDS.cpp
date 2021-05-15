@@ -115,8 +115,8 @@ bool NeuronGraph::formatGraphFromSWCList(){
                 //上一段已经结束，该段为新段
                 int seg_id = getNewSegmentId();
                 list_swc[index].seg_id = seg_id;
-                list_swc[index].color = list_swc[index].color;
-                list_swc[index].name = list_swc[index].name;
+                list_swc[index].color = list_swc[hash_swc_ids[list_swc[index].pn]].color;
+                list_swc[index].name = list_swc[hash_swc_ids[list_swc[index].pn]].name;
                 list_swc[index].user_id = list_swc[index].user_id;
                 list_swc[index].line_id = list_swc[hash_swc_ids[list_swc[index].pn]].line_id;
                 list_swc[index].seg_in_id = 1;
@@ -231,6 +231,7 @@ string NeuronGraph::getLinestoJson(NeuronPool * np){
     package.set("selectedVertexIndex",np->getSelectedVertexIndex());
     package.set("selectedMapIndex",np->getSelectedLineIndex());
     package.set("selectedTableName",tableName);
+    package.set("selectedTool",np->getTool());
     Poco::Dynamic::Var json(package);
     return json.toString();
 }
@@ -436,7 +437,7 @@ bool NeuronGraph::addSegment(int id, Vertex *v){
     vEndswc.y = v->y;
     vEndswc.z = v->z;
     vEndswc.r = 1;
-    vEndswc.type = 3;
+    vEndswc.type = Type(3);
     //路径生成算法之后修改该部分
     vEndswc.pn = id;
     vEndswc.user_id = lines[v->line_id].user_id;
@@ -554,46 +555,57 @@ bool NeuronGraph::changeName(int line_id, string name){
     for( auto v = lines[line_id].hash_vertexes.begin() ; v != lines[line_id].hash_vertexes.end() ; v++ ){
         v->second.name = name;
         NeuronSWC *swc = &list_swc[hash_swc_ids[v->second.id]];
-        modifySWCs.push_back(make_shared<NeuronSWC>(*swc));
         swc->name = name;
+        modifySWCs.push_back(make_shared<NeuronSWC>(*swc));
         for( auto seg = v->second.hash_linked_seg_ids.begin() ; seg != v->second.hash_linked_seg_ids.end() ; seg++ ){
             Segment *s = &segments[seg->first];
             s->name = name;
             for( auto p = s->segment_vertex_ids.begin() ; p != s->segment_vertex_ids.end() ; p ++ ){
                 NeuronSWC *pSWC = &list_swc[hash_swc_ids[p->second]];
                 pSWC->name = name;
+                modifySWCs.push_back(make_shared<NeuronSWC>(*pSWC));
             }
         }
     }
+    if( modifySWCs.size() == 0 ) return true;
     if( DataBase::modifySWCs(modifySWCs,tableName) ) return true;
     else return false;
 }
 
 bool NeuronGraph::changeColor(int line_id, string color){
     lines[line_id].color = color;
+    std::vector<std::shared_ptr<NeuronSWC> > modifySWCs;
     for( auto v = lines[line_id].hash_vertexes.begin() ; v != lines[line_id].hash_vertexes.end() ; v++ ){
         v->second.color = color;
         NeuronSWC *swc = &list_swc[hash_swc_ids[v->second.id]];
         swc->color = color;
+        modifySWCs.push_back(make_shared<NeuronSWC>(*swc));
         for( auto seg = v->second.hash_linked_seg_ids.begin() ; seg != v->second.hash_linked_seg_ids.end() ; seg++ ){
             Segment *s = &segments[seg->first];
             s->color = color;
             for( auto p = s->segment_vertex_ids.begin() ; p != s->segment_vertex_ids.end() ; p ++ ){
                 NeuronSWC *pSWC = &list_swc[hash_swc_ids[p->second]];
                 pSWC->color = color;
+                modifySWCs.push_back(make_shared<NeuronSWC>(*pSWC));
             }
         }
     }
-    return true;
+    if( modifySWCs.size() == 0 ) return true;
+    if( DataBase::modifySWCs(modifySWCs,tableName) ) return true;
+    else return false;
 }
 
 bool NeuronPool::deleteLine(int line_id){
     return graph->deleteLine(line_id);
 }
 
+
+void GraphDrawManager::Delete( int line_id ){
+    return;
+}
+
 bool NeuronGraph::deleteLine(int line_id){
     Line *l = &lines[line_id];
-    lines.erase(line_id);
     bool result = 1;
     for( auto v = lines[line_id].hash_vertexes.begin() ; v != lines[line_id].hash_vertexes.end() ; v++ ){
         NeuronSWC *swc = &list_swc[hash_swc_ids[v->second.id]];
@@ -604,17 +616,12 @@ bool NeuronGraph::deleteLine(int line_id){
                 NeuronSWC *pSWC = &list_swc[hash_swc_ids[p->second]]; //数据库删除该节点TODO
                 result &= DataBase::deleteSWC(*pSWC,tableName);
             }
-            free(s);
+            segments.erase(seg->first);
         }
-        free(&v->second);
     }
-    free(l);
-    graphDrawManager.Delete(line_id);
+    //graphDrawManager->Delete(line_id);
+    lines.erase(line_id);
     return result;
-}
-
-void GraphDrawManager::Delete( int line_id ){
-
 }
 
 bool NeuronPool::hasCamera(){
@@ -654,4 +661,16 @@ bool NeuronPool::changeMode(std::string mode){
         return true;
     }
     return false;
+}
+
+int NeuronPool::getRenderMode(){
+    return m_mode;
+}
+
+void NeuronPool::setTool(int toolIndex){
+    m_tool = toolIndex;
+}
+
+int NeuronPool::getTool(){
+    return m_tool;
 }

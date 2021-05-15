@@ -147,6 +147,7 @@ void WebSocketRequestHandler::sendIamgeFrame(){
     using WebSocket = Poco::Net::WebSocket;
     volume_render_lock->lock();
     {
+        block_volume_renderer->set_mode(neuron_pool->getRenderMode());
         block_volume_renderer->set_camera(neuron_pool->getCamera());
         block_volume_renderer->render_frame();
         auto &image = block_volume_renderer->get_frame();

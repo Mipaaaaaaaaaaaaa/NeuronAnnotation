@@ -40,5 +40,5 @@ void DownloadRequestHandler::handleRequest(
     o.close();
     response.set("Content-Disposition","attachment");
     response.set("filename",fileName);
-    response.sendFile(filePath,"text/plain");
+    response.sendFile(filePath,"text/plain"); //文件格式可能有问题，现在下载是download.txt
 }

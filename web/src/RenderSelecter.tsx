@@ -4,32 +4,34 @@ import {BulbOutlined} from '@ant-design/icons'
 import axios from 'axios';
 
 
-const serverURL = "http://localhost:12121";
+const _SOCKETLINK = "ws://localhost:12121/info";
 class RenderSelecter extends React.Component {
     constructor(props){
         super(props)
         this.state = {
-            selectedRender: "MIP",
+            selectedRender: "DVR",
         };
     }
 
     handleRenderChange = (v:string) => {
-        console.log("555555")
+        let self = this;
         this.setState({selectedRender:v});
-        axios
-            .post(serverURL+"/info",{              
-                modify:{
+        const ws = new WebSocket(_SOCKETLINK);
+        ws.binaryType = "arraybuffer";
+        ws.onopen = () => {
+            console.log("连接成功，准备发送更新数据");
+            ws.send(
+              JSON.stringify({
+                  modify : {
                     selectedRender : v
-                }
-            })
-            .then((res)=>{
-                console.log("八八八")
-                console.log(res);
-            })
-            .catch((e)=>{
-                console.log(e);
-            })
-
+                  }
+              })
+          );
+        };
+        ws.onmessage = (msg) => {
+            const {data} = msg;
+            ws.close();
+        }
     };
 
     render(){

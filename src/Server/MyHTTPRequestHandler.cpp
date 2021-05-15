@@ -14,6 +14,8 @@
 #include <SWCP.hpp>
 #include <DataBase.hpp>
 #include <iostream>
+#include <Poco/InflatingStream.h>
+#include <Poco/Net/HTMLForm.h>
 using Poco::Util::Application;
 using WebSocket = Poco::Net::WebSocket;
 
@@ -75,9 +77,17 @@ void MyHTTPRequestHandler::handleRequest(
                     }
                     if( modify_data.HasMember("visible") ){
                         result &= neuron_pool->changeVisible(line_id,modify_data["visible"].GetBool());
+                        //render_ws->sendIamgeFrame();
                     }
                     if( modify_data.HasMember("selectedTableName") ){
                         result &= neuron_pool->changeTable(modify_data["selectedTableName"].GetString());
+                    }
+                    if( modify_data.HasMember("selectedRender" ) ){
+                        result &= neuron_pool->changeMode(modify_data["selectedRender"].GetString());
+                        //render_ws->sendIamgeFrame();
+                    }
+                    if( modify_data.HasMember("selectedTool" ) ){
+                        neuron_pool->setTool(modify_data["selectedTool"].GetInt());
                     }
                     if( result ){
                         render_ws->sendSuccessFrame("修改成功");
@@ -103,8 +113,9 @@ void MyHTTPRequestHandler::handleRequest(
                         render_ws->sendErrorFrame("删除失败");
                     }
                 }
-                std::string structureInfo = neuron_pool->getLinestoJson();
-                ws.sendFrame(structureInfo.c_str(),structureInfo.size(),WebSocket::FRAME_TEXT);
+                render_ws->sendStructureFrame();
+                ws.close();
+                return;
             }
             catch (std::exception& error)
             {

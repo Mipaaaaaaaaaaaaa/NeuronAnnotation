@@ -254,7 +254,7 @@ const Format: React.FC = () => {
                             <RenderSelecter />
                         </Col>
                         <Col flex="auto">
-                        <ToolsHeader handleToolsChange={handleToolsChange}/>
+                        <ToolsHeader data={data}/>
                         </Col>
                         <Col flex="auto">
                             <LoadAndSave

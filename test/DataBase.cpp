@@ -275,10 +275,12 @@ bool DataBase::deleteSWC(const NeuronSWC &swc, const std::string &tableName){
     c->sendRequest(*deleteCmd, response);
     auto doc = *(response.documents()[0]);
 
+    std::cout << doc.toString() << std::endl;   
+    
     if( doc.getInteger("ok") == 1 ) return true;
     return false;
 
-    std::cout << doc.toString() << std::endl;    
+ 
     // for (auto i : response.documents()) {
     //     return i->toString(2);
     // }

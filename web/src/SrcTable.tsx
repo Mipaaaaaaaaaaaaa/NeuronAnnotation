@@ -301,60 +301,70 @@ class SrcTable extends React.Component<EditableTableProps, EditableTableState>{
 
     handleDelete = (record) => {
         //服务器自删除后更新数据，并提示删除成功
-        const ws = new WebSocket("ws://127.0.0.1:12121:9999");
-            ws.binaryType = "arraybuffer";
-            ws.onopen = () => {
-                console.log("连接成功，准备发送更新数据");
-                ws.send(
-                    JSON.stringify({
-                        type: "deleteMap",
-                        index: record.index
-                    })
-                );
-            }
-    };
-
-    handleAdd = () => {
         let self = this;
         const ws = new WebSocket(_SOCKETLINK);
+        ws.binaryType = "arraybuffer";
         ws.onopen = () => {
-            console.log("连接成功，添加路径");
-            ws.send(
-                JSON.stringify({
-                  addline : 1
-                })
-            );
-            const hide = message.loading('正在添加...', 0);
-            setTimeout(hide, 500);
-        }
-        ws.onmessage = (msg) => {
-          const { data } = msg;
-          if (typeof msg.data === "object") {
-            const bytes = new Uint8Array(msg.data);
-            const blob = new Blob([bytes.buffer], { type: "image/jpeg" });
-            const url = URL.createObjectURL(blob);
-            self.props.setSrc(url);
-            return;
-          }  
-          try {
-            const obj = JSON.parse(data);
-            if( obj.type == "error" ){
-              console.log(obj.message);
-              message.error( obj.message );
-            }else if( obj.type == "success" ){
-              console.log(obj.message);
-              message.success( obj.message );
-            }else{
-              let p = new Promise(resolve =>{
-                resolve(self.props.setData(obj));
-              }).then(()=>{
-                self.props.initSelectedKey();
-              })
-            }
-          } catch {
-            console.log(data);
-          }
+            console.log("连接成功，准备发送更新数据");
+            ws.send(JSON.stringify({deleteline : 1 , index: record.index  }));
         };
+        ws.onmessage = (msg) => {
+            const {data} = msg;
+            ws.close();
+            try {
+                const obj = JSON.parse(data);
+                if (obj.type == "error") {
+                    console.log(obj.message);
+                    message.error(obj.message);
+                } else if (obj.type == "success") {
+                    console.log(obj.message);
+                    message.success(obj.message);
+                } else {
+                    let p = new Promise(resolve => {
+                        resolve(self.props.setData(obj));
+                    }).then(() => {
+                        self.props.initSelectedKey();
+                    })
+                }
+            } catch  {
+                console.log(data);
+            }
+        }
+      };
+
+      handleAdd = () => {
+          let self = this;
+          const ws = new WebSocket(_SOCKETLINK);
+          ws.onopen = () => {
+              console.log("连接成功，添加路径");
+              ws.send(JSON.stringify({addline: 1}));
+              const hide = message.loading('正在添加...', 0);
+              setTimeout(hide, 500);
+          }
+          ws.onmessage = (msg) => {
+              const {data} = msg;
+              ws.close();
+              try {
+                  const obj = JSON.parse(data);
+                  if (obj.type == "error") {
+                      console.log(obj.message);
+                      message.error(obj.message);
+                  } else if (obj.type == "success") {
+                      console.log(obj.message);
+                      message.success(obj.message);
+                  } else {
+                      let p = new Promise(resolve => {
+                          resolve(self.props.setData(obj));
+                      }).then(() => {
+                          self
+                              .props
+                              .initSelectedKey();
+                      })
+                  }
+              } catch  {
+                  console.log(data);
+              }
+          };
       };
 
     setColor = (color:Color,row:DataType) =>{
@@ -370,8 +380,10 @@ class SrcTable extends React.Component<EditableTableProps, EditableTableState>{
             console.log("连接成功，准备发送更新数据");
             ws.send(
                 JSON.stringify({
-                    type: "modifyMap",
-                    map: item
+                  modify : {
+                    index : row.index,
+                    color : color.hex
+                  }
                 })
             );
             const hide = message.loading('正在修改...', 0);
@@ -390,18 +402,42 @@ class SrcTable extends React.Component<EditableTableProps, EditableTableState>{
     }
 
     changeStatus = ( st:boolean,row:DataType ) =>{
-        console.log("修改可见")
-        //const newData = [...this.state.dataSource];
-        const newData = [...this.props.data.graphs];
-        const index = newData.findIndex(item => row.key === item.key);
-        const item = newData[index];
-        item.status = !item.status;
-        newData.splice(index, 1, {
-        ...item,
-        ...row,
-        });
-        this.props.setData({ graphs: newData });
-        //this.setState({ dataSource: newData });
+      let self = this;
+      const ws = new WebSocket(_SOCKETLINK);
+      ws.binaryType = "arraybuffer";
+      ws.onopen = () => {
+          console.log("连接成功，准备发送更新数据");
+          ws.send(
+            JSON.stringify({
+                modify : {
+                  index : row.index,
+                  visible : !st
+                }
+            })
+        );
+      };
+      ws.onmessage = (msg) => {
+          const {data} = msg;
+          ws.close();
+          try {
+              const obj = JSON.parse(data);
+              if (obj.type == "error") {
+                  console.log(obj.message);
+                  message.error(obj.message);
+              } else if (obj.type == "success") {
+                  console.log(obj.message);
+                  message.success(obj.message);
+              } else {
+                  let p = new Promise(resolve => {
+                      resolve(self.props.setData(obj));
+                  }).then(() => {
+                      self.props.initSelectedKey();
+                  })
+              }
+          } catch  {
+              console.log(data);
+          }
+      }
     };
 
     check = (record:DataType) => {
@@ -412,25 +448,27 @@ class SrcTable extends React.Component<EditableTableProps, EditableTableState>{
         const newData = [...this.props.data.graphs];
         const index = newData.findIndex(item => row.key === item.key);
         const item = newData[index];
-        // newData.splice(index, 1, {
-        // ...item,
-        // ...row,
-        // });
-        // this.props.setData({ graphs: newData });
         if( item.name == row.name ) return;
 
+        let self = this;
         const ws = new WebSocket(_SOCKETLINK);
+        ws.binaryType = "arraybuffer";
         ws.onopen = () => {
             console.log("连接成功，准备发送更新数据");
             ws.send(
-                JSON.stringify({
-                    type: "modifyMap",
-                    map: row
-                })
-            );
-            const hide = message.loading('正在修改...', 0);
-            setTimeout(hide, 1000);
+              JSON.stringify({
+                  modify : {
+                    index : row.index,
+                    name : row.name
+                  }
+              })
+          );
+        };
+        ws.onmessage = (msg) => {
+            const {data} = msg;
+            ws.close();
         }
+
     };
 
     onClickJump = (record) =>{
