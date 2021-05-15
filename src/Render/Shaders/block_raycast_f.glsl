@@ -117,10 +117,15 @@ for(int i=0;i<steps;i++){
     }
 
     if(color.a==0.f) discard;
-
     color+=bg_color*(1.f-color.a);
+    
+    if( mode == 0 ){
 
-    frag_color=color;
+        frag_color=color;
+    }
+    else{
+        frag_color=vec4(color.aaa,1);
+    }
     //    frag_color=vec4(view_direction,1.f);
 
 }

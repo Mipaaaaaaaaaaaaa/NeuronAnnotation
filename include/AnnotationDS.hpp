@@ -275,6 +275,7 @@ public:
         m_selected_line_index = -1;
         b_set_camera = false;
         m_mode = 0; //默认DVR
+        //m_mode = 1;
         m_tool = 0; //默认拖拽
     }
     string getLinestoJson();
