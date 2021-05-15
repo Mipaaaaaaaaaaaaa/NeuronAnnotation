@@ -167,7 +167,7 @@ auto WebSocketRequestHandler::getQueryPoint(std::array<uint32_t, 2> point)  -> c
     return query_res;
 }
 
-void WebSocketRequestHandler::sendStructureFream(){
+void WebSocketRequestHandler::sendStructureFrame(){
     using WebSocket = Poco::Net::WebSocket;
     std::string structureInfo = neuron_pool->getLinestoJson();
     ws->sendFrame(structureInfo.c_str(),structureInfo.size(),WebSocket::FRAME_TEXT);

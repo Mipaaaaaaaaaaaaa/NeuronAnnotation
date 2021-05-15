@@ -20,6 +20,6 @@ public:
   void sendErrorFrame(std::string errorMessage);
   void sendSuccessFrame(std::string successMessage);
   void sendIamgeFrame(); //其他request刷新时调用
-  void sendStructureFream();
+  void sendStructureFrame();
   auto getQueryPoint(std::array<uint32_t, 2> point)  -> const std::array<float, 8> ;
 };
