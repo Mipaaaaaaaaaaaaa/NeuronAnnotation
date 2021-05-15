@@ -18,6 +18,8 @@ map<string,int> RequestHandlerFactory::userList;
 std::shared_ptr<VolumeRenderer> RequestHandlerFactory::block_volume_renderer;
 std::shared_ptr<VolumeRenderer> RequestHandlerFactory::lines_renderer;
 bool RequestHandlerFactory::isInited = false;
+std::map<int, WebSocketRequestHandler*> RequestHandlerFactory::userWebsocketRequestHandler;
+
 
 void RequestHandlerFactory::initBlockVolumeRender(){
     std::cout<<"loading render backend..."<<std::endl;
@@ -63,10 +65,11 @@ Poco::Net::HTTPRequestHandler *RequestHandlerFactory::createRequestHandler(
         std::cout << "create WebSocketRequestHandler" << std::endl;
         WebSocketRequestHandler *n = new WebSocketRequestHandler();
         n->block_volume_renderer = block_volume_renderer;
-        n->volume_render_lock = volume_render_lock;
+        n->volume_render_lock = volume_render_lock;        
         if( userList.find(host.toString()) != userList.end() ){ //已有
             n->user_id = userList[host.toString()];
             n->neuron_pool = neuronPools[n->user_id];
+            userWebsocketRequestHandler[n->user_id] = n; //绑定每个用户的WebSocket
         }else{
             n->user_id = ++max_linked_id;
             userList[host.toString()] = n->user_id;
@@ -75,12 +78,11 @@ Poco::Net::HTTPRequestHandler *RequestHandlerFactory::createRequestHandler(
             n->neuron_pool->setGraphPool(&neuronGraphs);
             n->neuron_pool->setUserId(n->user_id);
             neuronPools[n->user_id] = n->neuron_pool;
+            userWebsocketRequestHandler[n->user_id] = n; //绑定每个用户的WebSocket
         }
         return n;
     }
 
-
-    
     if (uri == "/info"){
         std::cout << "create MyHTTPRequestHandler" << std::endl;
         MyHTTPRequestHandler *n = new MyHTTPRequestHandler();
@@ -96,6 +98,7 @@ Poco::Net::HTTPRequestHandler *RequestHandlerFactory::createRequestHandler(
             n->neuron_pool->setUserId(n->user_id);
             neuronPools[n->user_id] = n->neuron_pool;
         }
+        n->render_ws = userWebsocketRequestHandler[n->user_id];
         return n;
     }
 

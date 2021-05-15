@@ -57,15 +57,15 @@ void DownloadRequestHandler::handleRequest(
                 response.sendFile(filePath,"text");
                 //ws.sendFrame(output.c_str(),output.size(),WebSocket::FRAME_BINARY);
             }
-            catch (std::exception& error)
-            {
-                ws.sendFrame(error.what(), std::strlen(error.what()),WebSocket::FRAME_TEXT);
-            }
             catch (Poco::FileNotFoundException& error){
                 std::cout << "坏坏" << std::endl;
             }
             catch (Poco::OpenFileException& error){
                 std::cout << "sad" << std::endl;
+            }
+            catch (std::exception& error)
+            {
+                ws.sendFrame(error.what(), std::strlen(error.what()),WebSocket::FRAME_TEXT);
             }
         }while( len > 0 && (flags & WebSocket::FRAME_OP_BITMASK) !=WebSocket::FRAME_OP_CLOSE);
     }//try

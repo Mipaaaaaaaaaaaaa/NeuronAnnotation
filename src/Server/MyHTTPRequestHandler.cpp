@@ -80,24 +80,16 @@ void MyHTTPRequestHandler::handleRequest(
                         result &= neuron_pool->changeTable(modify_data["selectedTableName"].GetString());
                     }
                     if( result ){
-                        ErrorMessage em("修改成功","success");
-                        std::string str = em.ToJson();
-                        ws.sendFrame(str.c_str(),str.size(),WebSocket::FRAME_TEXT);
+                        render_ws->sendSuccessFrame("修改成功");
                     }else{
-                        ErrorMessage em("修改失败");
-                        std::string str = em.ToJson();
-                        ws.sendFrame(str.c_str(),str.size(),WebSocket::FRAME_TEXT);
+                        render_ws->sendErrorFrame("修改失败");
                     }
                 }
                 else if(document.HasMember("addline")){
                     if (neuron_pool->addLine()){
-                        ErrorMessage em("添加成功","success");
-                        std::string str = em.ToJson();
-                        ws.sendFrame(str.c_str(),str.size(),WebSocket::FRAME_TEXT);
+                        render_ws->sendSuccessFrame("添加成功");
                     }else{
-                        ErrorMessage em("添加失败");
-                        std::string str = em.ToJson();
-                        ws.sendFrame(str.c_str(),str.size(),WebSocket::FRAME_TEXT);
+                        render_ws->sendErrorFrame("添加失败");
                     }
                 }
                 else if(document.HasMember("deleteline")){
@@ -106,13 +98,9 @@ void MyHTTPRequestHandler::handleRequest(
                         line_id = document["index"].GetInt64();
                     }
                     if (neuron_pool->deleteLine(line_id)){
-                        ErrorMessage em("删除成功","success");
-                        std::string str = em.ToJson();
-                        ws.sendFrame(str.c_str(),str.size(),WebSocket::FRAME_TEXT);
+                        render_ws->sendSuccessFrame("删除成功");
                     }else{
-                        ErrorMessage em("删除失败");
-                        std::string str = em.ToJson();
-                        ws.sendFrame(str.c_str(),str.size(),WebSocket::FRAME_TEXT);
+                        render_ws->sendErrorFrame("删除失败");
                     }
                 }
                 std::string structureInfo = neuron_pool->getLinestoJson();

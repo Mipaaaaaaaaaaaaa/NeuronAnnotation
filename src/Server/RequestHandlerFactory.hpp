@@ -5,15 +5,17 @@
 #include <AnnotationDS.hpp>
 #include <VolumeRenderer.hpp>
 #include <Poco/Mutex.h>
+#include "WebSocketRequestHandler.hpp"
 
 class RequestHandlerFactory : public Poco::Net::HTTPRequestHandlerFactory {
-private:
+public:
   static int max_linked_id;
   static map<string,std::shared_ptr<NeuronGraph>> neuronGraphs;
   static map<string,int> userList;
   static map<int,NeuronPool*> neuronPools;
   static std::shared_ptr<VolumeRenderer> block_volume_renderer;
   static std::shared_ptr<VolumeRenderer> lines_renderer;
+  static std::map<int, WebSocketRequestHandler* > userWebsocketRequestHandler;
   static bool isInited;
   static std::shared_ptr<Poco::Mutex> volume_render_lock;
 public:
