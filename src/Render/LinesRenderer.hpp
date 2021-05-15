@@ -38,6 +38,8 @@ public:
 
     void render_frame() override;
 
+    void set_mode(int mode) noexcept override;
+
     auto get_frame()->const Image& override;
 
     auto get_querypoint()->const std::array<float,8> override;

@@ -79,6 +79,10 @@ void LinesRenderer::setupShaderUniform(){
     line_shader->setFloat("step",1.f);
 }
 
+void LinesRenderer::set_mode(int mode) noexcept {
+
+}
+
 void LinesRenderer::set_camera(Camera camera) noexcept {
     this->camera=camera;
     glm::vec3 camera_pos={camera.pos[0],camera.pos[1],camera.pos[2]};

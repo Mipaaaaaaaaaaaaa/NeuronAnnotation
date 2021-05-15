@@ -51,7 +51,7 @@ void RequestHandlerFactory::initLinesRender(){
 Poco::Net::HTTPRequestHandler *RequestHandlerFactory::createRequestHandler(
         const Poco::Net::HTTPServerRequest &request) {
     if( !isInited ){
-        neuronGraphs["test"] = make_shared<NeuronGraph>("./test.swc","test");
+        neuronGraphs["test"] = make_shared<NeuronGraph>("test",0);
         initBlockVolumeRender();
         initLinesRender();
         isInited = true;

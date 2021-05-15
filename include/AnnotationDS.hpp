@@ -176,12 +176,13 @@ class GraphDrawManager{
         //GraphDrawManager( NeuronGraph *g ):graph=g;
         void RebuildLine( int line_id );
         void InitGraphDrawManager();
+        void Delete( int line_id );
 };
 
 
 class NeuronGraph : public BasicObj{
 public:
-    NeuronGraph(const char * string, int type=0);
+    NeuronGraph(const char * string, int type=0); //0=DataBase 1=File
     NeuronGraph(const char * filePath, const char * tableName);
     NeuronGraph(){};
     // explicit NeuronGraph(int idx):graph_index(idx){}
@@ -193,6 +194,8 @@ public:
     bool deleteCurSelectLines();
     bool addVertex(Vertex* v);
     bool addSegment(int id, Vertex* v);
+    
+    bool devidedInto2Lines(int x, int  y);
 
     long int addLine();
     long int getNewVertexId();
@@ -280,6 +283,9 @@ public:
     bool deleteLine(int line_id);
     bool jumpToVertex(int id);
 
+    bool dividedInto2Lines(int x, int y);
+
+    bool changeMode(string modeName);
     bool changeTable(string tableName);
     bool changeVisible(int line_id, bool visible);
     bool changeColor(int line_id, string color);
@@ -301,10 +307,11 @@ private:
     int m_selected_vertex_index; //当前编辑顶点
     int m_selected_line_index; //当前选择路径
     map<int,bool> line_id_visible; //路径可视映射
-
+    int m_mode; //渲染模式
 public:
     void setCamera(Camera c);
     Camera getCamera();
+    int getRenderMode();
     int getSelectedLineIndex();
     int getSelectedVertexIndex();
     void initSelectedLineIndex();

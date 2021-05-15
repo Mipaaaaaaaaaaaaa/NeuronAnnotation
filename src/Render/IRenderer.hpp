@@ -16,6 +16,8 @@ public:
 
     virtual void set_transferfunc(TransferFunction tf) noexcept=0;
 
+    virtual void set_mode(int mode) noexcept=0;
+    
     virtual void set_mousekeyevent(MouseKeyEvent event) noexcept=0;
 
     virtual void set_querypoint(std::array<uint32_t,2> screen_pos) noexcept=0;

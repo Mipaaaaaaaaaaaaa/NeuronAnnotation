@@ -36,11 +36,12 @@ void EGLCheck(const char *fn) {
 #endif
 
 #include <cudaGL.h>
-
+#include "IRenderer.hpp"
 #include <Common/transferfunction_impl.h>
 #include <Common/help_gl.hpp>
 #include <random>
-
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
 #include "Shaders.hpp"
 
 extern "C"
@@ -57,6 +58,7 @@ BlockVolumeRenderer::BlockVolumeRenderer(int w, int h)
     }
     initResourceContext();
     setupSystemInfo();
+    InitVaoVbo();
 }
 
 BlockVolumeRenderer::~BlockVolumeRenderer() {
@@ -157,7 +159,31 @@ void BlockVolumeRenderer::render_frame() {
         std::cout<<"no intersect!"<<std::endl;
     }
 
+    // glBindVertexArray(0);
+    // glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    // glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
     render_volume();
+
+    // if( cur_verter_num > 0 ){
+    //     glDisable(GL_DEPTH_TEST);
+    //     line_shader->use();
+    //     glDrawBuffer(GL_COLOR_ATTACHMENT0);
+    //     // glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+    //     glColor3f(0.5,0.5,0);
+    //     glLineWidth(3);
+    //     glBindVertexArray(line_VAO);
+    //     glDrawElements(GL_LINES, 2 * (cur_verter_num - 1),GL_UNSIGNED_INT, nullptr);
+    //     glEnable(GL_DEPTH_TEST);
+        
+    // }
+
+    // glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
+    // glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    // glBindVertexArray(line_VAO);
+    // glPointSize(3);
+    // glDrawArrays(GL_LINES,0,4);
 
     glFinish();
 
@@ -178,6 +204,19 @@ auto BlockVolumeRenderer::get_frame() -> const Image & {
     return frame;
 }
 auto BlockVolumeRenderer::get_querypoint() -> const std::array<float, 8> {
+
+    float a[3] = {query_point_result[0],query_point_result[1],query_point_result[2]};
+    //把这个点加进来！
+    
+    glNamedBufferSubData(line_VBO, cur_verter_num * sizeof(float) * 3,
+                        3 * sizeof(float), a);
+    if( cur_verter_num > 0 ){
+        uint32_t idx[2] = {cur_verter_num - 1, cur_verter_num};
+        glNamedBufferSubData(line_EBO,
+                            (cur_verter_num - 1) * 2 * sizeof(uint32_t),
+                            2 * sizeof(uint32_t), idx);
+    }
+    cur_verter_num++;
 
     return std::array<float, 8>{query_point_result[0],
                                 query_point_result[1],
@@ -279,6 +318,46 @@ void BlockVolumeRenderer::initGL() {
 
 #endif
 }
+
+void BlockVolumeRenderer::InitVaoVbo() {
+    glGenBuffers(1, &line_VBO);
+    glBindBuffer(GL_ARRAY_BUFFER, line_VBO);
+    glBufferStorage(GL_ARRAY_BUFFER, 1024 * sizeof(float), nullptr, GL_DYNAMIC_STORAGE_BIT);
+    glGenVertexArrays(1, &line_VAO);
+    glGenBuffers(1, &line_EBO);
+    glBindVertexArray(line_VAO);
+    glBindBuffer(GL_ARRAY_BUFFER, line_VBO); //绑定同一个图的vbo
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float),(void *)0);
+    glEnableVertexAttribArray(0);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, line_EBO);
+    glBufferStorage(GL_ELEMENT_ARRAY_BUFFER, 1024 * 2 * sizeof(uint32_t), nullptr, GL_DYNAMIC_STORAGE_BIT);
+
+    // float vertices[]={
+    //         1.f,1.f,1.f,1.f,
+    //         0.5,0.5,0.5,2.f,
+    //         1.f,0.f,0.f,3.f,
+    //         0.f,1.f,0.f,4.f
+    // };
+    // GLuint vao,vbo;
+    // glGenVertexArrays(1,&line_VAO);
+    // glGenBuffers(1,&line_VBO);
+    // glBindVertexArray(line_VAO);
+    // glBindBuffer(GL_ARRAY_BUFFER, line_VBO);
+    // glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+    // glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)0);
+    // glEnableVertexAttribArray(0);
+
+    // glNamedBufferSubData(line_VBO, cur_verter_num * sizeof(float) * 3,
+    //                     3 * sizeof(float), a);
+    // if( cur_verter_num > 0 ){
+    //     uint32_t idx[2] = {cur_verter_num - 1, cur_verter_num};
+    //     glNamedBufferSubData(line_EBO,
+    //                         (cur_verter_num - 1) * 2 * sizeof(uint32_t),
+    //                         2 * sizeof(uint32_t), idx);
+    // }
+    // cur_verter_num++;
+}
+
 
 void BlockVolumeRenderer::initCUDA() {
     CUDA_DRIVER_API_CALL(cuInit(0));
@@ -408,7 +487,8 @@ void BlockVolumeRenderer::createGLShader() {
     raycasting_shader=std::make_unique<sv::Shader>("../../../src/Render/Shaders/block_raycast_v.glsl",
                                                    "../../../src/Render/Shaders/block_raycast_f.glsl");
 //    raycasting_shader->setShader(shader::mix_block_raycast_v,shader::mix_block_raycast_f,nullptr);
-
+    line_shader=std::make_unique<sv::Shader>("../../../src/Render/Shaders/markedpath_v.glsl",
+                                                   "../../../src/Render/Shaders/markedpath_f.glsl");
 }
 
 void BlockVolumeRenderer::createCUgraphics() {
@@ -447,10 +527,17 @@ void BlockVolumeRenderer::setupRuntimeResource() {
 #define B_VOL_TEX_1_BINDING 3
 #define B_VOL_TEX_2_BINDING 4
 
+
+void BlockVolumeRenderer::set_mode(int mode) noexcept {
+    raycasting_shader->use();
+    raycasting_shader->setInt("mode",mode);
+}
+
 void BlockVolumeRenderer::setupShaderUniform() {
 //    spdlog::info("{0}",__FUNCTION__ );
     raycasting_shader->use();
     raycasting_shader->setInt("transfer_func",B_TF_TEX_BINDING);
+    raycasting_shader->setInt("mode",0);
     raycasting_shader->setInt("preInt_transfer_func",B_PTF_TEX_BINDING);
     raycasting_shader->setInt("cache_volume0",B_VOL_TEX_0_BINDING);
     raycasting_shader->setInt("cache_volume1",B_VOL_TEX_1_BINDING);
@@ -483,6 +570,18 @@ void BlockVolumeRenderer::setupShaderUniform() {
     raycasting_shader->setFloat("shininess",100.0f);
     raycasting_shader->setFloat("ks",1.0f);
     raycasting_shader->setVec3("light_direction",glm::normalize(glm::vec3(-1.0f,-1.0f,-1.0f)));
+
+    auto fov =
+        2 * atan(tan(45.0f * glm::pi<float>() / 180.0f / 2.0f) / camera.zoom);
+    glm::mat4 projection = glm::perspective(
+        (double)fov, (double)window_width / (double)window_height, 0.0001, 5.0);
+    glm::mat4 view = glm::lookAt(
+        glm::vec3(camera.pos[0], camera.pos[1], camera.pos[2]),
+        glm::vec3(camera.front[0], camera.front[1], camera.front[2]),
+        glm::vec3(camera.up[0], camera.up[1], camera.up[2]));
+    glm::mat4 model = glm::mat4(1.0f);
+    glm::mat4 MVP = projection * view * model;
+    line_shader->setMat4("MVPMatrix",MVP);
 
     if(query){
         glm::ivec2 _query_point={query_point[0],window_height-query_point[1]};
@@ -532,7 +631,6 @@ void BlockVolumeRenderer::deleteCUDAResource() {
     for(int i=0;i<cu_resources.size();i++){
         CUDA_DRIVER_API_CALL(cuGraphicsUnregisterResource(cu_resources[i]));
     }
-
 }
 
 void BlockVolumeRenderer::deleteUtilResource() {
@@ -728,12 +826,16 @@ void BlockVolumeRenderer::updateMappingTable() {
 }
 
 void BlockVolumeRenderer::render_volume() {
+
     raycasting_shader->use();
 
     glBindVertexArray(screen_quad_vao);
 
     glDrawArrays(GL_TRIANGLES,0,6);
+
 }
+
+unsigned int BlockVolumeRenderer::cur_verter_num=0;
 
 void BlockVolumeRenderer::createQueryPoint() {
 

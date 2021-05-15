@@ -95,6 +95,10 @@ void VolumeRenderer::set_querypoint(std::array<uint32_t, 2> screen_pos) noexcept
     impl->set_querypoint(screen_pos);
 }
 
+void VolumeRenderer::set_mode(int mode) noexcept {
+    impl->set_mode(mode);
+}
+
 auto VolumeRenderer::get_querypoint() -> const std::array<float, 8> {
     return impl->get_querypoint();
 }

@@ -436,7 +436,7 @@ bool NeuronGraph::addSegment(int id, Vertex *v){
     vEndswc.y = v->y;
     vEndswc.z = v->z;
     vEndswc.r = 1;
-    vEndswc.type = v->type;
+    vEndswc.type = 3;
     //路径生成算法之后修改该部分
     vEndswc.pn = id;
     vEndswc.user_id = lines[v->line_id].user_id;
@@ -594,19 +594,27 @@ bool NeuronPool::deleteLine(int line_id){
 bool NeuronGraph::deleteLine(int line_id){
     Line *l = &lines[line_id];
     lines.erase(line_id);
+    bool result = 1;
     for( auto v = lines[line_id].hash_vertexes.begin() ; v != lines[line_id].hash_vertexes.end() ; v++ ){
-        //NeuronSWC *swc = &list_swc[hash_swc_ids[v->second.id]]; 数据库删除该节点TODO
+        NeuronSWC *swc = &list_swc[hash_swc_ids[v->second.id]];
+        result &= DataBase::deleteSWC(*swc,tableName);
         for( auto seg = v->second.hash_linked_seg_ids.begin() ; seg != v->second.hash_linked_seg_ids.end() ; seg++ ){
             Segment *s = &segments[seg->first];
             for( auto p = s->segment_vertex_ids.begin() ; p != s->segment_vertex_ids.end() ; p ++ ){
-                // NeuronSWC *pSWC = &list_swc[hash_swc_ids[p->second]]; 数据库删除该节点TODO
+                NeuronSWC *pSWC = &list_swc[hash_swc_ids[p->second]]; //数据库删除该节点TODO
+                result &= DataBase::deleteSWC(*pSWC,tableName);
             }
             free(s);
         }
         free(&v->second);
     }
     free(l);
-    return true;
+    graphDrawManager.Delete(line_id);
+    return result;
+}
+
+void GraphDrawManager::Delete( int line_id ){
+
 }
 
 bool NeuronPool::hasCamera(){
@@ -624,6 +632,25 @@ bool NeuronPool::changeTable(string tableName){
         graph = graphs_pool->at(tableName);
         initSelectedLineIndex();
         initSelectedVertexIndex();
+        return true;
+    }
+    return false;
+}
+
+bool NeuronPool::dividedInto2Lines(int x, int y){
+    return graph->devidedInto2Lines(x,y);
+}
+
+bool NeuronGraph::devidedInto2Lines(int x, int  y){
+    return true;
+}
+
+bool NeuronPool::changeMode(std::string mode){
+    if( mode == "DVR" ){
+        m_mode = 0;
+        return true;
+    }else if( mode == "MIP" ){
+        m_mode = 1;
         return true;
     }
     return false;

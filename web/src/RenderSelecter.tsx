@@ -1,6 +1,10 @@
 import React from "react";
 import { Button, Radio, Space, Divider } from 'antd';
 import {BulbOutlined} from '@ant-design/icons'
+import axios from 'axios';
+
+
+const serverURL = "http://localhost:12121";
 class RenderSelecter extends React.Component {
     constructor(props){
         super(props)
@@ -8,8 +12,24 @@ class RenderSelecter extends React.Component {
             selectedRender: "MIP",
         };
     }
+
     handleRenderChange = (v:string) => {
+        console.log("555555")
         this.setState({selectedRender:v});
+        axios
+            .post(serverURL+"/info",{              
+                modify:{
+                    selectedRender : v
+                }
+            })
+            .then((res)=>{
+                console.log("八八八")
+                console.log(res);
+            })
+            .catch((e)=>{
+                console.log(e);
+            })
+
     };
 
     render(){

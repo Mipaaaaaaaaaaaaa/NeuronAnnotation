@@ -50,6 +50,8 @@ public:
 
     void clear_scene() override;
 
+    void set_mode(int mode) noexcept override;
+
 private:
 
     struct BlockTableItem{
@@ -144,8 +146,17 @@ private:
     GLuint screen_quad_vbo;
     std::array<GLfloat,24> screen_quad_vertices;//6 vertices for x y and u v
 
-    std::unique_ptr<sv::Shader> raycasting_shader;
+    unsigned int line_VBO;
+    unsigned int line_VAO;
+    unsigned int line_EBO;
+    static unsigned int cur_verter_num;
+    // std::vector<unsigned int> line_EBOs;
+    // std::vector<unsigned int> line_VAOs;
+    std::vector<int> line_num_of_path_;
+    void InitVaoVbo();
 
+    std::unique_ptr<sv::Shader> raycasting_shader;
+    std::unique_ptr<sv::Shader> line_shader;
 #ifdef _WINDOWS
     HDC window_handle;
     HGLRC gl_context;

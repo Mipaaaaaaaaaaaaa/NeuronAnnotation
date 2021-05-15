@@ -26,6 +26,8 @@ public:
 
     void set_volume(const char* path);
 
+    void set_mode(int mode) noexcept;
+
     void set_camera(Camera camera) noexcept;
 
     void set_transferfunc(TransferFunction tf) noexcept;

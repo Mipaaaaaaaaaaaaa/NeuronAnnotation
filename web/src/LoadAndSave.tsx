@@ -6,7 +6,7 @@ import { UploadOutlined } from '@ant-design/icons';
 import { withSuccess } from "antd/lib/modal/confirm";
 import { linkVertical } from "d3-shape";
 
-const _DOWNLOAD = "ws://127.0.0.1:12121/download";
+const _DOWNLOAD = "http://127.0.0.1:12121/download";
 const { Option } = Select;
 const LoadAndSave: React.FC = (props) => {
   const UPLOAD = {
@@ -31,23 +31,7 @@ const LoadAndSave: React.FC = (props) => {
   } 
 
   const downLoad = () =>{
-    const ws = new WebSocket(_DOWNLOAD);
-    ws.binaryType="blob";
-    ws.onopen = () => {
-        console.log("连接成功，准备下载");
-        ws.send(
-            JSON.stringify({
-                tableName : props.data.selectedTableName
-            })
-        );
-    }
-    ws.onerror = () =>{
-        console.log("连接渲染服务器出错！");
-        message.error("连接渲染服务器出错！");
-    }
-    ws.onmessage = (msg) => {
-      console.log(msg)
-    };
+    //
   }
 
   return (
@@ -83,7 +67,7 @@ const LoadAndSave: React.FC = (props) => {
             arrowPointAtCenter
             color="blue"
             >
-        <Button icon={<DownloadOutlined />} size="large" onClick={downLoad} >下载</Button>
+        <Button icon={<DownloadOutlined />} size="large" href={_DOWNLOAD} download={props.data.selectedTableName+".swc"}  >下载</Button>
         </Tooltip>
           </Space>
       </div>

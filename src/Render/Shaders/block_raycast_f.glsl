@@ -27,6 +27,7 @@ uniform int window_height;
 uniform ivec2 query_point;
 uniform bool query;
 
+uniform int mode; //0-DVR/1-MIP
 
 uniform float step;
 uniform float view_depth;
@@ -78,9 +79,9 @@ void main()
     sample_start_pos=camera_pos;
 
     sample_pos=sample_start_pos;
-    for(int i=0;i<steps;i++){
+    float maxValue=0;
+for(int i=0;i<steps;i++){
         bool continued=virtualSample(sample_pos,sample_scalar);
-
         if(!continued)
         break;
 
@@ -93,8 +94,17 @@ void main()
             sample_color=texture(preInt_transfer_func,vec2(last_sample_scalar.r,sample_scalar.r));
             sample_color.rgb=phongShading(sample_pos,sample_color.rgb);
             sample_color.a*=(steps*steps-i*i)*1.f/(steps*steps);
-            color=color+sample_color*vec4(sample_color.aaa,1.f)*(1.f-color.a);
-
+            if( mode == 0){
+                color = color+sample_color*vec4(sample_color.aaa,1.f)*(1.f-color.a);
+            }
+            else{
+                if( sample_scalar.r > maxValue){
+                    maxValue = sample_scalar.r;
+                    // color.a = maxValue;
+                    color = sample_color;
+                }
+                // color.a = maxValue;
+            }
             if(color.a>0.9f)
             break;
             last_sample_scalar=sample_scalar;
@@ -107,6 +117,7 @@ void main()
     }
 
     if(color.a==0.f) discard;
+
     color+=bg_color*(1.f-color.a);
 
     frag_color=color;
