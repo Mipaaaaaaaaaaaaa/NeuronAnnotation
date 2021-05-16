@@ -92,6 +92,7 @@ typedef struct NeuronSWC : public BasicObj
     int64_t seg_in_id; //该点在线段内的id
     int64_t user_id; //点所在脑数据中的block
     int64_t timestamp; //时间戳
+    bool deleted; //已在数据库删除 假删除用
     NeuronSWC(){
         id=0;
         type=Undefined;
@@ -104,6 +105,7 @@ typedef struct NeuronSWC : public BasicObj
         seg_in_id=-1;
         user_id=-1;
         timestamp=-1;
+        deleted=false;
     }
 } NeuronSWC;
 
@@ -186,12 +188,15 @@ public:
     NeuronGraph(const char * filePath, const char * tableName);
     NeuronGraph(){};
     // explicit NeuronGraph(int idx):graph_index(idx){}
+    void selectVertex( int x, int y, NeuronPool *n );
     bool selectVertices(std::vector<int> idxes);
     bool selectEdges(std::vector<int> idxes);
     bool selectLines(std::vector<int> idxes);
     bool deleteCurSelectVertices();
     bool deleteCurSelectEdges();
-    bool deleteCurSelectLines();
+    bool deleteCurSelectLines(    );
+
+    
     bool addVertex(Vertex* v);
     bool addSegment(int id, Vertex* v);
     
@@ -204,7 +209,9 @@ public:
     long int getCurMaxVertexId();
     long int getCurMaxLineId();
     long int getCurMaxSegmentId();
+    
     bool deleteLine(int line_id);
+    bool deleteVertex(int x, int y, NeuronPool *neuron_pool, std::string &error);
 
     void setMaxVertexId(long int id);
     void setMaxLineId(long int id);
@@ -248,7 +255,7 @@ private:
 public:
     bool formatGraphFromSWCList();
     int formatSegments(std::map<int,vector<int>> &vertexLinkedCount, int index);
-
+    long findNearestVertex(int cx, int cy, NeuronPool * neuron_pool, double &best_dist);
 public:
     GraphDrawManager *graphDrawManager;
 };
@@ -269,13 +276,18 @@ public:
 class NeuronPool{
 public:
     void selectVertex(int id);
+    void selectVertex(int x, int y);
     void selectLine(int id);
     NeuronPool(){
         m_selected_vertex_index = -1;
         m_selected_line_index = -1;
         b_set_camera = false;
         m_mode = 0; //默认DVR
+        //m_mode = 1;
         m_tool = 0; //默认拖拽
+
+        window_width = 1200;
+        window_height = 900;
     }
     string getLinestoJson();
     bool getLineVisible(int id);
@@ -286,7 +298,7 @@ public:
     bool jumpToVertex(int id);
 
     bool dividedInto2Lines(int x, int y);
-
+    bool deleteVertex(int x, int y, std::string &error);
     bool changeMode(string modeName);
     bool changeTable(string tableName);
     bool changeVisible(int line_id, bool visible);
@@ -296,6 +308,12 @@ public:
     void setGraph( std::shared_ptr<NeuronGraph> pN){
         graph = pN;
     };
+
+    int getWindowWidth();
+    int getWindowHeight();
+    void setWindowWidth(int w);
+    void setWindowHeight(int h);
+
     void setUserId( int id ){
         user_id = id;
     }
@@ -311,6 +329,10 @@ private:
     map<int,bool> line_id_visible; //路径可视映射
     int m_mode; //渲染模式
     int m_tool; //工具的index
+
+    int window_width;
+    int window_height;
+
 public:
     void setTool(int toolIndex);
     int getTool();

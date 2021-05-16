@@ -537,7 +537,7 @@ void BlockVolumeRenderer::setupShaderUniform() {
 //    spdlog::info("{0}",__FUNCTION__ );
     raycasting_shader->use();
     raycasting_shader->setInt("transfer_func",B_TF_TEX_BINDING);
-    raycasting_shader->setInt("mode",0);
+    raycasting_shader->setInt("mode",1);
     raycasting_shader->setInt("preInt_transfer_func",B_PTF_TEX_BINDING);
     raycasting_shader->setInt("cache_volume0",B_VOL_TEX_0_BINDING);
     raycasting_shader->setInt("cache_volume1",B_VOL_TEX_1_BINDING);
