@@ -65,39 +65,42 @@ void WebSocketRequestHandler::handleRequest(
                     QueryPoint query_point;
                     seria::deserialize(query_point,values);
                     //进一步确定当前操作
-                    if ( document.HasMember("tool") ){
-                        rapidjson::Value& toolValue = document["tool"];
-                        std::cout << toolValue.GetInt() << std::endl;
-                        switch(Tools(toolValue.GetInt())){
-                            case Drag:
-                            break;
-                            case Insert:
-                                auto query_res = getQueryPoint({query_point.x,query_point.y});
-                                if( query_res[7] > 0.5f ){
-                                    if(neuron_pool->addVertex(query_res[0],query_res[1],query_res[2])){
-                                        sendSuccessFrame("添加成功");
-                                    }else{
-                                        sendErrorFrame("添加失败");
-                                    }
+                    switch(Tools(neuron_pool->getTool())){
+                        case Drag: //拖拽不需要判断
+                            neuron_pool->selectVertex(query_point.x,query_point.y);
+                        break;
+                        case Insert:
+                            auto query_res = getQueryPoint({query_point.x,query_point.y});
+                            if( query_res[7] > 0.5f ){
+                                if(neuron_pool->addVertex(query_res[0],query_res[1],query_res[2])){
+                                    sendSuccessFrame("添加成功");
+                                }else{
+                                    sendErrorFrame("添加失败");
                                 }
-                                else{
-                                    printf("%lf Alpha is too low!\n",query_res[7]);
-                                    sendErrorFrame("选择点透明度低，请重新选择");
-                                }
-                            break;
-                            case Cut:
-                                //找到最近的一个端点
-                                //把图按照这个断点分成两个
-                            break;
-                            case Select:
-                                //找到最近的一个端点
-                                //替换选择的端点
-                            break;
-                            case Delete:
-                                //找到最近的一个叶节点
-                                //删除这个叶节点相连的线
-                            break;
-                        }
+                            }
+                            else{
+                                printf("%lf Alpha is too low!\n",query_res[7]);
+                                sendErrorFrame("选择点透明度低，请重新选择");
+                            }
+                        break;
+                        case Cut:
+                            //找到最近的一个端点
+                            //把图按照这个断点分成两个
+                        break;
+                        case Select:
+                            //矩形框选中 TODO
+                        break;
+                        case Delete:                            //找到最近的一个叶节点
+                                                                //删除这个叶节点相连的线
+                            string error;
+                            bool res = neuron_pool->deleteVertex(query_point.x,query_point.y,error);
+                            if( res ){
+                                sendSuccessFrame("删除成功");
+                            }else{
+                                sendErrorFrame(error);
+                            }
+
+                        break;
                     }
                 }
                 sendStructureFrame();
@@ -125,8 +128,6 @@ void WebSocketRequestHandler::handleRequest(
                 break;
         }//switch
     }//catch
-    //WebSocket生命周期结束？
-    //RequestHandlerFactory::userWebsocketRequestHandler.erase(user_id);
 }
 
 void WebSocketRequestHandler::sendErrorFrame(std::string errorMessage){
