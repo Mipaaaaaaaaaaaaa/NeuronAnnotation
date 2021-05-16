@@ -8,6 +8,15 @@
 #include <Poco/JSON/Array.h>
 #include <Poco/Dynamic/Var.h>
 #include <DataBase.hpp>
+#include<glm/glm.hpp>
+
+#include<glm/gtc/matrix_transform.hpp>
+
+#ifdef _WINDOWS
+#include<glad/wgl.h>
+#else
+#include<glad/glad.h>
+#endif
 
 using namespace std;
 using Poco::Dynamic::Var;
@@ -604,17 +613,132 @@ void GraphDrawManager::Delete( int line_id ){
     return;
 }
 
+bool NeuronPool::deleteVertex(int x, int y, std::string &error){ //屏幕点
+    return graph->deleteVertex(x,y,this,error);
+}
+
+bool NeuronGraph::deleteVertex(int x, int y, NeuronPool *neuron_pool, std::string &error){
+    //find index;
+    if( list_swc.size() == 0 ){
+        error = "暂无节点可删除";
+        return false;
+    }
+    double best_dist;
+    long id = findNearestVertex( x, y, neuron_pool, best_dist);
+    if( id == -1 || best_dist > 10 ){
+        error = "选择节点失败，请重新选择";
+        return false;
+    }
+    int result = 1;
+    NeuronSWC *swc = &list_swc[hash_swc_ids[id]];
+    if( swc->seg_in_id == 0 || swc->seg_in_id == swc->seg_size - 1 ){ // 是关键节点
+        Vertex *v = &lines[swc->line_id].hash_vertexes[swc->id];
+        if( !v ){
+            error = "未找到关键节点，请重新选择";
+            return false;
+        }
+        if( v->hash_linked_seg_ids.size() > 1 ){ //此时不可删除
+            error = "该节点不是叶节点，请重新选择";
+            return false;
+        }
+        auto it = v->hash_linked_seg_ids.begin(); //关联段
+        for(auto id = segments[it->first].segment_vertex_ids.begin(); id != segments[it->first].segment_vertex_ids.end() ; id ++ )
+        {   
+            if( id->first == 0 || id->first ==  segments[it->first].size - 1){
+                continue;
+            }
+            //中间节点直接删掉
+            result &= DataBase::deleteSWC(list_swc[hash_swc_ids[id->second]],tableName);
+            list_swc[hash_swc_ids[id->second]].deleted = true;
+        }
+        if( swc->id == segments[it->first].start_id && swc->pn == -1 ){ //如果是起点，则让最后的节点成为新的根节点 //如果是终点，则直接删除
+            result &= DataBase::deleteSWC(*swc,tableName);
+            swc->deleted = true;
+            int end_id = segments[it->first].end_id;
+            lines[v->line_id].hash_vertexes[end_id].linked_vertex_ids.erase(v->id); //对endV进行操作
+            lines[v->line_id].hash_vertexes[end_id].hash_linked_seg_ids.erase(it->first);
+            if( lines[v->line_id].hash_vertexes[end_id].linked_vertex_ids.size() == 0 ){
+                list_swc[hash_swc_ids[end_id]].pn = -1;
+                list_swc[hash_swc_ids[end_id]].seg_in_id = -1;
+                list_swc[hash_swc_ids[end_id]].seg_size = -1;
+                result &= DataBase::modifySWC(list_swc[hash_swc_ids[end_id]],tableName);
+            }
+            neuron_pool->selectVertex(end_id);
+        }else{
+            result &= DataBase::deleteSWC(*swc,tableName);
+            swc->deleted = true;
+            int start_id = segments[it->first].start_id;
+            lines[v->line_id].hash_vertexes[start_id].linked_vertex_ids.erase(v->id); 
+            lines[v->line_id].hash_vertexes[start_id].hash_linked_seg_ids.erase(it->first);
+            neuron_pool->selectVertex(start_id);
+        }
+        return true;
+    }
+    else{
+        error = "请选择关键节点！";
+        return false;
+    }
+}
+
+long NeuronGraph::findNearestVertex(int cx, int cy, NeuronPool * neuron_pool, double &best_dist) //find the nearest node in a neuron in XY project of the display window
+{
+	double px, py, pz, ix, iy, iz;
+
+	long best_ind=-1; best_dist=-1;
+
+    bool init = false;
+    Camera camera = neuron_pool->getCamera();
+    int window_width = neuron_pool->getWindowWidth();
+    int window_height = neuron_pool->getWindowHeight();
+    auto fov =
+        2 * atan(tan(45.0f * glm::pi<float>() / 180.0f / 2.0f) / camera.zoom);
+    glm::mat4 projection = glm::perspective(
+        (double)fov, (double)window_width / (double)window_height, 0.0001, 5.0);
+    glm::mat4 model = glm::mat4(1.0f);
+    glm::vec4 viewport(0.0f,0.0f, (double)window_width, (double)window_height);
+	for (long i = 0 ; i < list_swc.size() ; i++ )
+	{
+        if( list_swc[i].deleted ) continue;
+
+		ix = list_swc[i].x, iy = list_swc[i].y, iz = list_swc[i].z;
+		//GLint res = gluProject(ix, iy, iz, model, projection, viewport, &px, &py, &pz); 
+        glm::vec3 res = glm::project(glm::vec3(ix,iy,iz),model,projection,viewport);
+        // note: should use the saved modelview, projection and viewport matrix
+		res.y = viewport[3]-res.y; //the Y axis is reversed
+
+		double cur_dist = (px-cx)*(px-cx)+(py-cy)*(py-cy);
+
+		if ( !init ) {	best_dist = cur_dist; best_ind = list_swc[i].id; }
+		else 
+		{	
+			if (cur_dist < best_dist ) 
+			{
+				best_dist=cur_dist; 
+				best_ind = list_swc[i].id;
+			}
+		}
+	}
+
+	return best_ind; 
+}
+
 bool NeuronGraph::deleteLine(int line_id){
     Line *l = &lines[line_id];
     bool result = 1;
     for( auto v = lines[line_id].hash_vertexes.begin() ; v != lines[line_id].hash_vertexes.end() ; v++ ){
         NeuronSWC *swc = &list_swc[hash_swc_ids[v->second.id]];
-        result &= DataBase::deleteSWC(*swc,tableName);
+        if( !swc->deleted ){
+            result &= DataBase::deleteSWC(*swc,tableName);
+            swc->deleted = true; //每个节点最多删除一次
+        }
         for( auto seg = v->second.hash_linked_seg_ids.begin() ; seg != v->second.hash_linked_seg_ids.end() ; seg++ ){
             Segment *s = &segments[seg->first];
             for( auto p = s->segment_vertex_ids.begin() ; p != s->segment_vertex_ids.end() ; p ++ ){
-                NeuronSWC *pSWC = &list_swc[hash_swc_ids[p->second]]; //数据库删除该节点TODO
-                result &= DataBase::deleteSWC(*pSWC,tableName);
+                NeuronSWC *pSWC = &list_swc[hash_swc_ids[p->second]];
+                if( !pSWC->deleted ){
+                    result &= DataBase::deleteSWC(*pSWC,tableName);
+                    pSWC->deleted = true;
+                }
             }
             segments.erase(seg->first);
         }
@@ -673,4 +797,20 @@ void NeuronPool::setTool(int toolIndex){
 
 int NeuronPool::getTool(){
     return m_tool;
+}
+
+int NeuronPool::getWindowWidth(){
+    return window_width;
+}
+
+int NeuronPool::getWindowHeight(){
+    return window_height;
+}
+
+void NeuronPool::setWindowWidth(int w){
+    window_width = w;
+}
+
+void NeuronPool::setWindowHeight(int h){
+    window_height = h;
 }
