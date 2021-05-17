@@ -124,7 +124,7 @@ for(int i=0;i<steps;i++){
         frag_color=color;
     }
     else{
-        frag_color=vec4(color.aaa,1);
+        frag_color=vec4(maxValue,maxValue,maxValue,1);
     }
     //    frag_color=vec4(view_direction,1.f);
 

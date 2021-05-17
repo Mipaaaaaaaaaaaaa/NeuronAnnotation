@@ -428,6 +428,8 @@ bool NeuronGraph::addVertex(Vertex *v){
     NeuronSWC swc;
     swc.id = v->id;
     swc.name = v->name = lines[v->line_id].name;
+    swc.line_id = v->line_id;
+    swc.seg_in_id = 0;
     swc.pn = -1;
     swc.x = v->x;
     swc.y = v->y;
@@ -634,7 +636,7 @@ bool NeuronPool::deleteVertex(int x, int y, std::string &error){ //屏幕点
 bool NeuronGraph::deleteVertex(int x, int y, NeuronPool *neuron_pool, std::string &error){
     //find index;
     if( list_swc.size() == 0 ){
-        error = "暂无节点可删除";
+        error = "牙白";
         return false;
     }
     double best_dist;
@@ -689,7 +691,7 @@ bool NeuronGraph::deleteVertex(int x, int y, NeuronPool *neuron_pool, std::strin
         return true;
     }
     else{
-        error = "请选择关键节点！";
+        error = "请选择关节节点";
         return false;
     }
 }

@@ -51,8 +51,8 @@ void RequestHandlerFactory::initLinesRender(){
 Poco::Net::HTTPRequestHandler *RequestHandlerFactory::createRequestHandler(
         const Poco::Net::HTTPServerRequest &request) {
     if( !isInited ){
-        neuronGraphs["test"] = make_shared<NeuronGraph>("./test.swc","test"); //读取本地swc,并且转换成test集合
-        //neuronGraphs["test"] = make_shared<NeuronGraph>("test",0);
+        //neuronGraphs["test"] = make_shared<NeuronGraph>("./test.swc","test"); //读取本地swc,并且转换成test集合
+        neuronGraphs["test"] = make_shared<NeuronGraph>("test",0);
         initBlockVolumeRender();
         initLinesRender();
         isInited = true;
@@ -118,6 +118,7 @@ Poco::Net::HTTPRequestHandler *RequestHandlerFactory::createRequestHandler(
             n->neuron_pool->setUserId(n->user_id);
             neuronPools[n->user_id] = n->neuron_pool;
         }
+        n->render_ws = userWebsocketRequestHandler[n->user_id];
         return n;
     }
 

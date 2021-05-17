@@ -18,6 +18,8 @@
 #include <SWCP.hpp>
 #include <DataBase.hpp>
 #include <iostream>
+#include "RequestHandlerFactory.hpp"
+
 using Poco::Util::Application;
 
 class MyPartHandler : public Poco::Net::PartHandler{
@@ -79,8 +81,28 @@ void UploadRequestHandler::handleRequest(
     std::cout << "buffer:" << partHandler.buffer() << endl;
     std::cout << "file name:" << partHandler.filename() << endl;
     std::cout << "file size:" << partHandler.length() << endl;
-    response.setStatus(Poco::Net::HTTPResponse::HTTP_OK);
-    response.send();
+    
+    
+    string tableName = partHandler.filename();
+    string fix = ".swc";
+    int pos = tableName.find(fix);
+    tableName = tableName.erase(pos,fix.size());
+    if( RequestHandlerFactory::neuronGraphs.find(tableName) != RequestHandlerFactory::neuronGraphs.end() ){
+        response.setStatus(Poco::Net::HTTPResponse::HTTP_CONFLICT);
+        response.send();
+    }
+    else{
+        string filePath = "./" + tableName;
+        std::ofstream of(filePath);
+        of.clear();
+        of.write(partHandler.buffer().c_str(),partHandler.buffer().size());
+        of.close();
+        RequestHandlerFactory::neuronGraphs[tableName] = std::make_shared<NeuronGraph>(filePath.c_str(),tableName.c_str());
+        response.setStatus(Poco::Net::HTTPResponse::HTTP_OK);
+        response.send();
+        render_ws->sendSuccessFrame("上传成功");
+        render_ws->sendStructureFrame();
+    }
     return;
 
 

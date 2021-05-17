@@ -159,9 +159,9 @@ void BlockVolumeRenderer::render_frame() {
         std::cout<<"no intersect!"<<std::endl;
     }
 
-    // glBindVertexArray(0);
-    // glBindFramebuffer(GL_FRAMEBUFFER, 0);
-    // glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    glBindVertexArray(0);
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     render_volume();
 
@@ -181,9 +181,12 @@ void BlockVolumeRenderer::render_frame() {
 
     // glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
     // glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    // glBindVertexArray(line_VAO);
-    // glPointSize(3);
-    // glDrawArrays(GL_LINES,0,4);
+            glDisable(GL_DEPTH_TEST);
+            line_shader->use();
+    glBindVertexArray(line_VAO);
+    glPointSize(3);
+    glDrawArrays(GL_LINES,0,4);
+            glEnable(GL_DEPTH_TEST);
 
     glFinish();
 
@@ -333,10 +336,10 @@ void BlockVolumeRenderer::InitVaoVbo() {
     glBufferStorage(GL_ELEMENT_ARRAY_BUFFER, 1024 * 2 * sizeof(uint32_t), nullptr, GL_DYNAMIC_STORAGE_BIT);
 
     // float vertices[]={
-    //         1.f,1.f,1.f,1.f,
-    //         0.5,0.5,0.5,2.f,
-    //         1.f,0.f,0.f,3.f,
-    //         0.f,1.f,0.f,4.f
+    //         1000.f,1000.f,1000.f,
+    //         0.5,0.5,0.5,
+    //         1.f,0.f,0.f,
+    //         0.f,1.f,0.f,
     // };
     // GLuint vao,vbo;
     // glGenVertexArrays(1,&line_VAO);
@@ -344,7 +347,7 @@ void BlockVolumeRenderer::InitVaoVbo() {
     // glBindVertexArray(line_VAO);
     // glBindBuffer(GL_ARRAY_BUFFER, line_VBO);
     // glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
-    // glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)0);
+    // glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
     // glEnableVertexAttribArray(0);
 
     // glNamedBufferSubData(line_VBO, cur_verter_num * sizeof(float) * 3,
@@ -537,7 +540,6 @@ void BlockVolumeRenderer::setupShaderUniform() {
 //    spdlog::info("{0}",__FUNCTION__ );
     raycasting_shader->use();
     raycasting_shader->setInt("transfer_func",B_TF_TEX_BINDING);
-    raycasting_shader->setInt("mode",1);
     raycasting_shader->setInt("preInt_transfer_func",B_PTF_TEX_BINDING);
     raycasting_shader->setInt("cache_volume0",B_VOL_TEX_0_BINDING);
     raycasting_shader->setInt("cache_volume1",B_VOL_TEX_1_BINDING);
@@ -581,7 +583,6 @@ void BlockVolumeRenderer::setupShaderUniform() {
         glm::vec3(camera.up[0], camera.up[1], camera.up[2]));
     glm::mat4 model = glm::mat4(1.0f);
     glm::mat4 MVP = projection * view * model;
-    line_shader->setMat4("MVPMatrix",MVP);
 
     if(query){
         glm::ivec2 _query_point={query_point[0],window_height-query_point[1]};
@@ -591,6 +592,10 @@ void BlockVolumeRenderer::setupShaderUniform() {
     else{
         raycasting_shader->setBool("query",false);
     }
+
+    line_shader->use();
+    line_shader->setMat4("MVPMatrix",MVP);
+
 }
 
 
