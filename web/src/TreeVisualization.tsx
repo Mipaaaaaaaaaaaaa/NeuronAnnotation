@@ -200,8 +200,10 @@ class TreeVisualization extends React.Component {
     }
 
     componentDidMount() {
-        this.TreePlot()
-        this.setState({preData:this.props.data});
+        if( this.props.data.graphs && this.props.data.graphs[this.props.selectedMapKey].sub[this.props.selectedVertexKey] ){
+            this.TreePlot()
+            this.setState({preData:this.props.data});
+        }
         // if(this.props.data.graphs[this.props.selectedMapKey].sub[this.props.selectedVertexKey]){
         //     this.RectPhyloPlot();
         //     this.UnrootedPhyloPlot();
@@ -210,7 +212,7 @@ class TreeVisualization extends React.Component {
 
     TreePlot = () => {
         const self = this;
-        console.log(this.props.data.graphs[this.props.selectedMapKey].sub);
+        //console.log(this.props.data.graphs[this.props.selectedMapKey].sub);
         if(this.props.data.graphs.length != 0 && this.props.data.graphs[this.props.selectedMapKey].sub ){
             var treeData = JSON.parse(getTreeData( this.props.data.graphs[this.props.selectedMapKey] ,self.state.rootIndex));
 

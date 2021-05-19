@@ -153,6 +153,9 @@ private:
     // std::vector<unsigned int> line_EBOs;
     // std::vector<unsigned int> line_VAOs;
     std::vector<int> line_num_of_path_;
+
+    int render_mode;
+
     void InitVaoVbo();
 
     std::unique_ptr<sv::Shader> raycasting_shader;

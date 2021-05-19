@@ -327,7 +327,7 @@ std::string DataBase::getSWCFileStringFromTable(const std::string &tableName){
 
     auto queryPtr = g_db.createQueryRequest(tableName);
     queryPtr->selector();
-
+    queryPtr->setNumberToReturn(1000000);
     Poco::MongoDB::ResponseMessage response;
 
     // send request to server

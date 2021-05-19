@@ -163,7 +163,10 @@ void BlockVolumeRenderer::render_frame() {
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-    render_volume();
+    if( render_mode != 2 ){ //非单线渲染
+        render_volume();
+    }
+    
 
     // if( cur_verter_num > 0 ){
     //     glDisable(GL_DEPTH_TEST);
@@ -184,7 +187,7 @@ void BlockVolumeRenderer::render_frame() {
     glDisable(GL_DEPTH_TEST);
     line_shader->use();
     glBindVertexArray(line_VAO);
-    glPointSize(3);
+    glPointSize(10);
     glDrawArrays(GL_LINES,0,4);
     glEnable(GL_DEPTH_TEST);
 
@@ -540,6 +543,7 @@ void BlockVolumeRenderer::set_mode(int mode) noexcept {
     if(!wglMakeCurrent(window_handle, gl_context)){
         throw std::runtime_error("Failed to activate OpenGL 4.6 rendering context.");
     }
+    render_mode = mode; 
     raycasting_shader->use();
     raycasting_shader->setInt("mode",mode);
 }

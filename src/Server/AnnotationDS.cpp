@@ -799,6 +799,9 @@ bool NeuronPool::changeMode(std::string mode){
     }else if( mode == "MIP" ){
         m_mode = 1;
         return true;
+    }else if( mode == "LINE" ){
+        m_mode = 2;
+        return true;
     }
     return false;
 }
