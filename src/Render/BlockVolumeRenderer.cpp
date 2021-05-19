@@ -164,9 +164,9 @@ void BlockVolumeRenderer::render_frame() {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     if( render_mode != 2 ){ //非单线渲染
-        render_volume();
+    render_volume();
     }
-    
+
 
     // if( cur_verter_num > 0 ){
     //     glDisable(GL_DEPTH_TEST);
@@ -187,7 +187,7 @@ void BlockVolumeRenderer::render_frame() {
     glDisable(GL_DEPTH_TEST);
     line_shader->use();
     glBindVertexArray(line_VAO);
-    glPointSize(10);
+    glPointSize(3);
     glDrawArrays(GL_LINES,0,4);
     glEnable(GL_DEPTH_TEST);
 
@@ -536,14 +536,14 @@ void BlockVolumeRenderer::setupRuntimeResource() {
 #define B_VOL_TEX_0_BINDING 2
 #define B_VOL_TEX_1_BINDING 3
 #define B_VOL_TEX_2_BINDING 4
-
+#define B_POS_TEX_BINDING 5
 
 void BlockVolumeRenderer::set_mode(int mode) noexcept {
     //call every time start to use opengl for this thread
     if(!wglMakeCurrent(window_handle, gl_context)){
         throw std::runtime_error("Failed to activate OpenGL 4.6 rendering context.");
     }
-    render_mode = mode; 
+    render_mode = mode;
     raycasting_shader->use();
     raycasting_shader->setInt("mode",mode);
 }
@@ -862,6 +862,25 @@ void BlockVolumeRenderer::createQueryPoint() {
     glBindBufferBase(GL_SHADER_STORAGE_BUFFER,1,query_point_ssbo);
 
     GL_CHECK
+}
+
+auto BlockVolumeRenderer::get_pos_frame() -> const Map<float> & {
+    pos_frame.width=window_width;
+    pos_frame.height=window_height;
+    pos_frame.channels=4;
+    pos_frame.data.resize(window_width*window_height*4);
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    glGetTextureImage(pos_frame_tex,0,GL_RGBA,GL_FLOAT,pos_frame.data.size()*sizeof(float),reinterpret_cast<void*>(pos_frame.data.data()));
+
+    return pos_frame;
+}
+
+void BlockVolumeRenderer::createFrameTexture() {
+    glGenTextures(1,&pos_frame_tex);
+    glBindTexture(GL_TEXTURE_2D,pos_frame_tex);
+    glBindTextureUnit(B_POS_TEX_BINDING,pos_frame_tex);
+    glTextureStorage2D(pos_frame_tex,1,GL_RGBA32F,window_width,window_height);
+    glBindImageTexture(0,pos_frame_tex,0,GL_FALSE,0,GL_READ_WRITE,GL_RGBA32F);
 }
 
 
