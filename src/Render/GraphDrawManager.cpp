@@ -1,9 +1,8 @@
 #include <AnnotationDS.hpp>
 #include <glm/glm.hpp>
-#define MAX_VERTEX_NUMBER 1000000
+#define MAX_VERTEX_NUMBER (int)1000000
 #include <glad/gl.h>
 #include <glad/wgl.h>
-// #include <GLinit.hpp>
 
 using vec3 = glm::vec3;
 

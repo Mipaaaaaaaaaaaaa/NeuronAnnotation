@@ -22,7 +22,7 @@ void GraphDrawManager::InitGraphDrawManager(){
     // if(!wglMakeCurrent(GLHandler::window_handle, GLHandler::gl_context)){
     //     throw std::runtime_error("Failed to activate OpenGL 4.6 rendering context.");
     // }
-
+    return;
     glGenBuffers(1, &vbo);
     glBindBuffer(GL_ARRAY_BUFFER, vbo);
     glBufferStorage(GL_ARRAY_BUFFER, MAX_VERTEX_NUMBER * sizeof(float), nullptr, GL_DYNAMIC_STORAGE_BIT);

@@ -316,18 +316,106 @@ bool NeuronPool::addVertex(Vertex *v){
             m_selected_vertex_index = v->id;
             return true;
         }
-   }else{ // draw a line
-        v->linked_vertex_ids[m_selected_vertex_index] = true;
-        if( graph->addSegment(m_selected_vertex_index,v) ){
-            m_selected_vertex_index = v->id;
-            return true;
-        }
    }
+//    else{ // draw a line
+//         v->linked_vertex_ids[m_selected_vertex_index] = true;
+//         if( graph->addSegment(m_selected_vertex_index,v) ){
+//             m_selected_vertex_index = v->id;
+//             return true;
+//         }
+//    }
    return false;
+}
+
+bool NeuronPool::addSegment(std::vector<std::array<float,4>> *path){
+    m_selected_vertex_index = graph->addSegment(m_selected_vertex_index,path);
+    return true;
+}
+
+long long NeuronGraph::addSegment(int id, std::vector<std::array<float,4>> *path){
+    NeuronSWC vStartswc = list_swc[hash_swc_ids[id]];
+    NeuronSWC vEndswc;
+    //生成新的segments
+    long int segId = getNewSegmentId();
+    //路径生成算法之后修改该部分
+    int last_id = id;
+    int index = 0;
+    std::vector<shared_ptr<NeuronSWC> >inserts;
+    for( auto v : *path ){
+        if( index = 0 ){
+            Segment s;
+            segments[segId] = s;
+            segments[segId].id = segId;
+            segments[segId].color = vStartswc.color;
+            segments[segId].name = vStartswc.name;
+            segments[segId].start_id = id;
+            segments[segId].size = path->size();
+            segments[segId].line_id = vStartswc.line_id;
+            segments[segId].segment_vertex_ids[0] = id;
+            lines[vStartswc.line_id].hash_vertexes[id].hash_linked_seg_ids[segId] = true;
+            index = 1;
+            continue;
+        }
+        NeuronSWC mid;
+        mid.id = getNewVertexId();
+        mid.line_id = vStartswc.line_id;
+        mid.name = vStartswc.name;
+        mid.color = vStartswc.color;
+        mid.user_id = lines[vStartswc.line_id].user_id;
+        time_t t;
+        mid.timestamp = time(&t);
+        mid.x = v[0];
+        mid.y = v[1];
+        mid.z = v[2];
+        mid.pn = last_id;
+        last_id = mid.id;
+        mid.seg_id = segId;
+        mid.seg_in_id = index;
+        segments[segId].segment_vertex_ids[index] = mid.id;
+        mid.seg_size = path->size(); //总顶点数
+        inserts.push_back(make_shared<NeuronSWC>(mid));
+        index ++;
+    }
+    //连接两个点
+    Vertex vEnd;
+    vEnd.id = inserts[inserts.size()-1]->id;
+    vEnd.color = inserts[inserts.size()-1]->color;
+    vEnd.x = inserts[inserts.size()-1]->x;
+    vEnd.y = inserts[inserts.size()-1]->y;
+    vEnd.z = inserts[inserts.size()-1]->z;
+    vEnd.hash_linked_seg_ids[segId] = true;
+    vEnd.linked_vertex_ids[id] = true;
+    lines[vStartswc.line_id].hash_vertexes[id].linked_vertex_ids[vEnd.id] = true;
+    segments[segId].end_id = vEnd.id;
+    lines[vStartswc.line_id].hash_vertexes[vEnd.id] = vEnd;
+
+    list_and_hash_mutex.lock();
+    {
+        for( auto swc : inserts ){
+            list_swc.push_back(*swc);
+            hash_swc_ids[swc->id] = list_swc.size() - 1;
+        }
+    }
+    list_and_hash_mutex.unlock();
+
+    if( DataBase::insertSWCs(inserts,tableName) ) return vEnd.id;
+    return -1;
 }
 
 void NeuronPool::selectVertex( int id ){
     m_selected_vertex_index = id;
+    // NeuronSWC swc = graph->list_swc[graph->hash_swc_ids[id]];
+    // float offset_x = swc.x;
+    // float offset_y = swc.y;
+    // float offset_z = swc.z;
+    // glm::vec3 front = glm::normalize(glm::vec3(swc.x,swc.y,swc.z));
+    // m_camera.front[0] = front.x;
+    // m_camera.front[1] = front.y;
+    // m_camera.front[2] = front.z;
+
+    // m_camera.pos[0] = m_camera.pos[0]-offset_x;
+    // m_camera.pos[1] = m_camera.pos[1]-offset_y;
+    // m_camera.pos[2] = m_camera.pos[2]-offset_z;
 }
 
 void NeuronPool::selectVertex( int x, int y){
@@ -840,4 +928,24 @@ void NeuronPool::setWindowWidth(int w){
 
 void NeuronPool::setWindowHeight(int h){
     window_height = h;
+}
+
+std::array<int,2> NeuronPool::getSelectedVertexXY(){
+    float x = graph->list_swc[graph->hash_swc_ids[m_selected_vertex_index]].x;
+    float y = graph->list_swc[graph->hash_swc_ids[m_selected_vertex_index]].y;
+    float z = graph->list_swc[graph->hash_swc_ids[m_selected_vertex_index]].z;
+
+    auto fov =
+        2 * atan(tan(45.0f * glm::pi<float>() / 180.0f / 2.0f) / m_camera.zoom);
+    glm::mat4 projection = glm::perspective(
+        (double)fov, (double)window_width / (double)window_height, 0.0001, 5.0);
+    glm::mat4 model = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, -10.0f));//glm::mat4(1.0f);
+    glm::vec4 viewport(0.0f,0.0f, (double)window_width, (double)window_height);
+
+    //GLint res = gluProject(ix, iy, iz, model, projection, viewport, &px, &py, &pz); 
+    glm::vec3 res = glm::project(glm::vec3(x,y,z),model,projection,viewport);
+    // note: should use the saved modelview, projection and viewport matrix
+    res.y = viewport[3]-res.y; //the Y axis is reversed
+
+    return {(int)res.x,(int)res.y};
 }

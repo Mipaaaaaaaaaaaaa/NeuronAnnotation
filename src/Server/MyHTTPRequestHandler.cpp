@@ -65,6 +65,7 @@ void MyHTTPRequestHandler::handleRequest(
                     }
                     if( modify_data.HasMember("selectedVertexIndex") && modify_data["selectedVertexIndex"].IsInt64() ){
                         neuron_pool->selectVertex(modify_data["selectedVertexIndex"].GetInt64());
+                        render_ws->sendIamgeFrame();
                     }
                     if( modify_data.HasMember("selectedLineIndex") && modify_data["selectedLineIndex"].IsInt64() ){
                         neuron_pool->selectLine(modify_data["selectedLineIndex"].GetInt64());

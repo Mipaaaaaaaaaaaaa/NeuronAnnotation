@@ -202,7 +202,8 @@ public:
     
     bool addVertex(Vertex* v);
     bool addSegment(int id, Vertex* v);
-    
+    long long addSegment(int id,std::vector<std::array<float,4>> *path); //return final id
+
     bool devidedInto2Lines(int x, int  y);
 
     long int addLine();
@@ -287,7 +288,7 @@ public:
     bool addLine();
     bool deleteLine(int line_id);
     bool jumpToVertex(int id);
-
+    bool addSegment(std::vector<std::array<float,4>> *path); //return final id
     bool dividedInto2Lines(int x, int y);
     bool deleteVertex(int x, int y, std::string &error);
     bool changeMode(string modeName);
@@ -296,6 +297,7 @@ public:
     bool changeColor(int line_id, string color);
     bool changeName(int line_id, string name);
     bool hasCamera();
+    std::array<int,2> getSelectedVertexXY();
     void setGraph( std::shared_ptr<NeuronGraph> pN){
         graph = pN;
     };

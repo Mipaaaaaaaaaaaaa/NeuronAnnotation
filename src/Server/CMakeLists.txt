@@ -48,7 +48,8 @@ endif()
 add_executable(NeuronAnnotateServer ${SERVER_SRCS})
 target_include_directories(NeuronAnnotateServer PRIVATE
         ${PROJECT_SOURCE_DIR}/third_party
-        ${GLAD_INCLUDE_DIR})
+        ${GLAD_INCLUDE_DIR}
+        ${PROJECT_SOURCE_DIR}/src/Algorithm)
 target_link_libraries(NeuronAnnotateServer PRIVATE
         Poco::Net
         Poco::Util

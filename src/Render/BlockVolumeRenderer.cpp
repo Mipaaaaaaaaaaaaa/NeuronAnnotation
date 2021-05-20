@@ -159,45 +159,29 @@ void BlockVolumeRenderer::render_frame() {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     if( render_mode != 2 ){ //非单线渲染
-    render_volume();
+        render_volume();
     }
 
-    glDisable(GL_DEPTH_TEST);
-    line_shader->use();
+    // glDisable(GL_DEPTH_TEST);
+    // line_shader->use();
 
-    std::shared_ptr<NeuronGraph> g = neuron_pool->getGraph();
-    for( auto line : g->graphDrawManager->hash_lineid_vao_ebo ){
-        if(neuron_pool->getLineVisible(line.first)){ //只渲染可见
-            glLineWidth(3);
-            glBindVertexArray(line.first);
-            glDrawElements( GL_LINES, 2 * g->graphDrawManager->line_num_of_path[line.first] , GL_UNSIGNED_INT , nullptr );
-        }
-    }
+    // // std::shared_ptr<NeuronGraph> g = neuron_pool->getGraph();
+    // // for( auto line : g->graphDrawManager->hash_lineid_vao_ebo ){
+    // //     if(neuron_pool->getLineVisible(line.first)){ //只渲染可见
+    // //         glLineWidth(3);
+    // //         glBindVertexArray(line.first);
+    // //         glDrawElements( GL_LINES, 2 * g->graphDrawManager->line_num_of_path[line.first] , GL_UNSIGNED_INT , nullptr );
+    // //     }
+    // // }
 
-    glEnable(GL_DEPTH_TEST);
+    // glEnable(GL_DEPTH_TEST);
 
-    // if( cur_verter_num > 0 ){
-    //     glDisable(GL_DEPTH_TEST);
-    //     line_shader->use();
-    //     glDrawBuffer(GL_COLOR_ATTACHMENT0);
-    //     // glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-    //     glColor3f(0.5,0.5,0);
-    //     glLineWidth(3);
-    //     glBindVertexArray(line_VAO);
-    //     glDrawElements(GL_LINES, 2 * (cur_verter_num - 1),GL_UNSIGNED_INT, nullptr);
-    //     glEnable(GL_DEPTH_TEST);
-        
-    // }
-
-    // glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
-    // glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    glDisable(GL_DEPTH_TEST);
-    line_shader->use();
-    glBindVertexArray(line_VAO);
-    glPointSize(3);
-    glDrawArrays(GL_LINES,0,4);
-    glEnable(GL_DEPTH_TEST);
+    // glDisable(GL_DEPTH_TEST);
+    // // line_shader->use();
+    // // glBindVertexArray(line_VAO);
+    // // glPointSize(3);
+    // // glDrawArrays(GL_LINES,0,6);
+    // glEnable(GL_DEPTH_TEST);
 
     glFinish();
 
@@ -221,6 +205,7 @@ auto BlockVolumeRenderer::get_frame() -> const Image & {
     wglMakeCurrent(NULL, NULL);
     return frame;
 }
+
 auto BlockVolumeRenderer::get_querypoint() -> const std::array<float, 8> {
     GL_CHECK
     return std::array<float, 8>{query_point_result[0],
@@ -246,6 +231,7 @@ void BlockVolumeRenderer::createResource() {
     createGLResource();
     createCUDAResource();
     createUtilResource();
+    createFrameTexture();
 }
 
 void BlockVolumeRenderer::initGL() {
@@ -860,6 +846,7 @@ void BlockVolumeRenderer::createQueryPoint() {
 }
 
 auto BlockVolumeRenderer::get_pos_frame() -> const Map<float> & {
+
     pos_frame.width=window_width;
     pos_frame.height=window_height;
     pos_frame.channels=4;
@@ -868,6 +855,10 @@ auto BlockVolumeRenderer::get_pos_frame() -> const Map<float> & {
     glGetTextureImage(pos_frame_tex,0,GL_RGBA,GL_FLOAT,pos_frame.data.size()*sizeof(float),reinterpret_cast<void*>(pos_frame.data.data()));
 
     return pos_frame;
+    GL_CHECK
+    //call every time stop using opengl for this thread
+    //https://www.khronos.org/opengl/wiki/OpenGL_and_multithreading
+    wglMakeCurrent(NULL, NULL);
 }
 
 void BlockVolumeRenderer::createFrameTexture() {
