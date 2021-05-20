@@ -193,16 +193,25 @@ class TreeVisualization extends React.Component {
         console.log(this.state.preData)
         console.log(this.props.data)
         if( JSON.stringify(this.state.preData) != JSON.stringify(this.props.data) ){
-            this.TreePlot();
-            this.setState({preData:this.props.data });
+            new Promise((resolve,reject) => {
+                this.setState({preData:this.props.data });
+                this.setState({rootIndex:this.props.data.selectedVertexIndex});
+                resolve(this.setState({rootIndex:this.props.data.selectedVertexIndex}));
+            }).then(()=>{
+                this.TreePlot();
+            })            
         }
-        
     }
 
     componentDidMount() {
         if( this.props.data.graphs && this.props.data.graphs[this.props.selectedMapKey].sub[this.props.selectedVertexKey] ){
-            this.TreePlot()
-            this.setState({preData:this.props.data});
+            new Promise((resolve,reject) => {
+                this.setState({preData:this.props.data });
+                this.setState({rootIndex:this.props.data.selectedVertexIndex});
+                resolve(this.setState({rootIndex:this.props.data.selectedVertexIndex}));
+            }).then(()=>{
+                this.TreePlot();
+            })            
         }
         // if(this.props.data.graphs[this.props.selectedMapKey].sub[this.props.selectedVertexKey]){
         //     this.RectPhyloPlot();
@@ -212,8 +221,15 @@ class TreeVisualization extends React.Component {
 
     TreePlot = () => {
         const self = this;
+        d3
+        .select("#Rectangle")
+        .select("svg")
+        .selectAll("*")
+        .remove()
         //console.log(this.props.data.graphs[this.props.selectedMapKey].sub);
         if(this.props.data.graphs.length != 0 && this.props.data.graphs[this.props.selectedMapKey].sub ){
+            if( ! this.props.data.graphs[this.props.selectedMapKey].sub ) return;
+            console.log(getTreeData( this.props.data.graphs[this.props.selectedMapKey] ,self.state.rootIndex));
             var treeData = JSON.parse(getTreeData( this.props.data.graphs[this.props.selectedMapKey] ,self.state.rootIndex));
 
             // Set the dimensions and margins of the diagram
@@ -225,11 +241,6 @@ class TreeVisualization extends React.Component {
             // append the svg object to the body of the page
             // appends a 'group' element to 'svg'
             // moves the 'group' element to the top left margin
-            d3
-                .select("#Rectangle")
-                .select("svg")
-                .selectAll("*")
-                .remove()
 
             var svg = d3.select("#Rectangle").select("svg")
                 .attr("width", width + margin.right + margin.left)
