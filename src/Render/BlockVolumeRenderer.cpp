@@ -3,7 +3,7 @@
 //
 
 #include"BlockVolumeRenderer.hpp"
-
+// #include<GLinit.hpp>
 #ifdef _WINDOWS
 #include <Common/wgl_wrap.hpp>
 #define WGL_NV_gpu_affinity
@@ -83,11 +83,6 @@ void BlockVolumeRenderer::set_camera(Camera camera) noexcept {
                            camera.f*tanf(glm::radians(camera.zoom/2))*window_width/window_height,
                            camera.f*tanf(glm::radians(camera.zoom/2)) ,
                            (camera.f-camera.n)/2.f);
-//    print_array(camera.pos);
-//    print_array(camera.front);
-//    print_array(camera.up);
-//    print_vec(center_pos);
-//    std::cout<<std::endl;
 }
 
 void BlockVolumeRenderer::set_transferfunc(TransferFunction tf) noexcept {
@@ -167,6 +162,19 @@ void BlockVolumeRenderer::render_frame() {
     render_volume();
     }
 
+    glDisable(GL_DEPTH_TEST);
+    line_shader->use();
+
+    std::shared_ptr<NeuronGraph> g = neuron_pool->getGraph();
+    for( auto line : g->graphDrawManager->hash_lineid_vao_ebo ){
+        if(neuron_pool->getLineVisible(line.first)){ //只渲染可见
+            glLineWidth(3);
+            glBindVertexArray(line.first);
+            glDrawElements( GL_LINES, 2 * g->graphDrawManager->line_num_of_path[line.first] , GL_UNSIGNED_INT , nullptr );
+        }
+    }
+
+    glEnable(GL_DEPTH_TEST);
 
     // if( cur_verter_num > 0 ){
     //     glDisable(GL_DEPTH_TEST);
@@ -214,19 +222,6 @@ auto BlockVolumeRenderer::get_frame() -> const Image & {
     return frame;
 }
 auto BlockVolumeRenderer::get_querypoint() -> const std::array<float, 8> {
-
-    float a[3] = {query_point_result[0],query_point_result[1],query_point_result[2]};
-    //把这个点加进来！
-    
-    glNamedBufferSubData(line_VBO, cur_verter_num * sizeof(float) * 3,
-                        3 * sizeof(float), a);
-    if( cur_verter_num > 0 ){
-        uint32_t idx[2] = {cur_verter_num - 1, cur_verter_num};
-        glNamedBufferSubData(line_EBO,
-                            (cur_verter_num - 1) * 2 * sizeof(uint32_t),
-                            2 * sizeof(uint32_t), idx);
-    }
-    cur_verter_num++;
     GL_CHECK
     return std::array<float, 8>{query_point_result[0],
                                 query_point_result[1],
@@ -883,5 +878,7 @@ void BlockVolumeRenderer::createFrameTexture() {
     glBindImageTexture(0,pos_frame_tex,0,GL_FALSE,0,GL_READ_WRITE,GL_RGBA32F);
 }
 
-
+void BlockVolumeRenderer::set_neuronpool(NeuronPool *np) {
+    neuron_pool = np;
+}
 

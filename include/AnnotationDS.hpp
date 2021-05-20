@@ -170,12 +170,15 @@ struct Line : public BasicObj //Line是有关关键Vertex的集合
 class GraphDrawManager{
     public:
         NeuronGraph * graph;
+        unsigned int vbo; //顶点集合
         float *line_vertices = nullptr;
         vector<unsigned int *> paths; //顶点索引从1开始
-        std::map<int, std::pair<unsigned int, unsigned int> > hash_lineid_vao_vbo;
-        vector<unsigned int> line_num_of_path_;
+        std::map<int, std::pair<unsigned int, unsigned int> > hash_lineid_vao_ebo;
+        vector<unsigned int> line_num_of_path;
     public:
-        //GraphDrawManager( NeuronGraph *g ):graph=g;
+        GraphDrawManager( NeuronGraph *g ){
+            graph = g;
+        }
         void RebuildLine( int line_id );
         void InitGraphDrawManager();
         void Delete( int line_id );

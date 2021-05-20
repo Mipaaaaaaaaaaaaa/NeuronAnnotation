@@ -217,7 +217,7 @@ class TreeVisualization extends React.Component {
             var treeData = JSON.parse(getTreeData( this.props.data.graphs[this.props.selectedMapKey] ,self.state.rootIndex));
 
             // Set the dimensions and margins of the diagram
-            var margin = ({top: 50, right: 100, bottom: 50, left: 50});
+            var margin = ({top: 50, right: 1500, bottom: 50, left: 50});
             //var margin = {top: 20, right: 90, bottom: 30, left: 90},
             var width = 1200 - margin.left - margin.right;
             var height = 300 - margin.top - margin.bottom;
@@ -336,7 +336,7 @@ class TreeVisualization extends React.Component {
 
             // Update the node attributes and style
             nodeUpdate.select('circle.node')
-                .attr('r', 10)
+                .attr('r', 7)
                 .style("fill", function(d) {
                     return d._children ? "#B0C4DE" : "#ffffff";
                 })
