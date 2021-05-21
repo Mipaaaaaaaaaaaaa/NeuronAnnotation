@@ -73,3 +73,50 @@ void GraphDrawManager::InitGraphDrawManager(){
     
     inited = true;
 }
+
+void GraphDrawManager::RebuildLine( int line_id ){
+    line_num_of_path[line_id] = 0;
+
+    for( auto seg = graph->segments.begin() ; seg != graph->segments.end() ; seg ++ ){
+        if( line_id != seg->second.line_id) continue; //只重建该条路径
+        if( hash_lineid_vao_ebo.find(seg->second.line_id) == hash_lineid_vao_ebo.end() ){ //该条线未初始化
+            unsigned int vao, ebo;
+            glGenVertexArrays(1, &vao);
+            glGenBuffers(1, &ebo);
+            glBindVertexArray(vao);
+            glBindBuffer(GL_ARRAY_BUFFER, vbo); //绑定同一个图的vbo
+            //pos
+            glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float),(void *)0);
+            glEnableVertexAttribArray(0);
+            //color
+            glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float),(void *)(3* sizeof(float)));
+            glEnableVertexAttribArray(1);
+            glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
+            glBufferStorage(GL_ELEMENT_ARRAY_BUFFER, 100000 * 2 * sizeof(uint64_t), nullptr, GL_DYNAMIC_STORAGE_BIT);
+            hash_lineid_vao_ebo[seg->second.line_id] = std::make_pair(vao,ebo);
+            glBindBuffer(GL_ARRAY_BUFFER,0);
+            glBindVertexArray(0);
+        }
+        GLuint ebo = hash_lineid_vao_ebo[seg->second.line_id].second;
+        uint64_t head;
+        for( auto v : seg->second.segment_vertex_ids){
+            if (v.first == 0){
+                head = graph->hash_swc_ids[v.second];
+                continue;
+            }
+            uint64_t idx[2] = {head,graph->hash_swc_ids[v.second]};
+            head = graph->hash_swc_ids[v.second];
+            glNamedBufferSubData(ebo,
+                                line_num_of_path[seg->second.line_id] * 2 * sizeof(uint64_t),
+                                2 * sizeof(uint64_t), idx);
+            line_num_of_path[seg->second.line_id]++;
+        }
+    }//遍历与该路径相关的所有segment
+}
+
+void GraphDrawManager::Delete( int line_id ){
+    glDeleteVertexArrays(1, &hash_lineid_vao_ebo[line_id].first); //deleteVAO
+    glDeleteBuffers(1, &hash_lineid_vao_ebo[line_id].second); //deleteEBO
+    hash_lineid_vao_ebo.erase(line_id);
+    line_num_of_path.erase(line_id);
+}

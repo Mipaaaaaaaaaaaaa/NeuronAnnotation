@@ -36,5 +36,9 @@ public:
 
     virtual void set_neuronpool(NeuronPool *np)=0;
 
+    virtual void enter_gl()=0;
+    
+    virtual void exit_gl()=0;
+
 };
 #endif //NEURONANNOTATION_IRENDERER_H

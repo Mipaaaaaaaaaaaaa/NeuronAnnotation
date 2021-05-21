@@ -87,6 +87,8 @@ Poco::Net::HTTPRequestHandler *RequestHandlerFactory::createRequestHandler(
     if (uri == "/info"){
         std::cout << "create MyHTTPRequestHandler" << std::endl;
         MyHTTPRequestHandler *n = new MyHTTPRequestHandler();
+        n->block_volume_renderer = block_volume_renderer;
+        n->volume_render_lock = volume_render_lock;    
         if( userList.find(host.toString()) != userList.end() ){ //已有
             n->user_id = userList[host.toString()];
             n->neuron_pool = neuronPools[n->user_id];

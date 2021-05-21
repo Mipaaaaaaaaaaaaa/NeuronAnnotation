@@ -172,8 +172,7 @@ class GraphDrawManager{
         NeuronGraph * graph;
         bool inited;
         unsigned int vbo; //顶点集合
-        float *line_vertices = nullptr;
-        //vector<unsigned int *> paths; //顶点索引从1开始
+        long long v_count; //当前顶点数量
         std::map<int, std::pair<unsigned int, unsigned int> > hash_lineid_vao_ebo;
         std::map<int,int> line_num_of_path;
     public:
@@ -184,6 +183,7 @@ class GraphDrawManager{
         void RebuildLine( int line_id );
         void InitGraphDrawManager();
         void Delete( int line_id );
+        void UpdateSWC();
 };
 
 

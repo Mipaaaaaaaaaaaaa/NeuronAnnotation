@@ -56,6 +56,10 @@ public:
 
     void set_neuronpool(NeuronPool *np) override;
 
+    void enter_gl() override;
+    
+    void exit_gl() override;
+
 private:
 
     struct BlockTableItem{

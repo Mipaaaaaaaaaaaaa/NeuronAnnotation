@@ -110,3 +110,11 @@ auto VolumeRenderer::get_pos_frame() -> const Map<float> & {
 void VolumeRenderer::set_neuronpool(NeuronPool *np){
     impl->set_neuronpool(np);
 }
+
+void VolumeRenderer::enter_gl(){
+    impl->enter_gl();
+}
+
+void VolumeRenderer::exit_gl(){
+    impl->exit_gl();
+}

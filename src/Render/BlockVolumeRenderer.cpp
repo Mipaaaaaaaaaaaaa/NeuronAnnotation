@@ -199,10 +199,6 @@ auto BlockVolumeRenderer::get_frame() -> const Image & {
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
     glReadPixels(0, 0, frame.width, frame.height, GL_RGB, GL_UNSIGNED_BYTE,
                  reinterpret_cast<void *>(frame.data.data()));
-    GL_CHECK
-    //call every time stop using opengl for this thread
-    //https://www.khronos.org/opengl/wiki/OpenGL_and_multithreading
-    wglMakeCurrent(NULL, NULL);
     return frame;
 }
 
@@ -520,10 +516,6 @@ void BlockVolumeRenderer::setupRuntimeResource() {
 #define B_POS_TEX_BINDING 5
 
 void BlockVolumeRenderer::set_mode(int mode) noexcept {
-    //call every time start to use opengl for this thread
-    if(!wglMakeCurrent(window_handle, gl_context)){
-        throw std::runtime_error("Failed to activate OpenGL 4.6 rendering context.");
-    }
     render_mode = mode;
     raycasting_shader->use();
     raycasting_shader->setInt("mode",mode);
@@ -855,10 +847,6 @@ auto BlockVolumeRenderer::get_pos_frame() -> const Map<float> & {
     glGetTextureImage(pos_frame_tex,0,GL_RGBA,GL_FLOAT,pos_frame.data.size()*sizeof(float),reinterpret_cast<void*>(pos_frame.data.data()));
 
     return pos_frame;
-    GL_CHECK
-    //call every time stop using opengl for this thread
-    //https://www.khronos.org/opengl/wiki/OpenGL_and_multithreading
-    wglMakeCurrent(NULL, NULL);
 }
 
 void BlockVolumeRenderer::createFrameTexture() {
@@ -876,3 +864,16 @@ void BlockVolumeRenderer::set_neuronpool(NeuronPool *np) {
     }
 }
 
+void BlockVolumeRenderer::enter_gl(){
+    //call every time start to use opengl for this thread
+    if(!wglMakeCurrent(window_handle, gl_context)){
+        throw std::runtime_error("Failed to activate OpenGL 4.6 rendering context.");
+    }
+}
+
+void BlockVolumeRenderer::exit_gl(){
+    GL_CHECK
+    //call every time stop using opengl for this thread
+    //https://www.khronos.org/opengl/wiki/OpenGL_and_multithreading
+    wglMakeCurrent(NULL, NULL);
+}

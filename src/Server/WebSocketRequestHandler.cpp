@@ -75,6 +75,8 @@ void WebSocketRequestHandler::handleRequest(
                         {
                             volume_render_lock->lock();
                             
+                                block_volume_renderer->enter_gl();
+
                                 block_volume_renderer->set_camera(neuron_pool->getCamera());
                                 block_volume_renderer->set_mode(neuron_pool->getRenderMode());
                                 block_volume_renderer->set_querypoint({query_point.x,query_point.y});
@@ -83,6 +85,8 @@ void WebSocketRequestHandler::handleRequest(
                                 auto query_res = block_volume_renderer->get_querypoint();
                                 auto maptable = block_volume_renderer->get_pos_frame();
                             
+                                block_volume_renderer->exit_gl();
+
                             volume_render_lock->unlock();
 
                             if( query_res[7] > 0.1f ){
@@ -99,11 +103,18 @@ void WebSocketRequestHandler::handleRequest(
                                     ag->point0 = {(unsigned int)start[0],(unsigned int)start[1]}; //获取起点的坐标
                                     ag->point1 = {query_point.x,query_point.y}; //终点坐标
                                     auto path = ag->GenPath_v1(maptable);
-                                    if(neuron_pool->addSegment(&path)){
+
+                                    volume_render_lock->lock();
+
+                                    block_volume_renderer->enter_gl();
+                                    if(neuron_pool->addSegment(&path)){ //涉及到点的添加
                                         sendSuccessFrame("添加成功");
                                     }else{
                                         sendErrorFrame("添加失败");
                                     }
+                                    block_volume_renderer->exit_gl();
+
+                                    volume_render_lock->unlock();
                                 }
                             }else{
                                 printf("%lf Alpha is too low!\n",query_res[7]);
@@ -175,17 +186,23 @@ void WebSocketRequestHandler::sendSuccessFrame( std::string successMessage){
 void WebSocketRequestHandler::sendIamgeFrame(){
     using WebSocket = Poco::Net::WebSocket;
     volume_render_lock->lock();
-    {
+    
+        block_volume_renderer->enter_gl(); //线程进入gl时必须调用
+
         block_volume_renderer->set_mode(neuron_pool->getRenderMode());
         block_volume_renderer->set_neuronpool(neuron_pool);
         block_volume_renderer->set_camera(neuron_pool->getCamera());
         block_volume_renderer->render_frame();
         auto &image = block_volume_renderer->get_frame();
-        std::cout<<image.width<<" "<<image.height<<std::endl;
-        auto encoded = Image::encode(image, Image::Format::JPEG);
-        ws->sendFrame(encoded.data.data(), encoded.data.size(),WebSocket::FRAME_BINARY);
-    }
+
+        block_volume_renderer->exit_gl(); //线程离开gl时必须调用
+    
     volume_render_lock->unlock();
+
+    std::cout<<image.width<<" "<<image.height<<std::endl;
+    auto encoded = Image::encode(image, Image::Format::JPEG);
+    ws->sendFrame(encoded.data.data(), encoded.data.size(),WebSocket::FRAME_BINARY);
+
 }
 
 void WebSocketRequestHandler::sendStructureFrame(){

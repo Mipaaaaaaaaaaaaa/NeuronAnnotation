@@ -397,7 +397,7 @@ long long NeuronGraph::addSegment(int id, std::vector<std::array<float,4>> *path
         }
     }
     list_and_hash_mutex.unlock();
-
+    graphDrawManager->RebuildLine(vStartswc.line_id);
     if( DataBase::insertSWCs(inserts,tableName) ) return vEnd.id;
     return -1;
 }
@@ -704,11 +704,6 @@ bool NeuronGraph::changeColor(int line_id, string color){
 
 bool NeuronPool::deleteLine(int line_id){
     return graph->deleteLine(line_id);
-}
-
-
-void GraphDrawManager::Delete( int line_id ){
-    return;
 }
 
 bool NeuronPool::deleteVertex(int x, int y, std::string &error){ //屏幕点

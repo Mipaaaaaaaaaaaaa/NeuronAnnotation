@@ -49,6 +49,10 @@ public:
 
     void clear_scene();
 
+    void enter_gl();
+
+    void exit_gl();
+
 private:
     std::string renderer_name;
     std::unique_ptr<IRenderer> impl;
