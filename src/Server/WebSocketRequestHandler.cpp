@@ -90,12 +90,18 @@ void WebSocketRequestHandler::handleRequest(
                             volume_render_lock->unlock();
 
                             if( query_res[7] > 0.1f ){
-                                if(neuron_pool->getSelectedVertexIndex() == -1 ){
+                                // if(neuron_pool->getSelectedVertexIndex() == -1 ){
+                                if( true ){
+                                    volume_render_lock->lock();
+                                    block_volume_renderer->enter_gl();
                                     if(neuron_pool->addVertex(query_res[0],query_res[1],query_res[2])){
                                         sendSuccessFrame("添加成功");
                                     }else{
                                         sendErrorFrame("添加失败");
                                     }
+                                    
+                                    block_volume_renderer->exit_gl();
+                                    volume_render_lock->unlock();
                                 }
                                 else{
                                     AutoPathGen *ag = new AutoPathGen();

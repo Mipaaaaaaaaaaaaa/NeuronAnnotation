@@ -206,7 +206,7 @@ public:
     bool addSegment(int id, Vertex* v);
     long long addSegment(int id,std::vector<std::array<float,4>> *path); //return final id
 
-    bool devidedInto2Lines(int x, int  y);
+    bool devidedInto2Lines(long id);
 
     long int addLine();
     long int getNewVertexId();

@@ -52,7 +52,7 @@ Poco::Net::HTTPRequestHandler *RequestHandlerFactory::createRequestHandler(
         const Poco::Net::HTTPServerRequest &request) {
     if( !isInited ){
         //neuronGraphs["test"] = make_shared<NeuronGraph>("./test.swc","test"); //读取本地swc,并且转换成test集合
-        neuronGraphs["test"] = make_shared<NeuronGraph>("test",0);
+        neuronGraphs["N001"] = make_shared<NeuronGraph>("N001",0);
         initBlockVolumeRender();
         initLinesRender();
         isInited = true;
@@ -75,7 +75,7 @@ Poco::Net::HTTPRequestHandler *RequestHandlerFactory::createRequestHandler(
             n->user_id = ++max_linked_id;
             userList[host.toString()] = n->user_id;
             n->neuron_pool = new NeuronPool();
-            n->neuron_pool->setGraph(neuronGraphs["test"]);
+            n->neuron_pool->setGraph(neuronGraphs["N001"]);
             n->neuron_pool->setGraphPool(&neuronGraphs);
             n->neuron_pool->setUserId(n->user_id);
             neuronPools[n->user_id] = n->neuron_pool;
@@ -96,7 +96,7 @@ Poco::Net::HTTPRequestHandler *RequestHandlerFactory::createRequestHandler(
             n->user_id = ++max_linked_id;
             userList[host.toString()] = n->user_id;
             n->neuron_pool = new NeuronPool();
-            n->neuron_pool->setGraph(neuronGraphs["test"]);
+            n->neuron_pool->setGraph(neuronGraphs["N001"]);
             n->neuron_pool->setGraphPool(&neuronGraphs);
             n->neuron_pool->setUserId(n->user_id);
             neuronPools[n->user_id] = n->neuron_pool;
@@ -115,7 +115,7 @@ Poco::Net::HTTPRequestHandler *RequestHandlerFactory::createRequestHandler(
             n->user_id = ++max_linked_id;
             userList[host.toString()] = n->user_id;
             n->neuron_pool = new NeuronPool();
-            n->neuron_pool->setGraph(neuronGraphs["test"]);
+            n->neuron_pool->setGraph(neuronGraphs["N001"]);
             n->neuron_pool->setGraphPool(&neuronGraphs);
             n->neuron_pool->setUserId(n->user_id);
             neuronPools[n->user_id] = n->neuron_pool;
@@ -134,7 +134,7 @@ Poco::Net::HTTPRequestHandler *RequestHandlerFactory::createRequestHandler(
             n->user_id = ++max_linked_id;
             userList[host.toString()] = n->user_id;
             n->neuron_pool = new NeuronPool();
-            n->neuron_pool->setGraph(neuronGraphs["test"]);
+            n->neuron_pool->setGraph(neuronGraphs["N001"]);
             n->neuron_pool->setGraphPool(&neuronGraphs);
             n->neuron_pool->setUserId(n->user_id);
             neuronPools[n->user_id] = n->neuron_pool;

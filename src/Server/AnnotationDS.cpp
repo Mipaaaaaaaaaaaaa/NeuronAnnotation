@@ -317,13 +317,13 @@ bool NeuronPool::addVertex(Vertex *v){
             return true;
         }
    }
-//    else{ // draw a line
-//         v->linked_vertex_ids[m_selected_vertex_index] = true;
-//         if( graph->addSegment(m_selected_vertex_index,v) ){
-//             m_selected_vertex_index = v->id;
-//             return true;
-//         }
-//    }
+   else{ // draw a line
+        v->linked_vertex_ids[m_selected_vertex_index] = true;
+        if( graph->addSegment(m_selected_vertex_index,v) ){
+            m_selected_vertex_index = v->id;
+            return true;
+        }
+   }
    return false;
 }
 
@@ -577,6 +577,7 @@ bool NeuronGraph::addSegment(int id, Vertex *v){
     }
     list_and_hash_mutex.unlock();
     lines[v->line_id].hash_vertexes[v->id] = *v;
+    graphDrawManager->RebuildLine(v->line_id);
     if( DataBase::insertSWC(vEndswc,tableName) ) return true;
     return false;
 }
@@ -866,11 +867,23 @@ bool NeuronPool::changeTable(string tableName){
 }
 
 bool NeuronPool::dividedInto2Lines(int x, int y){
-    return graph->devidedInto2Lines(x,y);
+    double best_dist;
+    long id = graph->findNearestVertex(x,y,this,best_dist);
+    if( best_dist > 10 ) return false;
+    if(graph->devidedInto2Lines(id)){
+        std::string tableName = graph->tableName;
+        (*graphs_pool)[tableName] = std::make_shared<NeuronGraph>(tableName.c_str(),0);
+        graph = (*graphs_pool)[tableName];
+        return true;
+    }
+    return false;
 }
 
-bool NeuronGraph::devidedInto2Lines(int x, int  y){
-    return true;
+bool NeuronGraph::devidedInto2Lines(long id){
+    NeuronSWC swc = list_swc[hash_swc_ids[id]];
+    swc.pn = -1;
+    if(DataBase::modifySWC(swc,tableName)) return true;
+    return false;
 }
 
 bool NeuronPool::changeMode(std::string mode){

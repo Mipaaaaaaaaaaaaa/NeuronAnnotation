@@ -114,17 +114,20 @@ void GraphDrawManager::RebuildLine( int line_id ){
             }
             uint64_t idx[2] = {head,graph->hash_swc_ids[v.second]};
             head = graph->hash_swc_ids[v.second];
+            long long count = line_num_of_path[seg->second.line_id];
             glNamedBufferSubData(ebo,
-                                line_num_of_path[seg->second.line_id] * 2 * sizeof(uint64_t),
+                                count * 2 * sizeof(uint64_t),
                                 2 * sizeof(uint64_t), idx);
-            line_num_of_path[seg->second.line_id]++;
+
+            line_num_of_path[seg->second.line_id] = count + 1;
+            
         }
     }//遍历与该路径相关的所有segment
 }
 
 void GraphDrawManager::Delete( int line_id ){
     glDeleteVertexArrays(1, &hash_lineid_vao_ebo[line_id].first); //deleteVAO
-    glDeleteBuffers(1, &hash_lineid_vao_ebo[line_id].second); //deleteEBO
+    // glDeleteBuffers(1, &hash_lineid_vao_ebo[line_id].second); //deleteEBO
     hash_lineid_vao_ebo.erase(line_id);
     line_num_of_path.erase(line_id);
 }
