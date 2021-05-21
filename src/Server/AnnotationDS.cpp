@@ -404,18 +404,6 @@ long long NeuronGraph::addSegment(int id, std::vector<std::array<float,4>> *path
 
 void NeuronPool::selectVertex( int id ){
     m_selected_vertex_index = id;
-    // NeuronSWC swc = graph->list_swc[graph->hash_swc_ids[id]];
-    // float offset_x = swc.x;
-    // float offset_y = swc.y;
-    // float offset_z = swc.z;
-    // glm::vec3 front = glm::normalize(glm::vec3(swc.x,swc.y,swc.z));
-    // m_camera.front[0] = front.x;
-    // m_camera.front[1] = front.y;
-    // m_camera.front[2] = front.z;
-
-    // m_camera.pos[0] = m_camera.pos[0]-offset_x;
-    // m_camera.pos[1] = m_camera.pos[1]-offset_y;
-    // m_camera.pos[2] = m_camera.pos[2]-offset_z;
 }
 
 void NeuronPool::selectVertex( int x, int y){
@@ -465,7 +453,6 @@ NeuronGraph::NeuronGraph(const char * filePath, const char * tableName){
 
     //构造函数后需要初始化绘制参数
     this->graphDrawManager = new GraphDrawManager(this);
-    this->graphDrawManager->InitGraphDrawManager();
 }
 
 
@@ -493,7 +480,6 @@ NeuronGraph::NeuronGraph(const char * string, int type){
     
     //构造函数后需要初始化绘制参数
     this->graphDrawManager = new GraphDrawManager(this);
-    this->graphDrawManager->InitGraphDrawManager();
 }
 
 long int NeuronGraph::getNewVertexId(){
@@ -855,7 +841,7 @@ bool NeuronGraph::deleteLine(int line_id){
             segments.erase(seg->first);
         }
     }
-    //graphDrawManager->Delete(line_id);
+    graphDrawManager->Delete(line_id);
     lines.erase(line_id);
     return result;
 }
@@ -938,14 +924,15 @@ std::array<int,2> NeuronPool::getSelectedVertexXY(){
     auto fov =
         2 * atan(tan(45.0f * glm::pi<float>() / 180.0f / 2.0f) / m_camera.zoom);
     glm::mat4 projection = glm::perspective(
-        (double)fov, (double)window_width / (double)window_height, 0.0001, 5.0);
-    glm::mat4 model = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, -10.0f));//glm::mat4(1.0f);
+        (double)glm::radians(45.0f), (double)window_width / (double)window_height, (double)m_camera.n, (double)m_camera.f);
+    glm::mat4 model = glm::mat4(1.0f);
     glm::vec4 viewport(0.0f,0.0f, (double)window_width, (double)window_height);
 
     //GLint res = gluProject(ix, iy, iz, model, projection, viewport, &px, &py, &pz); 
     glm::vec3 res = glm::project(glm::vec3(x,y,z),model,projection,viewport);
     // note: should use the saved modelview, projection and viewport matrix
     res.y = viewport[3]-res.y; //the Y axis is reversed
-
+    glm::vec3 unprojected = glm::unProject(res, model, projection, viewport);
+    //逆过程
     return {(int)res.x,(int)res.y};
 }

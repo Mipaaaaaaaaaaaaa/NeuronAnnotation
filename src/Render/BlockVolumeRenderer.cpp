@@ -162,26 +162,26 @@ void BlockVolumeRenderer::render_frame() {
         render_volume();
     }
 
-    // glDisable(GL_DEPTH_TEST);
-    // line_shader->use();
+    glDisable(GL_DEPTH_TEST);
+    line_shader->use();
 
-    // // std::shared_ptr<NeuronGraph> g = neuron_pool->getGraph();
-    // // for( auto line : g->graphDrawManager->hash_lineid_vao_ebo ){
-    // //     if(neuron_pool->getLineVisible(line.first)){ //只渲染可见
-    // //         glLineWidth(3);
-    // //         glBindVertexArray(line.first);
-    // //         glDrawElements( GL_LINES, 2 * g->graphDrawManager->line_num_of_path[line.first] , GL_UNSIGNED_INT , nullptr );
-    // //     }
-    // // }
+    std::shared_ptr<NeuronGraph> g = neuron_pool->getGraph();
+    for( auto line : g->graphDrawManager->hash_lineid_vao_ebo ){
+        if(neuron_pool->getLineVisible(line.first)){ //只渲染可见
+            glLineWidth(3);
+            glBindVertexArray(line.second.first); //绑定vao
+            glDrawElements( GL_LINES, 2 * g->graphDrawManager->line_num_of_path[line.first] , GL_UNSIGNED_INT , nullptr );
+        }
+    }
 
-    // glEnable(GL_DEPTH_TEST);
+    glEnable(GL_DEPTH_TEST);
 
-    // glDisable(GL_DEPTH_TEST);
-    // // line_shader->use();
-    // // glBindVertexArray(line_VAO);
-    // // glPointSize(3);
-    // // glDrawArrays(GL_LINES,0,6);
-    // glEnable(GL_DEPTH_TEST);
+    glDisable(GL_DEPTH_TEST);
+    line_shader->use();
+    glBindVertexArray(line_VAO);
+    glPointSize(3);
+    glDrawArrays(GL_LINES,0,6);
+    glEnable(GL_DEPTH_TEST);
 
     glFinish();
 
@@ -871,5 +871,8 @@ void BlockVolumeRenderer::createFrameTexture() {
 
 void BlockVolumeRenderer::set_neuronpool(NeuronPool *np) {
     neuron_pool = np;
+    if(np->getGraph()->graphDrawManager->inited == false ){
+        np->getGraph()->graphDrawManager->InitGraphDrawManager();
+    }
 }
 

@@ -82,6 +82,7 @@ void MyHTTPRequestHandler::handleRequest(
                     }
                     if( modify_data.HasMember("selectedTableName") ){
                         result &= neuron_pool->changeTable(modify_data["selectedTableName"].GetString());
+                        render_ws->sendIamgeFrame();
                     }
                     if( modify_data.HasMember("selectedRender" ) ){
                         result &= neuron_pool->changeMode(modify_data["selectedRender"].GetString());
