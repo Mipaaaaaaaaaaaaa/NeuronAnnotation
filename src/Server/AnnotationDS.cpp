@@ -780,39 +780,43 @@ bool NeuronGraph::deleteVertex(int x, int y, NeuronPool *neuron_pool, std::strin
 
 long NeuronGraph::findNearestVertex(int cx, int cy, NeuronPool * neuron_pool, double &best_dist) //find the nearest node in a neuron in XY project of the display window
 {
-	double px, py, pz, ix, iy, iz;
+	double px, py, pz, x, y, z;
 
 	long best_ind=-1; best_dist=-1;
 
     bool init = false;
+
     Camera camera = neuron_pool->getCamera();
     int window_width = neuron_pool->getWindowWidth();
     int window_height = neuron_pool->getWindowHeight();
-    auto fov =
-        2 * atan(tan(45.0f * glm::pi<float>() / 180.0f / 2.0f) / camera.zoom);
     glm::mat4 projection = glm::perspective(
-        (double)fov, (double)window_width / (double)window_height, 0.0001, 5.0);
+        (double)glm::radians(camera.zoom), (double)window_width / (double)window_height, (double)camera.n, (double)camera.f);
+    // glm::mat4 projection = glm::perspective(glm::radians(m_camera.zoom), (float)window_width / (float)window_height, 0.1f, 100.0f);
+    glm::mat4 view = glm::lookAt(
+        glm::vec3(camera.pos[0], camera.pos[1], camera.pos[2]),
+        glm::vec3(camera.pos[0]+camera.front[0], camera.pos[1]+camera.front[1], camera.pos[2]+camera.front[2]),
+        glm::vec3(camera.up[0], camera.up[1], camera.up[2]));
     glm::mat4 model = glm::mat4(1.0f);
     glm::vec4 viewport(0.0f,0.0f, (double)window_width, (double)window_height);
-	for (long i = 0 ; i < list_swc.size() ; i++ )
-	{
-        if( list_swc[i].deleted ) continue;
 
-		ix = list_swc[i].x, iy = list_swc[i].y, iz = list_swc[i].z;
-		//GLint res = gluProject(ix, iy, iz, model, projection, viewport, &px, &py, &pz); 
-        glm::vec3 res = glm::project(glm::vec3(ix,iy,iz),model,projection,viewport);
+	for (auto v : lines[neuron_pool->getSelectedLineIndex()].hash_vertexes )
+	{
+
+		x = v.second.x, y = v.second.y, z = v.second.z;
+        //GLint res = gluProject(ix, iy, iz, model, projection, viewport, &px, &py, &pz); 
+        glm::vec3 res = glm::project(glm::vec3(x,y,z),model*view,projection,viewport);
         // note: should use the saved modelview, projection and viewport matrix
-		res.y = viewport[3]-res.y; //the Y axis is reversed
+        res.y = viewport[3]-res.y; //the Y axis is reversed
 
 		double cur_dist = (px-cx)*(px-cx)+(py-cy)*(py-cy);
 
-		if ( !init ) {	best_dist = cur_dist; best_ind = list_swc[i].id; }
+		if ( !init ) {	best_dist = cur_dist; best_ind = v.first; }
 		else 
 		{	
 			if (cur_dist < best_dist ) 
 			{
 				best_dist=cur_dist; 
-				best_ind = list_swc[i].id;
+				best_ind = v.first;
 			}
 		}
 	}
@@ -921,15 +925,18 @@ std::array<int,2> NeuronPool::getSelectedVertexXY(){
     float y = graph->list_swc[graph->hash_swc_ids[m_selected_vertex_index]].y;
     float z = graph->list_swc[graph->hash_swc_ids[m_selected_vertex_index]].z;
 
-    auto fov =
-        2 * atan(tan(45.0f * glm::pi<float>() / 180.0f / 2.0f) / m_camera.zoom);
     glm::mat4 projection = glm::perspective(
-        (double)glm::radians(45.0f), (double)window_width / (double)window_height, (double)m_camera.n, (double)m_camera.f);
+        (double)glm::radians(m_camera.zoom), (double)window_width / (double)window_height, (double)m_camera.n, (double)m_camera.f);
+    // glm::mat4 projection = glm::perspective(glm::radians(m_camera.zoom), (float)window_width / (float)window_height, 0.1f, 100.0f);
+    glm::mat4 view = glm::lookAt(
+        glm::vec3(m_camera.pos[0], m_camera.pos[1], m_camera.pos[2]),
+        glm::vec3(m_camera.pos[0]+m_camera.front[0], m_camera.pos[1]+m_camera.front[1], m_camera.pos[2]+m_camera.front[2]),
+        glm::vec3(m_camera.up[0], m_camera.up[1], m_camera.up[2]));
     glm::mat4 model = glm::mat4(1.0f);
     glm::vec4 viewport(0.0f,0.0f, (double)window_width, (double)window_height);
 
     //GLint res = gluProject(ix, iy, iz, model, projection, viewport, &px, &py, &pz); 
-    glm::vec3 res = glm::project(glm::vec3(x,y,z),model,projection,viewport);
+    glm::vec3 res = glm::project(glm::vec3(x,y,z),model*view,projection,viewport);
     // note: should use the saved modelview, projection and viewport matrix
     res.y = viewport[3]-res.y; //the Y axis is reversed
     glm::vec3 unprojected = glm::unProject(res, model, projection, viewport);
