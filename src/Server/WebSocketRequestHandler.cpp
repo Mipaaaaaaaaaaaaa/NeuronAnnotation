@@ -188,16 +188,6 @@ void WebSocketRequestHandler::sendIamgeFrame(){
     volume_render_lock->unlock();
 }
 
-// auto WebSocketRequestHandler::getQueryPoint(std::array<uint32_t, 2> point)  -> const std::array<float, 8> {
-//     using WebSocket = Poco::Net::WebSocket;
-//     volume_render_lock->lock();
-//     block_volume_renderer->set_querypoint(point);
-//     block_volume_renderer->render_frame();
-//     auto query_res = block_volume_renderer->get_querypoint();
-//     volume_render_lock->unlock();
-//     return query_res;
-// }
-
 void WebSocketRequestHandler::sendStructureFrame(){
     using WebSocket = Poco::Net::WebSocket;
     std::string structureInfo = neuron_pool->getLinestoJson();

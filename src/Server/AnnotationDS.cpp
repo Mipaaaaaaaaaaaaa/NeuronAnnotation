@@ -808,7 +808,7 @@ long NeuronGraph::findNearestVertex(int cx, int cy, NeuronPool * neuron_pool, do
         // note: should use the saved modelview, projection and viewport matrix
         res.y = viewport[3]-res.y; //the Y axis is reversed
 
-		double cur_dist = (px-cx)*(px-cx)+(py-cy)*(py-cy);
+		double cur_dist = (res.x-cx)*(res.x-cx)+(res.y-cy)*(res.y-cy);
 
 		if ( !init ) {	best_dist = cur_dist; best_ind = v.first; }
 		else 
