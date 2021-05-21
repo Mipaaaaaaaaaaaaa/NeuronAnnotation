@@ -62,68 +62,6 @@ interface ArcType{
     distance: number;
 }
 
-const GraphToNewick = ( graph:DataType, pkey:number ) =>{
-
-    //console.log(graph);
-    // var maxLength = 0;
-    // if( pkey == -1 ) return "";
-    // for( let i = 0 ; i < graph.sub.length ; i ++ ){
-    //     for( let j = 0 ; j < graph.sub[i].arc.length ; j ++ ){
-    //         if( maxLength < graph.sub[i].arc[j].distance ){
-    //             maxLength = graph.sub[i].arc[j].distance; //找到最大值，权重为1
-    //         }
-    //     }
-    // }
-    // let dicMap = new Map(); //index和key转换
-    // var visitedArray = new Array(graph.sub.length);
-    // for( let i = 0; i < graph.sub.length ; i ++ ){
-    //     visitedArray[i] = false;
-    //     dicMap.set(graph.sub[i].index,i); //服务器的index,对应客户端的key
-    // }
-    // const dfs = (graph:DataType,key:number,length:number) =>{
-    //     let parsedStr = "";
-    //     console.log("visite:",key);
-    //     visitedArray[key] = true;
-    //     for( let i = 0 ; i < graph.sub[key].arc.length ; i ++ ){
-    //         if( graph.sub[key].arc[i].headVex == graph.sub[key].index ){
-    //             let vexKey = dicMap.get(graph.sub[key].arc[i].tailVex);
-    //             if( !visitedArray[vexKey] ){
-    //                 let subStr = dfs(graph,vexKey,graph.sub[key].arc[i].distance);
-    //                 if( parsedStr.charAt(parsedStr.length - 1) >= '0' && parsedStr.charAt(parsedStr.length - 1) <= '9' ) 
-    //                     parsedStr = parsedStr + "," + subStr;
-    //                 else{
-    //                     parsedStr = parsedStr + subStr;
-    //                 }
-    //             }
-    //         } else if( graph.sub[key].arc[i].tailVex == graph.sub[key].index ){
-    //             let vexKey = dicMap.get(graph.sub[key].arc[i].headVex);
-    //             if( !visitedArray[vexKey] ){ 
-    //                 let subStr = dfs(graph,vexKey,graph.sub[key].arc[i].distance);
-    //                 if( parsedStr.charAt(parsedStr.length - 1) >= '0' && parsedStr.charAt(parsedStr.length - 1) <= '9' ) 
-    //                     parsedStr = parsedStr + "," + subStr;
-    //                 else{
-    //                     parsedStr = parsedStr + subStr;
-    //                 }
-    //             }
-    //         }
-    //     }
-    //     if( parsedStr == "" ){
-    //         return key + ":" + length/maxLength;
-    //     }
-    //     if( length == 0 ){ //最后一个顶点
-    //         return "(" + parsedStr + ")" ;
-    //     }
-    //     else {
-    //         return "(" + parsedStr + ")" + key + ":" + length/maxLength;
-    //     }
-    // }
-
-    // console.log(dicMap.get(pkey));
-    // let x = dfs(graph,dicMap.get(pkey),0);
-    // console.log(x);
-    // return x;
-}
-
 const getTreeData = ( graph:DataType, root:number ) =>{
     //console.log(graph);
     var maxLength = 0;
@@ -174,7 +112,7 @@ const getTreeData = ( graph:DataType, root:number ) =>{
         if( parsedStr != "" ) parsedStr = `, "children":[ ` + parsedStr + `]`
         return `{"name":"` + graph.sub[key].index + `"` + parsedStr + "}";
     }
-    console.log(root,dicMap.get(root))
+    // console.log(root,dicMap.get(root))
     let x = dfs(graph,root);
     return x;
 }
@@ -185,13 +123,16 @@ class TreeVisualization extends React.Component {
         super(props);
         this.state = {
             rootIndex : this.props.data.selectedVertexIndex,
-            preData : {}
+            preData: {},
+            width: 500,
+            height: 300,
+            depth:180
         };
     }
 
     componentDidUpdate(){
-        console.log(this.state.preData)
-        console.log(this.props.data)
+        // console.log(this.state.preData)
+        // console.log(this.props.data)
         if( JSON.stringify(this.state.preData) != JSON.stringify(this.props.data) ){
             new Promise((resolve,reject) => {
                 this.setState({preData:this.props.data });
@@ -229,39 +170,40 @@ class TreeVisualization extends React.Component {
         //console.log(this.props.data.graphs[this.props.selectedMapKey].sub);
         if(this.props.data.graphs.length != 0 && this.props.data.graphs[this.props.selectedMapKey].sub ){
             if( ! this.props.data.graphs[this.props.selectedMapKey].sub ) return;
-            console.log(getTreeData( this.props.data.graphs[this.props.selectedMapKey] ,self.state.rootIndex));
+            // console.log(getTreeData( this.props.data.graphs[this.props.selectedMapKey] ,self.state.rootIndex));
             var treeData = JSON.parse(getTreeData( this.props.data.graphs[this.props.selectedMapKey] ,self.state.rootIndex));
 
+
             // Set the dimensions and margins of the diagram
-            var margin = ({top: 50, right: 1500, bottom: 50, left: 50});
-            //var margin = {top: 20, right: 90, bottom: 30, left: 90},
-            var width = 1200 - margin.left - margin.right;
-            var height = 300 - margin.top - margin.bottom;
+            var margin = ({top: 50, right: 50, bottom: 50, left: 50});
+
+            self.setState({width:1200 - margin.left - margin.right}) ;
+            self.setState({height:300 - margin.top - margin.bottom});
+
+            var svg = d3.select("#Rectangle").select("svg")
+            .attr("width", self.state.width + margin.right + margin.left)
+            .attr("height", self.state.height + margin.top + margin.bottom)
+            .append("g")
+            .attr("transform", "translate("
+                + margin.left + "," + margin.top + ")");
 
             // append the svg object to the body of the page
             // appends a 'group' element to 'svg'
             // moves the 'group' element to the top left margin
 
-            var svg = d3.select("#Rectangle").select("svg")
-                .attr("width", width + margin.right + margin.left)
-                .attr("height", height + margin.top + margin.bottom)
-                .append("g")
-                .attr("transform", "translate("
-                    + margin.left + "," + margin.top + ")");
-
             var i = 0,
                 duration = 750;
 
             // declares a tree layout and assigns the size
-            var treemap = d3.tree().size([height, width]);
+            var treemap = d3.tree().size([self.state.height, self.state.width]);
 
             var root;
             // Assigns parent, children, height, depth
             root = d3.hierarchy(treeData, function(d) { return d.children; });
-            root.x0 = height / 2;
+            root.x0 = self.state.height / 2;
             root.y0 = 0;
 
-            console.log(this.state.rootIndex);
+            console.log(self.state.rootIndex);
 
             // Collapse after the second level
             root.children.forEach(collapse);
@@ -287,8 +229,17 @@ class TreeVisualization extends React.Component {
                 links = treeData.descendants().slice(1);
 
             // Normalize for fixed-depth.
-            nodes.forEach(function(d){ d.y = d.depth * 180});
-
+                nodes.forEach(function (d) {
+                    d.y = d.depth * 180;
+                    console.log(self.state.depth);
+                    d.y = d.depth * self.state.depth;
+                    if (d.y > self.state.width) {
+                        self.setState({width:d.y + 100});
+                    }
+                });
+                d3.select("#Rectangle").select("svg")
+                .attr("width", self.state.width + margin.right + margin.left)
+                .attr("height", self.state.height + margin.top + margin.bottom)
             // ****************** Nodes section ***************************
 
             // Update the nodes...
@@ -326,7 +277,7 @@ class TreeVisualization extends React.Component {
                 })
                 .text(function(d) {
                     if(d.data.name == root.data.name){
-                        console.log("root"+d.data.name);
+                        // console.log("root"+d.data.name);
                         return "Root";
                     }
                     else if(d.data.name == self.props.data.selectedVertexIndex)
@@ -417,7 +368,7 @@ class TreeVisualization extends React.Component {
 
             // Toggle children on click.
             function click(i,d) {
-                console.log(d);
+                // console.log(d);
                 if (d.children) {
                     d._children = d.children;
                     d.children = null;
@@ -447,15 +398,15 @@ class TreeVisualization extends React.Component {
 
 
     render() {
-
-        
         return (
             <>
             <div>
-                <p>选择端点Index</p>
-                <InputNumber defaultValue={this.props.data.selectedVertexIndex} onChange={(v)=>this.onChange(v)} />
+                {/* <p>选择端点Index</p> */}
+                选择端点Index： <InputNumber defaultValue={this.props.data.selectedVertexIndex} onChange={(v)=>this.onChange(v)} />
                 <div className="Rectangle" id="Rectangle" ref="Rectangle">
-                    <svg></svg>
+                    <div className="wuliwala">
+                            <svg></svg>
+                    </div>
                 </div>
             </div>
     </>

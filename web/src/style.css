@@ -103,7 +103,12 @@ body,
   stroke-width: 2px;
 }
 
-
+.wuliwala{
+  height: 500;
+  overflow-y: auto;
+  width: 500;
+  overflow-x: auto;
+}
 
 /* > .code-box-demo > .ant-layout + .ant-layout {
   margin-top: 16px;
