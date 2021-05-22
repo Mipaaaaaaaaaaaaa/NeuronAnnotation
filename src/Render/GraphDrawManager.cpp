@@ -3,6 +3,7 @@
 #define MAX_VERTEX_NUMBER (int)1000000
 #include <glad/gl.h>
 #include <glad/wgl.h>
+#include <iostream>
 
 using vec3 = glm::vec3;
 vec3 tocolor( std::string color ){
@@ -118,14 +119,12 @@ void GraphDrawManager::RebuildLine(){
             glBindVertexArray(0);
         }
         GLuint ebo = hash_lineid_vao_ebo[line_id].second;
-        uint32_t head;
         for( auto v : seg->second.segment_vertex_ids){
             if (v.first == 0){
-                head = graph->hash_swc_ids[v.second];
                 continue;
             }
-            uint32_t idx[2] = {graph->hash_swc_ids[v.second],graph->hash_swc_ids[graph->list_swc[graph->hash_swc_ids[v.second]].pn]};
-            head = graph->hash_swc_ids[v.second];
+            uint32_t idx[2] = {graph->hash_swc_ids[graph->list_swc[graph->hash_swc_ids[v.second]].pn],graph->hash_swc_ids[v.second]};
+            std::cout << idx[0] << " " << idx[1] << std::endl;
             glNamedBufferSubData(ebo,
                                 line_num_of_path[seg->second.line_id] * 2 * sizeof(uint32_t),
                                 2 * sizeof(uint32_t), idx);

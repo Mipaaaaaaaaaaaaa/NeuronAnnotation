@@ -90,8 +90,8 @@ void WebSocketRequestHandler::handleRequest(
                             volume_render_lock->unlock();
 
                             if( query_res[7] > 0.1f ){
-                                // if(neuron_pool->getSelectedVertexIndex() == -1 ){
-                                if( true ){
+                                if(neuron_pool->getSelectedVertexIndex() == -1 ){
+                                // if( true ){
                                     if(neuron_pool->addVertex(query_res[0],query_res[1],query_res[2])){
                                         sendSuccessFrame("添加成功");
                                         sendIamgeFrame();
@@ -103,14 +103,16 @@ void WebSocketRequestHandler::handleRequest(
                                 else{
                                     AutoPathGen *ag = new AutoPathGen();
                                     std::array<int,2> start = neuron_pool->getSelectedVertexXY();
-                                    ag->point0 = {(unsigned int)start[0],(unsigned int)start[1]}; //获取起点的坐标
-                                    ag->point1 = {query_point.x,query_point.y}; //终点坐标
+                                    ag->point1 = {(unsigned int)start[1],(unsigned int)start[0]}; //获取起点的坐标
+                                    ag->point0 = {query_point.y,query_point.x}; //终点坐标
                                     auto path = ag->GenPath_v1(maptable);
 
                                     if(neuron_pool->addSegment(&path)){ //涉及到点的添加
                                         sendSuccessFrame("添加成功");
+                                        sendIamgeFrame();
                                     }else{
                                         sendErrorFrame("添加失败");
+                                        sendIamgeFrame();
                                     }
                                 }
                             }else{

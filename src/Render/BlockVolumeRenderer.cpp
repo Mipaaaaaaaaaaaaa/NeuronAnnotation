@@ -173,25 +173,25 @@ void BlockVolumeRenderer::render_frame() {
             glDrawElements( GL_LINES, 2 * g->graphDrawManager->line_num_of_path[line.first] , GL_UNSIGNED_INT , nullptr );
         }
     }
-    //高亮选中点
-    int index = neuron_pool->getSelectedVertexIndex();
-    float selected[] = {g->list_swc[g->hash_swc_ids[index]].x,g->list_swc[g->hash_swc_ids[index]].y,g->list_swc[g->hash_swc_ids[index]].z,
-        1.0f,1.0f,1.0f};
+    // //高亮选中点
+    // int index = neuron_pool->getSelectedVertexIndex();
+    // float selected[] = {g->list_swc[g->hash_swc_ids[index]].x,g->list_swc[g->hash_swc_ids[index]].y,g->list_swc[g->hash_swc_ids[index]].z,
+    //     1.0f,1.0f,1.0f};
 
-    glGenVertexArrays(1,&line_VAO);
-    glGenBuffers(1,&line_VBO);
-    glBindVertexArray(line_VAO);
-    glBindBuffer(GL_ARRAY_BUFFER, line_VBO);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(selected), selected, GL_STATIC_DRAW);
-    //pos
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float),(void *)0);
-    glEnableVertexAttribArray(0);
-    //color
-    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float),(void *)(3* sizeof(float)));
-    glEnableVertexAttribArray(1);
+    // glGenVertexArrays(1,&line_VAO);
+    // glGenBuffers(1,&line_VBO);
+    // glBindVertexArray(line_VAO);
+    // glBindBuffer(GL_ARRAY_BUFFER, line_VBO);
+    // glBufferData(GL_ARRAY_BUFFER, sizeof(selected), selected, GL_STATIC_DRAW);
+    // //pos
+    // glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float),(void *)0);
+    // glEnableVertexAttribArray(0);
+    // //color
+    // glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float),(void *)(3* sizeof(float)));
+    // glEnableVertexAttribArray(1);
 
-    glLineWidth(10);
-    glDrawArrays(GL_POINT,0,1);
+    // glLineWidth(10);
+    // glDrawArrays(GL_POINT,0,1);
 
     glEnable(GL_DEPTH_TEST);
 
