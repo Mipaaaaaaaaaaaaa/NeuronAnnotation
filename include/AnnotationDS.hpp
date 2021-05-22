@@ -199,7 +199,7 @@ public:
     NeuronGraph(const char * filePath, const char * tableName);
     NeuronGraph(){};
     // explicit NeuronGraph(int idx):graph_index(idx){}
-    void selectVertex( int x, int y, NeuronPool *n );
+    long selectVertex( int x, int y, NeuronPool *n );
     bool selectVertices(std::vector<int> idxes);
     bool selectEdges(std::vector<int> idxes);
     bool selectLines(std::vector<int> idxes);
@@ -277,7 +277,7 @@ public:
 class NeuronPool{
 public:
     void selectVertex(int id);
-    void selectVertex(int x, int y);
+    long selectVertex(int x, int y);
     void selectLine(int id);
     NeuronPool(){
         m_selected_vertex_index = -1;

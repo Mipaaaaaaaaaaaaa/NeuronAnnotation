@@ -67,9 +67,17 @@ void WebSocketRequestHandler::handleRequest(
                     seria::deserialize(query_point,values);
                     //进一步确定当前操作
                     switch(Tools(neuron_pool->getTool())){
-                        case Drag: 
-                            neuron_pool->selectVertex(query_point.x,query_point.y);
-                        break;
+                        case Drag:
+                            {
+                                long id = neuron_pool->selectVertex(query_point.x,query_point.y);
+                                std::ostringstream oss;
+                                oss << "切换至 " << id ;
+                                if( id != -1 ){
+                                    sendSuccessFrame(oss.str());
+                                    sendIamgeFrame();
+                                }
+                                break;
+                            }
 
                         case Insert:
                         {

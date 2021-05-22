@@ -416,11 +416,11 @@ void NeuronPool::selectVertex( int id ){
     m_selected_vertex_index = id;
 }
 
-void NeuronPool::selectVertex( int x, int y){
-    graph->selectVertex(x,y,this);
+long NeuronPool::selectVertex( int x, int y){
+    return graph->selectVertex(x,y,this);
 }
 
-void NeuronGraph::selectVertex( int x, int y, NeuronPool *n ){
+long NeuronGraph::selectVertex( int x, int y, NeuronPool *n ){
     double best_dist;
     int id = findNearestVertex(x,y,n,best_dist);
     if( list_swc[hash_swc_ids[id]].line_id == n->getSelectedLineIndex() ){
@@ -428,6 +428,7 @@ void NeuronGraph::selectVertex( int x, int y, NeuronPool *n ){
             n->selectVertex(id);
         }
     }
+    return id;
 }
 
 void NeuronPool::selectLine( int id ){
