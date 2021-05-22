@@ -27,7 +27,7 @@ struct Myhash{
 
 class BlockVolumeRenderer final: public IRenderer{
 public:
-    BlockVolumeRenderer(int w=1200,int h=900);
+    BlockVolumeRenderer(int w=1200,int h=700);
     BlockVolumeRenderer(const BlockVolumeRenderer&)=delete;
     BlockVolumeRenderer(BlockVolumeRenderer&&)=delete;
     ~BlockVolumeRenderer();

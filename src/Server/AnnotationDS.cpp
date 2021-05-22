@@ -159,6 +159,7 @@ bool NeuronGraph::formatGraphFromSWCList(){
             list_swc[index].user_id = list_swc[hash_swc_ids[list_swc[index].pn]].user_id;
             list_swc[index].line_id = list_swc[hash_swc_ids[pn]].line_id;
             list_swc[index].seg_id = list_swc[hash_swc_ids[pn]].seg_id;
+            list_swc[index].seg_in_id = list_swc[hash_swc_ids[pn]].seg_in_id + 1;
             segments[list_swc[pn].seg_id].size = list_swc[hash_swc_ids[pn]].seg_in_id + 2;
             segments[list_swc[pn].seg_id].segment_vertex_ids[list_swc[hash_swc_ids[pn]].seg_in_id+1] = list_swc[index].id;
             //更新所有前seg节点长度
@@ -397,7 +398,7 @@ long long NeuronGraph::addSegment(int id, std::vector<std::array<float,4>> *path
         }
     }
     list_and_hash_mutex.unlock();
-    graphDrawManager->RebuildLine(vStartswc.line_id);
+    graphDrawManager->setRebuildLine(vStartswc.line_id);
     if( DataBase::insertSWCs(inserts,tableName) ) return vEnd.id;
     return -1;
 }
@@ -464,7 +465,8 @@ NeuronGraph::NeuronGraph(const char * string, int type){
         this->cur_max_seg_id = -1;
         this->cur_max_line_id = -1;
         std::string str = DataBase::getSWCFileStringFromTable(string);
-        bool result = parser.ReadSWC(str.c_str(), *this,0);
+        std::cout<<str<<std::endl;
+        bool result = parser.ReadSWC(str.c_str(), *this,1);
         if( result )std::cout << " Build Graph From File Successfully!" << std::endl;
         else std::cout << " Build Graph From File Error!" << std::endl;
     }else{
@@ -577,7 +579,7 @@ bool NeuronGraph::addSegment(int id, Vertex *v){
     }
     list_and_hash_mutex.unlock();
     lines[v->line_id].hash_vertexes[v->id] = *v;
-    graphDrawManager->RebuildLine(v->line_id);
+    graphDrawManager->setRebuildLine(v->line_id);
     if( DataBase::insertSWC(vEndswc,tableName) ) return true;
     return false;
 }
@@ -688,6 +690,7 @@ bool NeuronGraph::changeColor(int line_id, string color){
         NeuronSWC *swc = &list_swc[hash_swc_ids[v->second.id]];
         swc->color = color;
         modifySWCs.push_back(make_shared<NeuronSWC>(*swc));
+        graphDrawManager->rebuild_swc_id[hash_swc_ids[swc->id]] = 1; //修正端点index;
         for( auto seg = v->second.hash_linked_seg_ids.begin() ; seg != v->second.hash_linked_seg_ids.end() ; seg++ ){
             Segment *s = &segments[seg->first];
             s->color = color;
@@ -695,10 +698,12 @@ bool NeuronGraph::changeColor(int line_id, string color){
                 NeuronSWC *pSWC = &list_swc[hash_swc_ids[p->second]];
                 pSWC->color = color;
                 modifySWCs.push_back(make_shared<NeuronSWC>(*pSWC));
+                graphDrawManager->rebuild_swc_id[hash_swc_ids[pSWC->id]] = 1;
             }
         }
     }
     if( modifySWCs.size() == 0 ) return true;
+    graphDrawManager->setRebuildLine(line_id);
     if( DataBase::modifySWCs(modifySWCs,tableName) ) return true;
     else return false;
 }
@@ -719,7 +724,7 @@ bool NeuronGraph::deleteVertex(int x, int y, NeuronPool *neuron_pool, std::strin
     }
     double best_dist;
     long id = findNearestVertex( x, y, neuron_pool, best_dist);
-    if( id == -1 || best_dist > 10 ){
+    if( id == -1 || best_dist > 1000 ){
         error = "选择节点失败，请重新选择";
         return false;
     }
@@ -806,7 +811,7 @@ long NeuronGraph::findNearestVertex(int cx, int cy, NeuronPool * neuron_pool, do
 
 		double cur_dist = (res.x-cx)*(res.x-cx)+(res.y-cy)*(res.y-cy);
 
-		if ( !init ) {	best_dist = cur_dist; best_ind = v.first; }
+		if ( !init ) {	best_dist = cur_dist; best_ind = v.first; init = true;}
 		else 
 		{	
 			if (cur_dist < best_dist ) 
@@ -841,7 +846,7 @@ bool NeuronGraph::deleteLine(int line_id){
             segments.erase(seg->first);
         }
     }
-    graphDrawManager->Delete(line_id);
+    graphDrawManager->setRebuildLine(line_id);
     lines.erase(line_id);
     return result;
 }
@@ -869,7 +874,7 @@ bool NeuronPool::changeTable(string tableName){
 bool NeuronPool::dividedInto2Lines(int x, int y){
     double best_dist;
     long id = graph->findNearestVertex(x,y,this,best_dist);
-    if( best_dist > 10 ) return false;
+    if( best_dist > 1000 ) return false;
     if(graph->devidedInto2Lines(id)){
         std::string tableName = graph->tableName;
         (*graphs_pool)[tableName] = std::make_shared<NeuronGraph>(tableName.c_str(),0);

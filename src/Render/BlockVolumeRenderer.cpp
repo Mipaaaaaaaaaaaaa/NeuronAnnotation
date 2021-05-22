@@ -173,15 +173,34 @@ void BlockVolumeRenderer::render_frame() {
             glDrawElements( GL_LINES, 2 * g->graphDrawManager->line_num_of_path[line.first] , GL_UNSIGNED_INT , nullptr );
         }
     }
+    //高亮选中点
+    int index = neuron_pool->getSelectedVertexIndex();
+    float selected[] = {g->list_swc[g->hash_swc_ids[index]].x,g->list_swc[g->hash_swc_ids[index]].y,g->list_swc[g->hash_swc_ids[index]].z,
+        1.0f,1.0f,1.0f};
 
-    glEnable(GL_DEPTH_TEST);
-
-    glDisable(GL_DEPTH_TEST);
-    line_shader->use();
+    glGenVertexArrays(1,&line_VAO);
+    glGenBuffers(1,&line_VBO);
     glBindVertexArray(line_VAO);
-    glPointSize(3);
-    glDrawArrays(GL_LINES,0,6);
+    glBindBuffer(GL_ARRAY_BUFFER, line_VBO);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(selected), selected, GL_STATIC_DRAW);
+    //pos
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float),(void *)0);
+    glEnableVertexAttribArray(0);
+    //color
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float),(void *)(3* sizeof(float)));
+    glEnableVertexAttribArray(1);
+
+    glLineWidth(10);
+    glDrawArrays(GL_POINT,0,1);
+
     glEnable(GL_DEPTH_TEST);
+
+    // glDisable(GL_DEPTH_TEST);
+    // line_shader->use();
+    // glBindVertexArray(line_VAO);
+    // glPointSize(3);
+    // glDrawArrays(GL_LINES,0,6);
+    // glEnable(GL_DEPTH_TEST);
 
     glFinish();
 
@@ -318,21 +337,6 @@ void BlockVolumeRenderer::InitVaoVbo() {
 //    glEnableVertexAttribArray(0);
 //    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, line_EBO);
 //    glBufferStorage(GL_ELEMENT_ARRAY_BUFFER, 1024 * 2 * sizeof(uint32_t), nullptr, GL_DYNAMIC_STORAGE_BIT);
-
-     float vertices[]={
-             500.f,500.f,1000.f,
-             2000,3000,1000,
-             1000.f,1000.f,1000.f,
-             1500.f,1800.f,1000.f,
-     };
-     GLuint vao,vbo;
-     glGenVertexArrays(1,&line_VAO);
-     glGenBuffers(1,&line_VBO);
-     glBindVertexArray(line_VAO);
-     glBindBuffer(GL_ARRAY_BUFFER, line_VBO);
-     glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
-     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
-     glEnableVertexAttribArray(0);
 
     // glNamedBufferSubData(line_VBO, cur_verter_num * sizeof(float) * 3,
     //                     3 * sizeof(float), a);
@@ -560,7 +564,7 @@ void BlockVolumeRenderer::setupShaderUniform() {
 
 
     glm::mat4 projection = glm::perspective(
-        (double)glm::radians(camera.zoom), (double)window_width / (double)window_height, 1.0, 10000.0);
+        (double)glm::radians(camera.zoom), (double)window_width / (double)window_height, (double)camera.n, (double)camera.f);
     glm::mat4 view = glm::lookAt(
         glm::vec3(camera.pos[0], camera.pos[1], camera.pos[2]),
         glm::vec3(camera.pos[0]+camera.front[0], camera.pos[1]+camera.front[1], camera.pos[2]+camera.front[2]),
@@ -861,6 +865,9 @@ void BlockVolumeRenderer::set_neuronpool(NeuronPool *np) {
     neuron_pool = np;
     if(np->getGraph()->graphDrawManager->inited == false ){
         np->getGraph()->graphDrawManager->InitGraphDrawManager();
+    }
+    if(np->getGraph()->graphDrawManager->rebuild_line_id != -1 ){
+        np->getGraph()->graphDrawManager->RebuildLine();
     }
 }
 

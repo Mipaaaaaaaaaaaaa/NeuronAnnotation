@@ -175,12 +175,18 @@ class GraphDrawManager{
         long long v_count; //当前顶点数量
         std::map<int, std::pair<unsigned int, unsigned int> > hash_lineid_vao_ebo;
         std::map<int,int> line_num_of_path;
+        int rebuild_line_id; //-1 default
+        std::map<int,int> rebuild_swc_id;
     public:
         GraphDrawManager( NeuronGraph *g ){
             graph = g;
             inited = false;
+            rebuild_line_id = -1;
         }
-        void RebuildLine( int line_id );
+        void setRebuildLine(int id){
+            rebuild_line_id = id;
+        }
+        void RebuildLine();
         void InitGraphDrawManager();
         void Delete( int line_id );
         void UpdateSWC();
@@ -258,6 +264,7 @@ private:
     // std::vector<Segment*> cur_select_segments;//last add edge or current select edge
     // std::vector<Line*> cur_select_lines;
     // int select_obj;//0 for nothing, 1 for point, 2 for edge, 3 for points, 4 for edges,5 for line,6 for lines
+
 public:
     bool formatGraphFromSWCList();
     int formatSegments(std::map<int,vector<int>> &vertexLinkedCount, int index);
@@ -281,7 +288,7 @@ public:
         m_tool = 0; //默认拖拽
 
         window_width = 1200;
-        window_height = 900;
+        window_height = 700;
     }
     string getLinestoJson();
     bool getLineVisible(int id);

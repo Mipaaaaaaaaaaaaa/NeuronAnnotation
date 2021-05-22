@@ -18,7 +18,6 @@ if(WIN32)
             VolumeRenderer.cpp
             Image.cpp
             AnnotationDS.cpp
-            GraphDrawManager.cpp
             ${PROJECT_SOURCE_DIR}/third_party/glad_wgl/src/gl.c
             ${PROJECT_SOURCE_DIR}/third_party/glad_wgl/src/wgl.c
     )
@@ -36,7 +35,6 @@ elseif(UNIX)
         WebSocketRequestHandler.cpp
         VolumeRenderer.cpp
         AnnotationDS.cpp
-        GraphDrawManager.cpp
         Image.cpp
         ${PROJECT_SOURCE_DIR}/third_party/glad/src/glad.c
     )

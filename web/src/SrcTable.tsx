@@ -373,7 +373,8 @@ class SrcTable extends React.Component<EditableTableProps, EditableTableState>{
         const item = newData[index];
         if(item.color == color.hex) return;
         
-        item.color = color.hex;
+        item.color = (color.hex).substr(0,7);
+        console.log(item.color);
         const ws = new WebSocket(_SOCKETLINK);
   
         ws.onopen = () => {
@@ -382,7 +383,7 @@ class SrcTable extends React.Component<EditableTableProps, EditableTableState>{
                 JSON.stringify({
                   modify : {
                     index : row.index,
-                    color : color.hex
+                    color : item.color
                   }
                 })
             );

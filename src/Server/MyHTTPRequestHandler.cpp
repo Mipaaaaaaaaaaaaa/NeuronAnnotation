@@ -75,6 +75,7 @@ void MyHTTPRequestHandler::handleRequest(
                     }
                     if( modify_data.HasMember("color") && modify_data["color"].IsString() ){
                         result &= neuron_pool->changeColor(line_id,modify_data["color"].GetString());
+                        render_ws->sendIamgeFrame();
                     }
                     if( modify_data.HasMember("visible") ){
                         result &= neuron_pool->changeVisible(line_id,modify_data["visible"].GetBool());
@@ -109,15 +110,12 @@ void MyHTTPRequestHandler::handleRequest(
                     if( document.HasMember("index") && document["index"].IsInt64() ){
                         line_id = document["index"].GetInt64();
                     }
-                    volume_render_lock->lock();
-                    block_volume_renderer->enter_gl();
                     if (neuron_pool->deleteLine(line_id)){
                         render_ws->sendSuccessFrame("删除成功");
+                        render_ws->sendIamgeFrame();
                     }else{
                         render_ws->sendErrorFrame("删除失败");
                     }
-                    block_volume_renderer->exit_gl();
-                    volume_render_lock->unlock();
                 }
                 render_ws->sendStructureFrame();
                 ws.close();

@@ -92,16 +92,13 @@ void WebSocketRequestHandler::handleRequest(
                             if( query_res[7] > 0.1f ){
                                 // if(neuron_pool->getSelectedVertexIndex() == -1 ){
                                 if( true ){
-                                    volume_render_lock->lock();
-                                    block_volume_renderer->enter_gl();
                                     if(neuron_pool->addVertex(query_res[0],query_res[1],query_res[2])){
                                         sendSuccessFrame("添加成功");
+                                        sendIamgeFrame();
                                     }else{
                                         sendErrorFrame("添加失败");
+                                        sendIamgeFrame();
                                     }
-                                    
-                                    block_volume_renderer->exit_gl();
-                                    volume_render_lock->unlock();
                                 }
                                 else{
                                     AutoPathGen *ag = new AutoPathGen();
@@ -110,17 +107,11 @@ void WebSocketRequestHandler::handleRequest(
                                     ag->point1 = {query_point.x,query_point.y}; //终点坐标
                                     auto path = ag->GenPath_v1(maptable);
 
-                                    volume_render_lock->lock();
-
-                                    block_volume_renderer->enter_gl();
                                     if(neuron_pool->addSegment(&path)){ //涉及到点的添加
                                         sendSuccessFrame("添加成功");
                                     }else{
                                         sendErrorFrame("添加失败");
                                     }
-                                    block_volume_renderer->exit_gl();
-
-                                    volume_render_lock->unlock();
                                 }
                             }else{
                                 printf("%lf Alpha is too low!\n",query_res[7]);
@@ -129,8 +120,7 @@ void WebSocketRequestHandler::handleRequest(
                         break;
                         }
                         case Cut:
-                            //找到最近的一个端点
-                            //把图按照这个断点分成两个
+                            neuron_pool->dividedInto2Lines(query_point.x,query_point.y);
                         break;
                         case Select:
                             //矩形框选中 TODO

@@ -397,7 +397,7 @@ long long NeuronGraph::addSegment(int id, std::vector<std::array<float,4>> *path
         }
     }
     list_and_hash_mutex.unlock();
-    graphDrawManager->RebuildLine(vStartswc.line_id);
+    graphDrawManager->setRebuildLine(vStartswc.line_id);
     if( DataBase::insertSWCs(inserts,tableName) ) return vEnd.id;
     return -1;
 }
@@ -464,7 +464,7 @@ NeuronGraph::NeuronGraph(const char * string, int type){
         this->cur_max_seg_id = -1;
         this->cur_max_line_id = -1;
         std::string str = DataBase::getSWCFileStringFromTable(string);
-        bool result = parser.ReadSWC(str.c_str(), *this,0);
+        bool result = parser.ReadSWC(str.c_str(), *this,1);
         if( result )std::cout << " Build Graph From File Successfully!" << std::endl;
         else std::cout << " Build Graph From File Error!" << std::endl;
     }else{
@@ -577,7 +577,7 @@ bool NeuronGraph::addSegment(int id, Vertex *v){
     }
     list_and_hash_mutex.unlock();
     lines[v->line_id].hash_vertexes[v->id] = *v;
-    graphDrawManager->RebuildLine(v->line_id);
+    graphDrawManager->setRebuildLine(v->line_id);
     if( DataBase::insertSWC(vEndswc,tableName) ) return true;
     return false;
 }
@@ -841,7 +841,7 @@ bool NeuronGraph::deleteLine(int line_id){
             segments.erase(seg->first);
         }
     }
-    graphDrawManager->Delete(line_id);
+    graphDrawManager->setRebuildLine(line_id);
     lines.erase(line_id);
     return result;
 }
