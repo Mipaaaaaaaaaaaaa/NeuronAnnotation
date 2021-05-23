@@ -8,7 +8,7 @@
 #include <Poco/JSON/Array.h>
 #include <Poco/Dynamic/Var.h>
 #include <DataBase.hpp>
-#include<glm/glm.hpp>
+#include <glm/glm.hpp>
 
 #include<glm/gtc/matrix_transform.hpp>
 
@@ -423,7 +423,7 @@ long NeuronPool::selectVertex( int x, int y){
 long NeuronGraph::selectVertex( int x, int y, NeuronPool *n ){
     double best_dist;
     int id = findNearestVertex(x,y,n,best_dist);
-    if( list_swc[hash_swc_ids[id]].line_id == n->getSelectedLineIndex() ){
+    if( list_swc[hash_swc_ids[id]].line_id == n->getSelectedLineIndex() && best_dist < 1000 ){
         if( lines[n->getSelectedLineIndex()].hash_vertexes.find(id) != lines[n->getSelectedLineIndex()].hash_vertexes.end() ){
             n->selectVertex(id);
         }
@@ -475,7 +475,6 @@ NeuronGraph::NeuronGraph(const char * string, int type){
         this->cur_max_seg_id = -1;
         this->cur_max_line_id = -1;
         std::string str = DataBase::getSWCFileStringFromTable(string);
-        std::cout<<str<<std::endl;
         bool result = parser.ReadSWC(str.c_str(), *this,1);
         if( result )std::cout << " Build Graph From File Successfully!" << std::endl;
         else std::cout << " Build Graph From File Error!" << std::endl;
@@ -889,18 +888,93 @@ bool NeuronPool::dividedInto2Lines(int x, int y){
     long id = graph->findNearestVertex(x,y,this,best_dist);
     if( best_dist > 1000 ) return false;
     if(graph->devidedInto2Lines(id)){
-        std::string tableName = graph->tableName;
-        (*graphs_pool)[tableName] = std::make_shared<NeuronGraph>(tableName.c_str(),0);
-        graph = (*graphs_pool)[tableName];
+        // std::string tableName = graph->tableName;
+        // (*graphs_pool)[tableName] = std::make_shared<NeuronGraph>(tableName.c_str(),0);
+        // graph = (*graphs_pool)[tableName];
         return true;
     }
     return false;
 }
 
 bool NeuronGraph::devidedInto2Lines(long id){
-    NeuronSWC swc = list_swc[hash_swc_ids[id]];
-    swc.pn = -1;
-    if(DataBase::modifySWC(swc,tableName)) return true;
+    NeuronSWC *swc = &list_swc[hash_swc_ids[id]];
+    int last_line_id = swc->line_id;
+    Vertex *v = &lines[last_line_id].hash_vertexes[id];
+    std::vector<std::shared_ptr<NeuronSWC> > modifySWCs;
+    for( auto seg : v->hash_linked_seg_ids ){
+        if( segments[seg.first].end_id == v->id ){ //修改以v为终点的seg的终点
+            segments[seg.first].end_id = segments[seg.first].segment_vertex_ids[segments[seg.first].size - 2]; //终点替换为倒数第二个点
+            segments[seg.first].size = segments[seg.first].size-1;
+            for( auto seg_v : segments[seg.first].segment_vertex_ids ){
+                NeuronSWC *segSWC = &list_swc[hash_swc_ids[seg_v.second]];
+                if( segSWC->seg_id == seg.first ){ //更新当前seg的size swc
+                    segSWC->seg_size = segments[seg.first].size;
+                    modifySWCs.push_back(make_shared<NeuronSWC>(*segSWC)); //数据库修改更新的SWC;
+                }
+            }
+            lines[last_line_id].hash_vertexes[segments[seg.first].start_id].linked_vertex_ids.erase(id); //删除上一个点与当前点的连线
+            Vertex vEnd;
+            vEnd.x = list_swc[hash_swc_ids[segments[seg.first].end_id]].x;
+            vEnd.y = list_swc[hash_swc_ids[segments[seg.first].end_id]].y;
+            vEnd.z = list_swc[hash_swc_ids[segments[seg.first].end_id]].z;
+            vEnd.type = list_swc[hash_swc_ids[segments[seg.first].end_id]].type;
+            vEnd.name = list_swc[hash_swc_ids[segments[seg.first].end_id]].name;
+            vEnd.color = list_swc[hash_swc_ids[segments[seg.first].end_id]].color;
+            vEnd.id = list_swc[hash_swc_ids[segments[seg.first].end_id]].id;
+            vEnd.timestamp = list_swc[hash_swc_ids[segments[seg.first].end_id]].timestamp;
+            vEnd.line_id = list_swc[hash_swc_ids[segments[seg.first].end_id]].line_id;
+            vEnd.radius = list_swc[hash_swc_ids[segments[seg.first].end_id]].r;
+
+            vEnd.hash_linked_seg_ids[seg.first] = true; //连接新终点与段
+            vEnd.linked_vertex_ids[segments[seg.first].start_id] = true; //连接新终点与起点
+            lines[last_line_id].hash_vertexes[vEnd.id] = vEnd;
+            lines[last_line_id].hash_vertexes[segments[seg.first].start_id].linked_vertex_ids[vEnd.id] = true; //连接起点与新终点
+            v->hash_linked_seg_ids.erase(seg.first);
+            v->linked_vertex_ids.erase(segments[seg.first].start_id);
+            break;
+           }
+    }//去除连接
+    int line_id = getNewLineId();
+    Line l;
+    lines[line_id] = l;
+    lines[line_id].id = line_id;
+    lines[line_id].name = "default" + std::to_string(line_id);
+    lines[line_id].color = "#aa0000";
+    std::vector<int> dfs_vector;
+    map<int,bool> seg_visited; //段的visited
+    map<int,bool> vec_visited; //点的visited
+    dfs_vector.push_back(id);
+    while( dfs_vector.size() != 0 ){
+        int v_id = dfs_vector[dfs_vector.size()-1]; //拿出最后一个元素
+        vec_visited[v_id] = true;
+        dfs_vector.pop_back();
+        for( auto seg : lines[last_line_id].hash_vertexes[v_id].hash_linked_seg_ids ){
+            if( !seg_visited[seg.first] ){ //未访问的段
+                segments[seg.first].line_id = line_id; //修改旧段的line_id
+                for( auto seg_v : segments[seg.first].segment_vertex_ids ){
+                    NeuronSWC *segSWC = &list_swc[hash_swc_ids[seg_v.second]];
+                    segSWC->line_id = line_id; //修改段属的line_id
+                    segSWC->name = lines[line_id].name;
+                    segSWC->color = lines[line_id].color;
+                    modifySWCs.push_back(make_shared<NeuronSWC>(*segSWC)); //数据库修改更新的SWC;
+                    graphDrawManager->rebuild_swc_id[hash_swc_ids[segSWC->id]] = 1;
+                }
+                seg_visited[seg.first] = true;
+            }
+        }
+        Vertex v_tmp = lines[last_line_id].hash_vertexes[v_id];
+        lines[last_line_id].hash_vertexes.erase(v_id); //在旧路径上删除节点
+        v_tmp.line_id = line_id;
+        lines[line_id].hash_vertexes[v_tmp.id] = v_tmp;
+        for( auto v_v : v_tmp.linked_vertex_ids ){
+            if( !vec_visited[v_v.first] ){ //未访问的点
+                dfs_vector.push_back(v_v.first);
+            }
+        }
+    }
+    graphDrawManager->setRebuildLine(line_id);
+    graphDrawManager->setRebuildLine(last_line_id);
+    if(DataBase::modifySWCs(modifySWCs,tableName)) return true;
     return false;
 }
 

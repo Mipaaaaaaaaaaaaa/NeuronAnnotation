@@ -171,16 +171,18 @@ void BlockVolumeRenderer::render_frame() {
             glLineWidth(3);
             glBindVertexArray(line.second.first); //绑定vao
             glDrawElements( GL_LINES, 2 * g->graphDrawManager->line_num_of_path[line.first] , GL_UNSIGNED_INT , nullptr );
+
+            // unsigned int vao = g->graphDrawManager->hash_lineid_vertex_vao_ebo[line.first].first; //点位置
+            // glBindVertexArray(vao);
+            // glDrawElements( GL_POINTS, g->graphDrawManager->vector_num_of_path[line.first] , GL_UNSIGNED_INT , nullptr );
         }
     }
-    // //高亮选中点
+    //高亮选中点
     // int index = neuron_pool->getSelectedVertexIndex();
     // float selected[] = {g->list_swc[g->hash_swc_ids[index]].x,g->list_swc[g->hash_swc_ids[index]].y,g->list_swc[g->hash_swc_ids[index]].z,
     //     1.0f,1.0f,1.0f};
 
-    // glGenVertexArrays(1,&line_VAO);
     // glGenBuffers(1,&line_VBO);
-    // glBindVertexArray(line_VAO);
     // glBindBuffer(GL_ARRAY_BUFFER, line_VBO);
     // glBufferData(GL_ARRAY_BUFFER, sizeof(selected), selected, GL_STATIC_DRAW);
     // //pos
@@ -191,7 +193,7 @@ void BlockVolumeRenderer::render_frame() {
     // glEnableVertexAttribArray(1);
 
     // glLineWidth(10);
-    // glDrawArrays(GL_POINT,0,1);
+    // glDrawArrays(GL_POINTS,0,1);
 
     glEnable(GL_DEPTH_TEST);
 
@@ -866,7 +868,7 @@ void BlockVolumeRenderer::set_neuronpool(NeuronPool *np) {
     if(np->getGraph()->graphDrawManager->inited == false ){
         np->getGraph()->graphDrawManager->InitGraphDrawManager();
     }
-    if(np->getGraph()->graphDrawManager->rebuild_line_id != -1 ){
+    if(np->getGraph()->graphDrawManager->rebuild_line_id.size() != 0 ){
         np->getGraph()->graphDrawManager->RebuildLine();
     }
 }

@@ -54,7 +54,7 @@ void DataBase::setPort(const std::string &value){
 }
 
 bool DataBase::modifySWC(const NeuronSWC &swc, const std::string &tableName){
-    std::cout << "[modifySWC]" << std::endl;
+    // std::cout << "[modifySWC]" << std::endl;
     auto con = takeConnection();
     auto c = static_cast<Poco::MongoDB::Connection::Ptr>(con);
 
@@ -74,8 +74,8 @@ bool DataBase::modifySWC(const NeuronSWC &swc, const std::string &tableName){
     swcObj->add("seg_size",swc.seg_size);
     swcObj->add("type",int(swc.type));
     swcObj->add("radius",swc.radius);
-    std::cout << "[modifySWC] MODIFY:";
-    std::cout << swcObj->toString() << std::endl;
+    // std::cout << "[modifySWC] MODIFY:";
+    // std::cout << swcObj->toString() << std::endl;
 
     Poco::MongoDB::Document::Ptr document(new Poco::MongoDB::Document());
     document->add("$set", swcObj);
@@ -96,7 +96,7 @@ bool DataBase::modifySWC(const NeuronSWC &swc, const std::string &tableName){
 
     c->sendRequest(*updateCMD,response);
     auto doc = *(response.documents()[0]);
-    std::cout << doc.toString() << std::endl;
+    // std::cout << doc.toString() << std::endl;
 
     if( doc.getInteger("ok") == 1 ) return true;
     return false;
@@ -146,7 +146,7 @@ bool DataBase::modifySWCs(const std::vector<std::shared_ptr<NeuronSWC> > &swcs, 
 
     c->sendRequest(*updateCMD,response);
     auto doc = *(response.documents()[0]);
-    std::cout << doc.toString() << std::endl;
+    // std::cout << doc.toString() << std::endl;
 
     if( doc.getInteger("ok") == 1 ) return true;
     return false;
@@ -173,8 +173,8 @@ bool DataBase::insertSWC(const NeuronSWC &swc, const std::string &tableName){
     swcObj->add("seg_size",swc.seg_size);
     swcObj->add("type",int(swc.type));
     swcObj->add("radius",swc.radius);
-    std::cout << "[insertSWC] INSERT:";
-    std::cout << swcObj->toString() << std::endl;
+    // std::cout << "[insertSWC] INSERT:";
+    // std::cout << swcObj->toString() << std::endl;
 
     Poco::MongoDB::Array::Ptr swcList(new Poco::MongoDB::Array());
 	swcList->add(std::to_string(0), swcObj);
@@ -185,14 +185,14 @@ bool DataBase::insertSWC(const NeuronSWC &swc, const std::string &tableName){
 
     c->sendRequest(*insert,response);
     auto doc = *(response.documents()[0]);
-    std::cout << doc.toString() << std::endl;
+    // std::cout << doc.toString() << std::endl;
 
     if( doc.getInteger("ok") == 1 ) return true;
     return false;
 }
 
 bool DataBase::findSWC(const NeuronSWC &swc, const std::string &tableName){
-    std::cout << "[findSWC] IN TABLE " << tableName << std::endl;
+    // std::cout << "[findSWC] IN TABLE " << tableName << std::endl;
     // take connection from pool
     auto con = takeConnection();
     auto c = static_cast<Poco::MongoDB::Connection::Ptr>(con);
@@ -209,9 +209,9 @@ bool DataBase::findSWC(const NeuronSWC &swc, const std::string &tableName){
     if (response.documents().empty()) {
         return false;
     }
-    std::cout << "[findSWC] FIND:";
+    // std::cout << "[findSWC] FIND:";
     auto doc = *(response.documents()[0]);
-    std::cout << doc.toString() << std::endl;
+    // std::cout << doc.toString() << std::endl;
     return true;
 }
 
@@ -241,8 +241,8 @@ bool DataBase::insertSWCs(const std::vector<std::shared_ptr<NeuronSWC> > &swcs, 
         swcObj->add("radius",(*swc)->radius);
         swcList->add(std::to_string(index++),swcObj);
     }
-    std::cout << "[insertSWCs] INSERT:";
-    std::cout << swcList->toString() << std::endl;
+    // std::cout << "[insertSWCs] INSERT:";
+    // std::cout << swcList->toString() << std::endl;
     auto insert = g_db.createCommand();
 
     insert->selector().add("insert",tableName).add("documents",swcList);
@@ -257,7 +257,7 @@ bool DataBase::insertSWCs(const std::vector<std::shared_ptr<NeuronSWC> > &swcs, 
 }
 
 bool DataBase::deleteSWC(const NeuronSWC &swc, const std::string &tableName){
-    std::cout << "[deleteSWC]" << std::endl;
+    // std::cout << "[deleteSWC]" << std::endl;
     // take connection
     auto con = takeConnection();
     auto c = static_cast<Poco::MongoDB::Connection::Ptr>(con);
@@ -285,7 +285,7 @@ bool DataBase::deleteSWC(const NeuronSWC &swc, const std::string &tableName){
     if( doc.getInteger("ok") == 1 ) return true;
     return false;
 
-    std::cout << doc.toString() << std::endl;    
+    // std::cout << doc.toString() << std::endl;    
     // for (auto i : response.documents()) {
     //     return i->toString(2);
     // }

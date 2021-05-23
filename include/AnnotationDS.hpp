@@ -172,19 +172,22 @@ class GraphDrawManager{
         NeuronGraph * graph;
         bool inited;
         unsigned int vbo; //顶点集合
+        std::map<int, std::pair<unsigned int, unsigned int> > hash_lineid_vertex_vao_ebo; //line_顶点vao
+        std::map<int,int> vector_num_of_path; //line 点数
         long long v_count; //当前顶点数量
         std::map<int, std::pair<unsigned int, unsigned int> > hash_lineid_vao_ebo;
         std::map<int,int> line_num_of_path;
-        int rebuild_line_id; //-1 default
+        std::vector<int> rebuild_line_id; //-1 default
         std::map<int,int> rebuild_swc_id;
     public:
         GraphDrawManager( NeuronGraph *g ){
             graph = g;
             inited = false;
-            rebuild_line_id = -1;
+            rebuild_line_id.clear();
+            rebuild_swc_id.clear();
         }
         void setRebuildLine(int id){
-            rebuild_line_id = id;
+            rebuild_line_id.push_back(id);
         }
         void RebuildLine();
         void InitGraphDrawManager();

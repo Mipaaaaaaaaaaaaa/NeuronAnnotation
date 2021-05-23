@@ -70,10 +70,11 @@ void WebSocketRequestHandler::handleRequest(
                         case Drag:
                             {
                                 long id = neuron_pool->selectVertex(query_point.x,query_point.y);
-                                std::ostringstream oss;
-                                oss << "切换至 " << id ;
+                                std::stringstream  fmt;
+                                fmt << "switch to " << id ;
                                 if( id != -1 ){
-                                    sendSuccessFrame(oss.str());
+                                    string st =  fmt.str();
+                                    sendSuccessFrame(st);
                                     sendIamgeFrame();
                                 }
                                 break;
@@ -105,7 +106,6 @@ void WebSocketRequestHandler::handleRequest(
                                         sendIamgeFrame();
                                     }else{
                                         sendErrorFrame("添加失败");
-                                        sendIamgeFrame();
                                     }
                                 }
                                 else{
@@ -120,7 +120,6 @@ void WebSocketRequestHandler::handleRequest(
                                         sendIamgeFrame();
                                     }else{
                                         sendErrorFrame("添加失败");
-                                        sendIamgeFrame();
                                     }
                                 }
                             }else{
@@ -130,7 +129,12 @@ void WebSocketRequestHandler::handleRequest(
                         break;
                         }
                         case Cut:
-                            neuron_pool->dividedInto2Lines(query_point.x,query_point.y);
+                            if(neuron_pool->dividedInto2Lines(query_point.x,query_point.y)){
+                                sendSuccessFrame("切分成功");
+                                sendIamgeFrame();
+                            }else{
+                                sendErrorFrame("切分失败");
+                            }
                         break;
                         case Select:
                             //矩形框选中 TODO
@@ -141,6 +145,7 @@ void WebSocketRequestHandler::handleRequest(
                             bool res = neuron_pool->deleteVertex(query_point.x,query_point.y,error);
                             if( res ){
                                 sendSuccessFrame("删除成功");
+                                sendIamgeFrame();
                             }else{
                                 sendErrorFrame(error);
                             }

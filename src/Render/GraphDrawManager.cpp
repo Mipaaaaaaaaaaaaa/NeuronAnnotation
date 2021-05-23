@@ -51,6 +51,31 @@ void GraphDrawManager::InitGraphDrawManager(){
     }
     for( auto line : graph->lines ){
         line_num_of_path[line.first] = 0; //初始化路径的线数
+        vector_num_of_path[line.first] = 0;
+
+        unsigned int vao, ebo;
+        glGenVertexArrays(1, &vao);
+        glGenBuffers(1, &ebo);
+        glBindVertexArray(vao);
+        glBindBuffer(GL_ARRAY_BUFFER, vbo); //绑定同一个图的vbo
+
+        //pos
+        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float),(void *)0);
+        glEnableVertexAttribArray(0);
+        //color
+        glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float),(void *)(3* sizeof(float)));
+        glEnableVertexAttribArray(1);
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
+        glBufferStorage(GL_ELEMENT_ARRAY_BUFFER, 100000 * sizeof(uint32_t), nullptr, GL_DYNAMIC_STORAGE_BIT);
+        hash_lineid_vertex_vao_ebo[line.first] = std::make_pair(vao,ebo);
+        glBindBuffer(GL_ARRAY_BUFFER,0);
+        glBindVertexArray(0);
+        for( auto vec : line.second.hash_vertexes ){
+            glNamedBufferSubData(ebo,
+                                vector_num_of_path[line.first] * sizeof(uint32_t),
+                                sizeof(uint32_t), &graph->hash_swc_ids[vec.first]);
+            vector_num_of_path[line.first]++;
+        }
     }
     for( auto seg = graph->segments.begin() ; seg != graph->segments.end() ; seg ++ ){
         if( hash_lineid_vao_ebo.find(seg->second.line_id) == hash_lineid_vao_ebo.end() ){ //该条线未初始化
@@ -94,18 +119,19 @@ void GraphDrawManager::InitGraphDrawManager(){
 
 void GraphDrawManager::RebuildLine(){
     UpdateSWC();
-    Delete(rebuild_line_id);
-    int line_id = rebuild_line_id;
-    
-    line_num_of_path[line_id] = 0;
-    for( auto seg = graph->segments.begin() ; seg != graph->segments.end() ; seg ++ ){
-        if( line_id != seg->second.line_id) continue; //只重建该条路径
-        if( hash_lineid_vao_ebo.find(seg->second.line_id) == hash_lineid_vao_ebo.end() ){ //该条线未初始化
+    for( auto line_id : rebuild_line_id ){
+        Delete(line_id);
+        // int line_id = rebuild_line_id;
+        if ( graph->lines.find(line_id) == graph->lines.end() ) continue;
+        line_num_of_path[line_id] = 0;
+        vector_num_of_path[line_id] = 0;
+        {
             unsigned int vao, ebo;
             glGenVertexArrays(1, &vao);
             glGenBuffers(1, &ebo);
             glBindVertexArray(vao);
             glBindBuffer(GL_ARRAY_BUFFER, vbo); //绑定同一个图的vbo
+
             //pos
             glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float),(void *)0);
             glEnableVertexAttribArray(0);
@@ -113,25 +139,53 @@ void GraphDrawManager::RebuildLine(){
             glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float),(void *)(3* sizeof(float)));
             glEnableVertexAttribArray(1);
             glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
-            glBufferStorage(GL_ELEMENT_ARRAY_BUFFER, 100000 * 2 * sizeof(uint32_t), nullptr, GL_DYNAMIC_STORAGE_BIT);
-            hash_lineid_vao_ebo[seg->second.line_id] = std::make_pair(vao,ebo);
+            glBufferStorage(GL_ELEMENT_ARRAY_BUFFER, 100000 * sizeof(uint32_t), nullptr, GL_DYNAMIC_STORAGE_BIT);
+            hash_lineid_vertex_vao_ebo[line_id] = std::make_pair(vao,ebo);
             glBindBuffer(GL_ARRAY_BUFFER,0);
             glBindVertexArray(0);
         }
-        GLuint ebo = hash_lineid_vao_ebo[line_id].second;
-        for( auto v : seg->second.segment_vertex_ids){
-            if (v.first == 0){
-                continue;
-            }
-            uint32_t idx[2] = {graph->hash_swc_ids[graph->list_swc[graph->hash_swc_ids[v.second]].pn],graph->hash_swc_ids[v.second]};
-            std::cout << idx[0] << " " << idx[1] << std::endl;
-            glNamedBufferSubData(ebo,
-                                line_num_of_path[seg->second.line_id] * 2 * sizeof(uint32_t),
-                                2 * sizeof(uint32_t), idx);
-            line_num_of_path[seg->second.line_id]++;
+        for( auto vec : graph->lines[line_id].hash_vertexes ){
+            glNamedBufferSubData(hash_lineid_vertex_vao_ebo[line_id].second,
+                                vector_num_of_path[line_id] * sizeof(uint32_t),
+                                sizeof(uint32_t), &graph->hash_swc_ids[vec.first]);
+            vector_num_of_path[line_id]++;
         }
-    }//遍历与该路径相关的所有segment
-    rebuild_line_id = -1;
+
+        for( auto seg = graph->segments.begin() ; seg != graph->segments.end() ; seg ++ ){
+            if( line_id != seg->second.line_id) continue; //只重建该条路径
+            if( hash_lineid_vao_ebo.find(seg->second.line_id) == hash_lineid_vao_ebo.end() ){ //该条线未初始化
+                unsigned int vao, ebo;
+                glGenVertexArrays(1, &vao);
+                glGenBuffers(1, &ebo);
+                glBindVertexArray(vao);
+                glBindBuffer(GL_ARRAY_BUFFER, vbo); //绑定同一个图的vbo
+                //pos
+                glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float),(void *)0);
+                glEnableVertexAttribArray(0);
+                //color
+                glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float),(void *)(3* sizeof(float)));
+                glEnableVertexAttribArray(1);
+                glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
+                glBufferStorage(GL_ELEMENT_ARRAY_BUFFER, 100000 * 2 * sizeof(uint32_t), nullptr, GL_DYNAMIC_STORAGE_BIT);
+                hash_lineid_vao_ebo[seg->second.line_id] = std::make_pair(vao,ebo);
+                glBindBuffer(GL_ARRAY_BUFFER,0);
+                glBindVertexArray(0);
+            }
+            GLuint ebo = hash_lineid_vao_ebo[line_id].second;
+            for( auto v : seg->second.segment_vertex_ids){
+                if (v.first == 0){
+                    continue;
+                }
+                uint32_t idx[2] = {graph->hash_swc_ids[graph->list_swc[graph->hash_swc_ids[v.second]].pn],graph->hash_swc_ids[v.second]};
+                std::cout << idx[0] << " " << idx[1] << std::endl;
+                glNamedBufferSubData(ebo,
+                                    line_num_of_path[seg->second.line_id] * 2 * sizeof(uint32_t),
+                                    2 * sizeof(uint32_t), idx);
+                line_num_of_path[seg->second.line_id]++;
+            }
+        }//遍历与该路径相关的所有segment
+    }
+    rebuild_line_id.clear();
 }
 
 void GraphDrawManager::Delete( int line_id ){
@@ -139,7 +193,13 @@ void GraphDrawManager::Delete( int line_id ){
         
         glDeleteVertexArrays(1, &hash_lineid_vao_ebo[line_id].first); //deleteVAO
         glDeleteBuffers(1, &hash_lineid_vao_ebo[line_id].second); //deleteEBO
+
+        glDeleteVertexArrays(1, &hash_lineid_vertex_vao_ebo[line_id].first);
+        glDeleteBuffers(1, &hash_lineid_vertex_vao_ebo[line_id].second);
+
         hash_lineid_vao_ebo.erase(line_id);
         line_num_of_path.erase(line_id);
+        hash_lineid_vertex_vao_ebo.erase(line_id);
+        vector_num_of_path.erase(line_id);
     }
 }
